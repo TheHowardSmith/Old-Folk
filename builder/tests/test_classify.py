@@ -103,8 +103,10 @@ def test_compilation_and_later_year_flagged():
 def test_writer_credit_flagged_and_approvable():
     meta = {"genre": "Hillbilly", "description": "<p><b>Writer:</b> Rodgers; McMichen</p>"}
     r = classify_item("w", "78rpm", item(meta), RULES)
-    assert r.status == FLAG and r.writers == ["Rodgers", "McMichen"]
+    assert r.status == INCLUDE and r.writers == ["Rodgers", "McMichen"]   # kept by default
     rules = load_rules()
+    rules.flag_named_writers = True
+    assert classify_item("w", "78rpm", item(meta), rules).status == FLAG
     rules.overrides = {"approved_writers": ["Rodgers", "mcmichen"]}
     assert classify_item("w", "78rpm", item(meta), rules).status == INCLUDE
 
@@ -188,16 +190,16 @@ def test_regimental_and_military_bands_excluded():
     assert r.status == EXCLUDE
 
 
-def test_world_popular_genres():
-    r = classify_item("t", "78rpm", item({"genre": "Tango", "language": "Spanish"}), RULES)
-    assert r.status == INCLUDE and r.genre == "latinpop"
-    r = classify_item("g", "78rpm", item({"genre": "Popular Music", "language": "Greek"}), RULES)
-    assert r.status == INCLUDE and r.genre == "worldpop"
-    # Western European / Nordic popular music is not "world music".
-    r = classify_item("d", "78rpm", item({"genre": "Popular Music", "language": "Danish"}), RULES)
-    assert r.status == EXCLUDE
-    r = classify_item("j", "78rpm", item({"genre": ["Popular Music", "Jazz"], "language": "Greek"}), RULES)
-    assert r.status == EXCLUDE
+def test_pop_and_latin_dance_not_included():
+    assert classify_item("t", "78rpm", item({"genre": "Tango", "language": "Spanish"}), RULES).status == EXCLUDE
+    assert classify_item("g", "78rpm", item({"genre": "Popular Music", "language": "Greek"}), RULES).status == EXCLUDE
+
+
+def test_poor_and_worn_discs_excluded():
+    for cond in ("Poor", "worn"):
+        r = classify_item("p", "78rpm", item({"genre": "Folk", "condition": cond}), RULES)
+        assert r.status == EXCLUDE and "condition" in r.reasons[0]
+    assert classify_item("g", "78rpm", item({"genre": "Folk", "condition": "Fair"}), RULES).status == INCLUDE
 
 
 def test_instrument_credits_are_not_writers():

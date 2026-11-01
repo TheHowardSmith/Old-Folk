@@ -213,23 +213,6 @@ def guess_region(meta: dict, tags: set[str], title: str, desc: str, genre: str |
     return "Unknown", "none"
 
 
-def world_popular_genre(meta: dict, tags: set[str], title: str, desc: str, rules: Rules) -> str | None:
-    """'latinpop' / 'worldpop' for non-Western popular 78s, else None."""
-    wp = rules.world_popular
-    if not wp or tags & wp.get("hard_exclude", frozenset()):
-        return None
-    latin = tags & wp.get("latin_tags", frozenset())
-    pop = tags & wp.get("popular_tags", frozenset())
-    if not latin and not pop:
-        return None
-    region, _ = guess_region(meta, tags, title, desc, None, rules)
-    if latin and region in wp.get("latin_regions", []):
-        return "latinpop"
-    if region in wp.get("regions", []):
-        return "worldpop"
-    return None
-
-
 def clean_title(title: str) -> str:
     title = title.strip()
     if NOT_A_NAME.match(title) or not title:
@@ -287,6 +270,10 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     tags = extract_tags(meta)
     blob = " | ".join([title, desc, notes, rights, " | ".join(sorted(tags))]).lower()
 
+    condition = str(meta.get("condition") or "").strip().lower()
+    if condition in rules.exclude_conditions:
+        return exclude(f"disc condition: {condition}")
+
     # 1. Restricted / unavailable material.
     if str(meta.get("access-restricted-item", "")).lower() == "true":
         return exclude("access-restricted item (lending only)")
@@ -311,10 +298,6 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     genre = specific_genre(tags, kind, rules)
     excluded = tags & rules.exclude_tags
     generic = is_generic_folk(tags - excluded, rules)
-    if not genre and not generic and kind == "78rpm":
-        genre = world_popular_genre(meta, tags, title, desc, rules)
-        if genre:
-            excluded = set()
     if excluded and not genre:
         if generic:
             flags.append(f"folk tag mixed with non-folk tags: {', '.join(sorted(excluded))}")
@@ -368,7 +351,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     approved = {w.lower() for w in (ov.get("approved_writers") or [])}
     unapproved = [w for w in writers if w.lower() not in approved]
     res.writers = writers
-    if unapproved:
+    if unapproved and rules.flag_named_writers:
         flags.append(f"named writer (check composition rights): {'; '.join(unapproved[:4])}")
 
     region, region_src = guess_region(meta, tags, title, desc, genre, rules)

@@ -11,7 +11,7 @@ Old Folk plays a never-ending random stream of public-domain folk and field reco
 ## What the app does
 
 - **Endless radio:** random tracks, and your phone never repeats one until you've heard everything in your selection.
-- **Genres:** pick one or more (old-time, blues, Celtic, klezmer, calypso, Hawaiian, field recordings, and optional pre-1970 world popular music such as tango and bolero).
+- **Genres:** pick one or more (old-time, blues, Celtic, klezmer, calypso, Hawaiian, African, Asian and Middle Eastern traditional music, field recordings...).
 - **Background playback:** keeps playing with the screen off, with notification and lock-screen controls.
 - **Smooth playback, even when skipping a lot:** 5 tracks are fetched ahead at first, then 20 ahead once you're streaming. Your last 20 tracks are kept too, so the previous button works instantly. Everything goes in a capped 600 MB cache, and tracks that won't play are skipped automatically. Fetching 20 ahead uses more mobile data.
 - **History tab:** scroll up through everything you've ever streamed on this phone, and down through the tracks coming next. Older tracks aren't stored on the phone; tapping one streams it again.
@@ -67,10 +67,10 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 - Only recordings believed to have been **recorded or released in 1970 or earlier** (New Zealand protects sound recordings for 50 years; 1970 leaves a safety margin).
 - Undated 78 rpm discs are treated as pre-1970, because the format was obsolete by the mid-1960s.
 - Items whose date looks unreliable (compilations, reissues, LPs dated before LPs existed, text mentioning later years, modern recordings of old songs) are **flagged for review**, not included.
-- Songs credited to a named (non-traditional) writer are flagged so the **composition** copyright can be checked as well.
+- Songs credited to a named (non-traditional) writer are currently **kept**; their writers are listed in `writers.csv` and `builder/scripts/writer_deaths.py` estimates how many would need removing if composition copyright is enforced.
 - Recordings whose descriptions say they are **restricted, sacred/secret or culturally sensitive are excluded**. Indigenous and ceremonial recordings are flagged for a human check.
-- Jazz, Western pop, classical, opera, spoken word, and military/regimental bands are excluded.
-- Pre-1970 **world popular** 78s (non-English popular song and Latin dance music from outside the Anglo, Western-European and Nordic mainstream) are included as two separate, optional genres.
+- Jazz, pop (including Latin dance music such as tango and bolero), classical, opera, spoken word, and military/regimental bands are excluded.
+- 78s graded **poor** or **worn** by the digitiser are excluded as too noisy.
 - No audio is ever stored in this repository.
 
 ## Rights notice

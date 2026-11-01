@@ -23,8 +23,6 @@ genres:
   pacific:      "Hawaiian & Pacific"
   field:        "Field Recordings & Work Songs"
   world:        "Other Traditional"
-  latinpop:     "Latin American Popular (tango, bolero, rumba...)"
-  worldpop:     "World Popular Song"
 
 # Tag -> genre. First matching genre in this mapping order wins, so put the
 # most specific styles first.
@@ -279,6 +277,15 @@ exclude_tags:
   - doo-wop
   - novelty
   - electronic
+  - tango
+  - tango-fox
+  - rumba
+  - rhumba
+  - mambo
+  - cha-cha-cha
+  - bolero
+  - samba
+  - conga
   - psychedelic
   - psychedelic folk
   - acid folk
@@ -346,26 +353,6 @@ band_words:
   - pipes & drums
   - drum corps
   - bugle corps
-
-# World popular music (opt-in genres, 78rpm discs only): non-English popular
-# song and Latin dance music from outside the Anglo / Western-European / Nordic
-# mainstream.
-world_popular:
-  latin_tags: [tango, tango-fox, rumba, rhumba, bolero, rumba-bolero, bolero mambo, samba, mambo,
-               cha-cha-cha, conga, guaracha, pasodoble, choro, porro, cancion, ranchera, latin,
-               cuban, mexican, son]
-  latin_regions: ["Latin America", "Caribbean", "Southern Europe"]
-  popular_tags: [popular music, popular, pop, vocal, instrumental, waltz, dance, chanson, canzone,
-                 romance, cancion, serenade, ballad]
-  regions: ["Latin America", "Caribbean", "Middle East & Caucasus", "South Asia", "East Asia",
-            "Southeast Asia", "Africa", "Hawaii & Pacific", "Southern Europe",
-            "Central & Eastern Europe"]
-  # Non-folk tags that still rule an item out of world popular.
-  hard_exclude: [jazz, swing, big band, dixieland, be-bop, bebop, boogie woogie, opera, operetta,
-                 operette, comic opera, classical, klassisk, orchestral, symphonic, concerto,
-                 sonata, overture, ballet, lieder, art song, aria, oratorio, cantata, film,
-                 soundtrack, broadway, musical, rock and roll, rock & roll, rockabilly,
-                 rhythm & blues, r&b, doo-wop, electronic, novelty, comedy]
 
 # Spoken word / non-music: always excluded, even with folk tags.
 spoken_tags:
@@ -534,6 +521,15 @@ traditional_composers:
   - p.d.
   - pd
   - n/a
+
+# Disc condition grades (78rpm `condition` field) that are excluded as too noisy.
+exclude_conditions:
+  - poor
+  - worn
+
+# Flag tracks that credit a named (non-traditional) writer for review?
+# false = keep them in the main list (the writer is still recorded in reports).
+flag_named_writers: false
 
 # Track length limits in seconds.
 min_seconds: 30
