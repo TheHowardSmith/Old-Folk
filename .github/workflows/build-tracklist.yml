@@ -1,0 +1,110 @@
+name: Build track list
+
+# Builds the track list with the Python builder and publishes it to the
+# fixed release tag `tracklist` (a pre-release, so it never becomes the
+# "latest" release that the APK download link points to).
+#
+# mode=sample : quick test list from a random sample of items (~10 min)
+# mode=full   : everything. Metadata fetching is slow and polite, so a run
+#               stops after ~5 h and saves its cache; run it again to resume.
+#               The list is published only once every item has been fetched.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "sample or full"
+        required: true
+        default: sample
+        type: choice
+        options: [sample, full]
+      sample_size:
+        description: "items in the sample (mode=sample)"
+        required: false
+        default: "200"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-tracklist
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    defaults:
+      run:
+        working-directory: builder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e '.[test]'
+      - run: pytest -q tests
+
+      - name: Restore metadata cache
+        uses: actions/cache/restore@v4
+        with:
+          path: builder/cache
+          key: tracklist-cache-${{ github.run_id }}
+          restore-keys: tracklist-cache-
+
+      - name: Search
+        run: oldfolk-build search
+
+      - name: Fetch metadata (sample)
+        if: inputs.mode == 'sample'
+        run: |
+          oldfolk-build sample --n "${{ inputs.sample_size }}"
+          oldfolk-build fetch --sample
+          oldfolk-build fetch --sample   # retry anything that failed
+
+      - name: Fetch metadata (full, time-boxed)
+        if: inputs.mode == 'full'
+        run: |
+          timeout 290m oldfolk-build fetch || true
+          oldfolk-build status
+
+      - name: Save metadata cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: builder/cache
+          key: tracklist-cache-${{ github.run_id }}
+
+      - name: Build
+        id: build
+        run: |
+          if [ "${{ inputs.mode }}" = "sample" ]; then
+            oldfolk-build build --sample --out ../dist
+          elif oldfolk-build status --require-complete; then
+            oldfolk-build build --out ../dist
+          else
+            echo "::notice::Fetch not finished yet; run this workflow again to continue."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to the tracklist release
+        if: steps.build.outputs.skip != 'true'
+        working-directory: dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view tracklist >/dev/null 2>&1; then
+            gh release create tracklist --prerelease --title "Track list" \
+              --notes "Track list data for the Old Folk app (CC0). Updated by the Build track list workflow."
+          fi
+          # Shards first, index last, then remove assets that are no longer listed.
+          gh release upload tracklist s-*.json r-*.json flagged.csv writers.csv excluded.csv report.md summary.json --clobber
+          gh release upload tracklist index.json --clobber
+          for a in $(gh release view tracklist --json assets -q '.assets[].name'); do
+            [ -e "$a" ] || gh release delete-asset tracklist "$a" -y
+          done
+          gh release edit tracklist --notes "Track list data for the Old Folk app (CC0). Version $(jq .v index.json), $(jq .n index.json) tracks, mode: ${{ inputs.mode }}."
+
+      - name: Summary
+        if: steps.build.outputs.skip != 'true'
+        run: cat ../dist/report.md | head -80 >> "$GITHUB_STEP_SUMMARY"

@@ -83,6 +83,15 @@ def cmd_build(args, rules, store):
     log.info("wrote %s", out)
 
 
+def cmd_status(args, rules, store):
+    stats = store.stats()
+    remaining = len(store.unfetched(sample_only=False))
+    stats["remaining"] = remaining
+    print(json.dumps(stats))
+    if args.require_complete and remaining:
+        sys.exit(1)
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="oldfolk-build", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -110,13 +119,17 @@ def main(argv=None):
     s.add_argument("--version", type=int, help="list version (default: UTC yyyymmddHHMM)")
     s.add_argument("--shard-size", type=int, default=SHARD_SIZE)
 
+    s = sub.add_parser("status", help="show cache statistics")
+    s.add_argument("--require-complete", action="store_true",
+                   help="exit 1 if some items still need fetching")
+
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
     rules = load_rules()
     store = Store(Path(args.db))
     {"search": cmd_search, "sample": cmd_sample, "fetch": cmd_fetch,
-     "build": cmd_build}[args.cmd](args, rules, store)
+     "build": cmd_build, "status": cmd_status}[args.cmd](args, rules, store)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,73 @@
+name: Release APK
+
+# Every push to main that touches the app builds a signed release APK and
+# publishes it as the latest GitHub release (asset name: old-folk.apk), so
+# https://github.com/<repo>/releases/latest/download/old-folk.apk always works.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/release-apk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-apk
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VERSION_CODE: ${{ github.run_number }}
+      VERSION_NAME: 0.1.${{ github.run_number }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew --no-daemon testDebugUnitTest assembleRelease
+
+      - name: Check signature
+        id: sig
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          cp "$APK" old-folk.apk
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/apksigner" verify --print-certs old-folk.apk | tee cert.txt
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "note=Signed with the project release key." >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Release keystore secrets are not set; this APK is signed with a throwaway debug key."
+            echo "note=**Test build:** signed with a temporary key because the release keystore secrets are not set yet. You will need to uninstall it before installing a properly signed version." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="app-v${VERSION_NAME}"
+          cat > notes.md <<NOTES
+          Old Folk ${VERSION_NAME}
+
+          **Install:** download \`old-folk.apk\` below on your Android phone (Android 8 or newer) and open it. You may need to allow installing apps from your browser.
+
+          ${{ steps.sig.outputs.note }}
+
+          Built from ${GITHUB_SHA::7}.
+          NOTES
+          gh release create "$TAG" old-folk.apk --title "Old Folk ${VERSION_NAME}" \
+            --notes-file notes.md --target "$GITHUB_SHA" --latest
