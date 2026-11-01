@@ -42,6 +42,7 @@ class Rules:
     genre_region: dict[str, str]
     exclude_conditions: frozenset[str] = frozenset()
     flag_named_writers: bool = True
+    instruction_ensembles: tuple[str, ...] = ()
     band_tags: frozenset[str] = frozenset()
     band_words: tuple[str, ...] = ()
     overrides: dict = field(default_factory=dict)
@@ -88,6 +89,7 @@ def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) 
         genre_region=dict(reg.get("genre_region") or {}),
         exclude_conditions=_lower_set(cls.get("exclude_conditions")),
         flag_named_writers=bool(cls.get("flag_named_writers", True)),
+        instruction_ensembles=tuple(str(p).lower() for p in cls.get("instruction_ensembles") or []),
         band_tags=_lower_set(cls.get("band_tags")),
         band_words=tuple(str(p).lower() for p in cls.get("band_words") or []),
         overrides=overrides,

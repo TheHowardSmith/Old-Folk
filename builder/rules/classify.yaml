@@ -15,6 +15,7 @@ genres:
   american:     "American Folk & Ballads"
   british:      "British Isles & Celtic"
   european:     "European Folk & Dance"
+  polka:        "Polka"
   jewish:       "Klezmer & Jewish"
   caribbean:    "Calypso & Caribbean"
   latin:        "Latin American Folk"
@@ -147,8 +148,9 @@ genre_tags:
     - gamelan
     - chinese
     - korean
-  european:
+  polka:
     - polka
+  european:
     - oberek
     - mazurka
     - mazur
@@ -353,6 +355,21 @@ band_words:
   - pipes & drums
   - drum corps
   - bugle corps
+
+# Folk-dance instruction records (arranged studio versions made for dance
+# classes, not traditional performances): excluded. Matched as whole words in
+# the performer, title and record label.
+instruction_ensembles:
+  - folkraft
+  - michael herman
+  - michael herman's
+  - folk dancer
+  - folk dance band
+  - folk dance orchestra
+  - folk dance ensemble
+  - world of fun
+  - sets in order
+  - honor your partner
 
 # Spoken word / non-music: always excluded, even with folk tags.
 spoken_tags:

@@ -18,7 +18,7 @@ Old Folk plays a never-ending random stream of public-domain folk and field reco
 ## What the app does
 
 - **Endless radio:** random tracks, and your phone never repeats one until you've heard everything in your selection.
-- **Genres:** pick one or more (old-time, blues, Celtic, klezmer, calypso, Hawaiian, African, Asian and Middle Eastern traditional music, field recordings...).
+- **Genres:** pick one or more (old-time, blues, Celtic, klezmer, polka, calypso, Hawaiian, African, Asian and Middle Eastern traditional music, field recordings...). Polka is a genre of its own, so it's easy to leave out.
 - **Background playback:** keeps playing with the screen off, with notification and lock-screen controls.
 - **Old-radio look:** a tuning dial whose needle points at the year of the recording, a green "magic eye" that glows while playing, bakelite-style knobs on a cloth grille. Light and dark themes.
 - **Even volume:** each track gets a quick level read when it downloads so everything plays at about the same loudness, and a limiter dips the sudden thumps and pops common on unmastered 78 transfers.
@@ -78,7 +78,7 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 - Items whose date looks unreliable (compilations, reissues, LPs dated before LPs existed, text mentioning later years, modern recordings of old songs) are **flagged for review**, not included.
 - Songs credited to a named (non-traditional) writer are currently **kept**; their writers are listed in `writers.csv` and `builder/scripts/writer_deaths.py` estimates how many would need removing if composition copyright is enforced.
 - Recordings whose descriptions say they are **restricted, sacred/secret or culturally sensitive are excluded**. Indigenous and ceremonial recordings are flagged for a human check.
-- Jazz, pop (including Latin dance music such as tango and bolero), classical, opera, spoken word, and military/regimental bands are excluded.
+- Jazz, pop (including Latin dance music such as tango and bolero), classical, opera, spoken word, and military/regimental bands are excluded, as are folk-dance instruction records (arranged studio versions made for dance classes, e.g. Folkraft or Michael Herman's Folk Orchestra).
 - 78s graded **poor** or **worn** by the digitiser are excluded as too noisy.
 - No audio is ever stored in this repository.
 

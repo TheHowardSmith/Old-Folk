@@ -217,3 +217,21 @@ def test_pick_image_prefers_label_scan():
     assert pick_image("x", files) == 1
     assert pick_image("x", files[:4]) == "x.jpg"
     assert pick_image("x", files[:3]) is None      # generic tile only: use the thumbnail service
+
+
+def test_polka_is_its_own_genre():
+    assert classify_item("p", "78rpm", item({"genre": "Polka", "language": "Polish"}), RULES).genre == "polka"
+    # untagged polka by title, generic folk tag
+    r = classify_item("q", "78rpm", item({"genre": "Ethnic", "title": "Clarinet Polka", "language": "Polish"}), RULES)
+    assert r.genre == "polka"
+    # oberek stays European folk; a hillbilly "polka" stays old-time
+    assert classify_item("o", "78rpm", item({"genre": "Oberek", "language": "Polish"}), RULES).genre == "european"
+    assert classify_item("h", "78rpm", item({"genre": "Hillbilly", "title": "Hillbilly Polka"}), RULES).genre == "oldtime"
+
+
+def test_folk_dance_instruction_records_excluded():
+    for creator in ("Michael Herman's Folk Orchestra", "FOLKRAFT INTERNATIONAL ORCHESTRA"):
+        r = classify_item("i", "78rpm", item({"genre": "Folk Dance", "creator": creator}), RULES)
+        assert r.status == EXCLUDE and "instruction" in r.reasons[0]
+    r = classify_item("j", "78rpm", item({"genre": "Folk Dance", "publisher": "Folk Dancer"}), RULES)
+    assert r.status == EXCLUDE
