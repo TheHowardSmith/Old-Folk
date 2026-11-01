@@ -69,6 +69,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -737,6 +738,8 @@ data class AboutInfo(
     val cache: String,
     val downloads: String,
     val appVersion: String,
+    val skipNoisy: Boolean = true,
+    val noisySkipped: Int = 0,
 )
 
 @Composable
@@ -746,8 +749,11 @@ private fun AboutScreen(graph: AppGraph) {
     val state by graph.engine.state.collectAsState()
     val list by graph.trackList.state.collectAsState()
     var confirmReset by remember { mutableStateOf(false) }
+    val skipNoisy by graph.settings.skipNoisy.collectAsState()
     AboutContent(
         AboutInfo(
+            skipNoisy = skipNoisy,
+            noisySkipped = graph.levels.noisyCount(),
             listVersion = list.index?.version?.toString() ?: "-",
             tracksLoaded = list.tracks.size,
             shards = "${list.shardsLoaded}/${list.shardsTotal}",
@@ -762,6 +768,7 @@ private fun AboutScreen(graph: AppGraph) {
         onSendReport = { Links.open(context, Links.reportFailures(graph.failures.reportBody(BuildConfig.VERSION_NAME))) },
         onClearFailures = { graph.failures.clear() },
         onGitHub = { Links.open(context, Links.repoUrl) },
+        onSkipNoisy = { graph.settings.setSkipNoisy(it) },
     )
     if (confirmReset) {
         AlertDialog(
@@ -777,6 +784,7 @@ private fun AboutScreen(graph: AppGraph) {
 @Composable
 fun AboutContent(
     info: AboutInfo, onReset: () -> Unit, onSendReport: () -> Unit, onClearFailures: () -> Unit, onGitHub: () -> Unit,
+    onSkipNoisy: (Boolean) -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -788,6 +796,19 @@ fun AboutContent(
                 "(recorded or released in 1970 or earlier). Their status may differ in other countries. " +
                 "Rights holders can request removal at thehowardsmith@gmail.com.",
                 style = MaterialTheme.typography.bodyMedium)
+        }
+        AboutCard("Sound") {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Skip very noisy recordings", style = MaterialTheme.typography.bodyLarge)
+                    Text("Each track is checked for heavy surface noise after it downloads. " +
+                        "Noisy ones are skipped on the radio (playlists always play everything)." +
+                        if (info.noisySkipped > 0) " ${plural(info.noisySkipped, "track")} flagged so far." else "",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = info.skipNoisy, onCheckedChange = onSkipNoisy)
+            }
         }
         AboutCard("Listening") {
             Text("Track list version ${info.listVersion} · ${"%,d".format(info.tracksLoaded)} tracks (${info.shards} parts)")

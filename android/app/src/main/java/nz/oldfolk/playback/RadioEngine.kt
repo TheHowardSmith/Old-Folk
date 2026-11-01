@@ -112,6 +112,7 @@ class RadioEngine(
     private val listener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             applyLevel()
+            skipIfNoisy()
             if (player.isPlaying) markPlayed()
             if (mode == Mode.RADIO) {
                 trimHistory()
@@ -154,7 +155,10 @@ class RadioEngine(
         }
         scope.launch(Dispatchers.Main) {
             // A measurement arrived: apply it if the current track has only just started.
-            levels.version.drop(1).collect { if (player.currentPosition < 3000) applyLevel() }
+            levels.version.drop(1).collect {
+                if (player.currentPosition < 3000) applyLevel()
+                dropNoisyAhead()
+            }
         }
     }
 
@@ -185,6 +189,40 @@ class RadioEngine(
         } catch (e: Exception) {
             // Some devices don't offer the effect; levelling then only turns loud tracks down.
             releaseEnhancer()
+        }
+    }
+
+    private fun skipNoisyOn() = mode == Mode.RADIO && settings.skipNoisy.value
+
+    /** Remove queued radio tracks that the noise check has flagged (they count as heard). */
+    private fun dropNoisyAhead() {
+        if (!skipNoisyOn()) return
+        var removed = false
+        for (i in player.mediaItemCount - 1 downTo player.currentMediaItemIndex + 1) {
+            val key = player.getMediaItemAt(i).mediaId.toLongOrNull() ?: continue
+            if (levels.isNoisy(key) == true) {
+                history.add(key)
+                player.removeMediaItem(i)
+                removed = true
+            }
+        }
+        if (removed) {
+            topUp()
+            prefetchUpcoming()
+        }
+    }
+
+    /** If the track that just started is known to be noisy, move on. */
+    private fun skipIfNoisy() {
+        if (!skipNoisyOn()) return
+        val t = currentTrack() ?: return
+        if (levels.isNoisy(t.key) == true && player.hasNextMediaItem()) {
+            main.post {
+                if (currentTrack()?.key == t.key) {
+                    history.add(t.key)
+                    player.seekToNextMediaItem()
+                }
+            }
         }
     }
 

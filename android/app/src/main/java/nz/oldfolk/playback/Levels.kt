@@ -25,14 +25,19 @@ import kotlin.math.log10
 import kotlin.math.pow
 
 /**
- * Loudness levelling. When a track has been downloaded (prefetched into the
- * cache, or saved for a playlist) its first [MAX_SECONDS] are decoded and a
- * gated RMS loudness is measured (a simplified EBU R128-style reading). The
- * playback gain that brings it to [TARGET_DB] is stored per track and applied
- * by [RadioEngine] at the start of the track.
+ * Loudness levelling and noise check. When a track has been downloaded
+ * (prefetched into the cache, or saved for a playlist) its first [MAX_SECONDS]
+ * are decoded once:
+ *  - a gated RMS loudness is measured (a simplified EBU R128-style reading);
+ *    the playback gain that brings it to [TARGET_DB] is applied by
+ *    [RadioEngine] at the start of the track;
+ *  - the first [NoiseCheck.SECONDS] are checked for heavy surface noise
+ *    ([NoiseCheck]); the radio skips tracks flagged as noisy.
  */
 class Levels(private val file: File) {
     private val gains = ConcurrentHashMap<Long, Float>()
+    private val noise = ConcurrentHashMap<Long, NoiseCheck.Result>()
+    private val noiseFile = File(file.parentFile, "noise.json")
     private val _version = MutableStateFlow(0)
     /** Bumps whenever a new measurement is stored. */
     val version: StateFlow<Int> = _version.asStateFlow()
@@ -42,7 +47,19 @@ class Levels(private val file: File) {
             val o = JSONObject(file.readText())
             o.keys().forEach { k -> gains[k.toLong(16)] = o.getDouble(k).toFloat() }
         }
+        runCatching {
+            val o = JSONObject(noiseFile.readText())
+            o.keys().forEach { k ->
+                val a = o.getJSONArray(k)
+                noise[k.toLong(16)] = NoiseCheck.Result(a.getDouble(0), a.getDouble(1))
+            }
+        }
     }
+
+    /** True if the track was measured and has heavy surface noise; null if not measured. */
+    fun isNoisy(key: Long): Boolean? = noise[key]?.noisy
+
+    fun noisyCount(): Int = noise.values.count { it.noisy }
 
     /** Gain in dB for a track, or null if it hasn't been measured yet. */
     fun gainDb(key: Long): Float? = gains[key]
@@ -53,18 +70,19 @@ class Levels(private val file: File) {
         if (has(key)) return
         val size = ContentMetadata.getContentLength(cache.getContentMetadata(url))
         if (size <= 0) return
-        CacheMediaDataSource(cache, url, size).use { src -> store(key, measure { it.setDataSource(src) }) }
+        CacheMediaDataSource(cache, url, size).use { src -> store(key, read { it.setDataSource(src) }) }
     }
 
     fun analyzeFile(key: Long, f: File) {
         if (has(key) || !f.exists()) return
-        store(key, measure { it.setDataSource(f.absolutePath) })
+        store(key, read { it.setDataSource(f.absolutePath) })
     }
 
-    private fun store(key: Long, loudness: Double?) {
-        if (loudness == null) return
+    private fun store(key: Long, reading: Reading?) {
+        val loudness = reading?.loudness ?: return
         val gain = (TARGET_DB - loudness).coerceIn(MIN_GAIN_DB, MAX_GAIN_DB).toFloat()
         gains[key] = gain
+        reading.noise?.let { noise[key] = it }
         save()
         _version.value++
     }
@@ -76,7 +94,17 @@ class Levels(private val file: File) {
         val tmp = File(file.parentFile, file.name + ".tmp")
         tmp.writeText(o.toString())
         tmp.renameTo(file)
+        val n = JSONObject()
+        noise.forEach { (k, v) ->
+            n.put(java.lang.Long.toHexString(k), org.json.JSONArray().put((v.ratioDb * 10).toInt() / 10.0)
+                .put((v.flatness * 100).toInt() / 100.0))
+        }
+        val tmpN = File(noiseFile.parentFile, noiseFile.name + ".tmp")
+        tmpN.writeText(n.toString())
+        tmpN.renameTo(noiseFile)
     }
+
+    data class Reading(val loudness: Double?, val noise: NoiseCheck.Result?)
 
     companion object {
         private const val TAG = "Levels"
@@ -87,7 +115,10 @@ class Levels(private val file: File) {
         private const val WINDOW_S = 0.4
 
         /** Gated RMS loudness of the first [MAX_SECONDS] in dBFS, or null if undecodable. */
-        fun measure(setSource: (MediaExtractor) -> Unit): Double? {
+        fun measure(setSource: (MediaExtractor) -> Unit): Double? = read(setSource)?.loudness
+
+        /** One decode pass: loudness of the first [MAX_SECONDS] plus the noise check. */
+        fun read(setSource: (MediaExtractor) -> Unit): Reading? {
             val ex = MediaExtractor()
             var codec: MediaCodec? = null
             try {
@@ -105,6 +136,10 @@ class Levels(private val file: File) {
                 c.start()
 
                 val windows = ArrayList<Double>()   // mean square per window
+                var mono = FloatArray(rate * NoiseCheck.SECONDS)  // first seconds, channels averaged
+                var monoLen = 0
+                var frameSum = 0f
+                var chan = 0
                 var winSum = 0.0
                 var winCount = 0
                 var total = 0L
@@ -133,6 +168,7 @@ class Levels(private val file: File) {
                         rate = c.outputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
                         channels = c.outputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
                         winSize = (rate * channels * WINDOW_S).toInt()
+                        if (monoLen == 0) mono = FloatArray(rate * NoiseCheck.SECONDS)
                     } else if (o >= 0) {
                         val out = c.getOutputBuffer(o)!!
                         out.position(info.offset)
@@ -141,6 +177,11 @@ class Levels(private val file: File) {
                         while (shorts.hasRemaining()) {
                             val v = shorts.get() / 32768.0
                             winSum += v * v
+                            frameSum += v.toFloat()
+                            if (++chan >= channels) {
+                                if (monoLen < mono.size) mono[monoLen++] = frameSum / channels
+                                frameSum = 0f; chan = 0
+                            }
                             if (++winCount >= winSize) {
                                 windows += winSum / winCount
                                 winSum = 0.0; winCount = 0
@@ -151,7 +192,8 @@ class Levels(private val file: File) {
                         if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) outputDone = true
                     }
                 }
-                return gatedLoudness(windows)
+                val noiseResult = if (monoLen >= rate * 8) NoiseCheck.analyze(mono, monoLen, rate) else null
+                return Reading(gatedLoudness(windows), noiseResult)
             } catch (e: Exception) {
                 Log.i(TAG, "level read failed: ${e.message}")
                 return null
