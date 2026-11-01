@@ -176,3 +176,30 @@ def test_region_from_script_and_compilation_tracks():
     regions = [t.region for t in r.tracks]
     assert regions == ["Latin America", "Africa", "Various"]
     assert [t.genre for t in r.tracks][:2] == ["latin", "african"]
+
+
+def test_regimental_and_military_bands_excluded():
+    r = classify_item("b", "78rpm", item({"genre": "Folk", "creator": "Band of the Coldstream Guards"}), RULES)
+    assert r.status == EXCLUDE and "band" in r.reasons[0]
+    r = classify_item("m", "78rpm", item({"genre": ["Folk", "March"]}), RULES)
+    assert r.status == EXCLUDE
+    r = classify_item("s", "78rpm", item({"genre": "Folk",
+                                          "creator": "KUNGL. FLOTTANS MUSIKKÅR"}), RULES)
+    assert r.status == EXCLUDE
+
+
+def test_world_popular_genres():
+    r = classify_item("t", "78rpm", item({"genre": "Tango", "language": "Spanish"}), RULES)
+    assert r.status == INCLUDE and r.genre == "latinpop"
+    r = classify_item("g", "78rpm", item({"genre": "Popular Music", "language": "Greek"}), RULES)
+    assert r.status == INCLUDE and r.genre == "worldpop"
+    # Western European / Nordic popular music is not "world music".
+    r = classify_item("d", "78rpm", item({"genre": "Popular Music", "language": "Danish"}), RULES)
+    assert r.status == EXCLUDE
+    r = classify_item("j", "78rpm", item({"genre": ["Popular Music", "Jazz"], "language": "Greek"}), RULES)
+    assert r.status == EXCLUDE
+
+
+def test_instrument_credits_are_not_writers():
+    meta = {"genre": "Polka", "description": "Writer: Piano; Bass; Polka"}
+    assert classify_item("p", "78rpm", item(meta), RULES).writers == []

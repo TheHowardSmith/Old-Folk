@@ -11,9 +11,10 @@ Old Folk plays a never-ending random stream of public-domain folk and field reco
 ## What the app does
 
 - **Endless radio:** random tracks, and your phone never repeats one until you've heard everything in your selection.
-- **Genres:** pick one or more (old-time, blues, Celtic, klezmer, calypso, Hawaiian, field recordings...).
+- **Genres:** pick one or more (old-time, blues, Celtic, klezmer, calypso, Hawaiian, field recordings, and optional pre-1970 world popular music such as tango and bolero).
 - **Background playback:** keeps playing with the screen off, with notification and lock-screen controls.
-- **Smooth playback:** the next tracks are prefetched into a capped 300 MB cache. Tracks that won't play are skipped automatically.
+- **Smooth playback, even when skipping a lot:** 5 tracks are fetched ahead at first, then 20 ahead once you're streaming. Your last 20 tracks are kept too, so the previous button works instantly. Everything goes in a capped 600 MB cache, and tracks that won't play are skipped automatically. Fetching 20 ahead uses more mobile data.
+- **History tab:** scroll up through everything you've ever streamed on this phone, and down through the tracks coming next. Older tracks aren't stored on the phone; tapping one streams it again.
 - **Track details:** title, performer, year, region and genre, with a link to the recording's Internet Archive page.
 - **Playlists:** save tracks you like; they're downloaded to your phone so they play offline (no storage cap).
 - **Report this track:** opens a pre-filled GitHub issue (rights concerns, wrong details, not folk...).
@@ -68,7 +69,8 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 - Items whose date looks unreliable (compilations, reissues, LPs dated before LPs existed, text mentioning later years, modern recordings of old songs) are **flagged for review**, not included.
 - Songs credited to a named (non-traditional) writer are flagged so the **composition** copyright can be checked as well.
 - Recordings whose descriptions say they are **restricted, sacred/secret or culturally sensitive are excluded**. Indigenous and ceremonial recordings are flagged for a human check.
-- Jazz, pop, classical, opera and spoken word are excluded.
+- Jazz, Western pop, classical, opera, spoken word, and military/regimental bands are excluded.
+- Pre-1970 **world popular** 78s (non-English popular song and Latin dance music from outside the Anglo, Western-European and Nordic mainstream) are included as two separate, optional genres.
 - No audio is ever stored in this repository.
 
 ## Rights notice

@@ -37,6 +37,16 @@ sources:
       folk OR "folk music" OR "folk songs" OR traditional OR hillbilly OR fiddle OR hawaiian OR calypso OR klezmer OR celtic OR irish
       OR "field recording" OR ethnic)
 
+  - name: 78rpm-world
+    kind: 78rpm
+    query: >-
+      collection:78rpm AND mediatype:audio AND genre:("Popular Music" OR popular OR Vocal
+      OR Instrumental OR Dance OR Waltz OR Tango OR "Tango-Fox" OR Rumba OR Rhumba OR Bolero
+      OR Samba OR Mambo OR Beguine OR Guaracha OR Ranchera OR Cancion OR Canzone OR Chanson
+      OR Romance OR Pasodoble OR Choro OR "Cha-Cha-Cha" OR Conga OR Merengue OR Porro OR Cuban
+      OR Mexican OR Latin OR "Rumba-Bolero" OR "Bolero Mambo" OR Son)
+      AND NOT language:(English OR english OR eng)
+
   - name: other-audio-dated
     kind: other
     query: >-

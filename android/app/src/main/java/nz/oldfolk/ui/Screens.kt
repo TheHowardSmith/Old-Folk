@@ -1,7 +1,10 @@
 package nz.oldfolk.ui
 
 import android.text.format.Formatter
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +33,10 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material.icons.filled.OfflinePin
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Pause
@@ -72,6 +79,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -82,7 +90,7 @@ import nz.oldfolk.data.Playlist
 import nz.oldfolk.data.Track
 import nz.oldfolk.playback.RadioEngine
 
-private enum class Tab(val label: String) { RADIO("Radio"), GENRES("Genres"), PLAYLISTS("Playlists"), ABOUT("About") }
+private enum class Tab(val label: String) { RADIO("Radio"), GENRES("Genres"), PLAYLISTS("Playlists"), HISTORY("History") }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,16 +98,27 @@ fun OldFolkAppUi(graph: AppGraph, onBeforePlay: () -> Unit) {
     var tab by rememberSaveable { mutableStateOf(Tab.RADIO) }
     var openPlaylist by rememberSaveable { mutableStateOf<String?>(null) }
     var addTrack by remember { mutableStateOf<Track?>(null) }
+    var showAbout by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = showAbout) { showAbout = false }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (tab == Tab.RADIO) "Old Folk" else tab.label) },
+                title = { Text(if (showAbout) "About" else if (tab == Tab.RADIO) "Old Folk" else tab.label) },
                 navigationIcon = {
-                    if (tab == Tab.PLAYLISTS && openPlaylist != null) {
+                    if (showAbout) {
+                        IconButton(onClick = { showAbout = false }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        }
+                    } else if (tab == Tab.PLAYLISTS && openPlaylist != null) {
                         IconButton(onClick = { openPlaylist = null }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                         }
+                    }
+                },
+                actions = {
+                    if (!showAbout) {
+                        IconButton(onClick = { showAbout = true }) { Icon(Icons.Filled.Info, "About") }
                     }
                 },
             )
@@ -109,13 +128,13 @@ fun OldFolkAppUi(graph: AppGraph, onBeforePlay: () -> Unit) {
                 Tab.entries.forEach { t ->
                     NavigationBarItem(
                         selected = tab == t,
-                        onClick = { tab = t; if (t != Tab.PLAYLISTS) openPlaylist = null },
+                        onClick = { tab = t; showAbout = false; if (t != Tab.PLAYLISTS) openPlaylist = null },
                         icon = {
                             Icon(when (t) {
                                 Tab.RADIO -> Icons.Filled.Radio
                                 Tab.GENRES -> Icons.Filled.Tune
                                 Tab.PLAYLISTS -> Icons.AutoMirrored.Filled.QueueMusic
-                                Tab.ABOUT -> Icons.Filled.Info
+                                Tab.HISTORY -> Icons.Filled.History
                             }, null)
                         },
                         label = { Text(t.label) },
@@ -125,7 +144,7 @@ fun OldFolkAppUi(graph: AppGraph, onBeforePlay: () -> Unit) {
         },
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
-            when (tab) {
+            if (showAbout) AboutScreen(graph) else when (tab) {
                 Tab.RADIO -> RadioScreen(graph, onBeforePlay, onAddToPlaylist = { addTrack = it })
                 Tab.GENRES -> GenresScreen(graph)
                 Tab.PLAYLISTS -> {
@@ -134,7 +153,7 @@ fun OldFolkAppUi(graph: AppGraph, onBeforePlay: () -> Unit) {
                     else PlaylistDetailScreen(graph, id, onBeforePlay,
                         onPlayed = { tab = Tab.RADIO }, onDeleted = { openPlaylist = null })
                 }
-                Tab.ABOUT -> AboutScreen(graph)
+                Tab.HISTORY -> HistoryScreen(graph, onBeforePlay)
             }
         }
     }
@@ -193,6 +212,9 @@ private fun RadioScreen(graph: AppGraph, onBeforePlay: () -> Unit, onAddToPlayli
 
         Spacer(Modifier.height(28.dp))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            IconButton(onClick = { onBeforePlay(); graph.engine.previous() }, modifier = Modifier.size(64.dp)) {
+                Icon(Icons.Filled.SkipPrevious, "Previous track", Modifier.size(40.dp))
+            }
             FilledIconButton(
                 onClick = { onBeforePlay(); graph.engine.togglePlay() },
                 modifier = Modifier.size(80.dp),
@@ -270,7 +292,7 @@ private fun InfoLine(label: String, value: String) {
 private fun GenresScreen(graph: AppGraph) {
     val list by graph.trackList.state.collectAsState()
     val selected by graph.settings.genres.collectAsState()
-    val genres = list.index?.genres.orEmpty()
+    val genres = list.index?.genres.orEmpty().sortedBy { it.name.lowercase() }
     LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
         item {
             ListItem(
@@ -509,7 +531,9 @@ private fun AboutScreen(graph: AppGraph) {
 
         HorizontalDivider()
         Text("Storage", style = MaterialTheme.typography.titleMedium)
-        Text("Streaming cache: ${Formatter.formatShortFileSize(context, graph.mediaCache.usedBytes())} (max 300 MB)")
+        Text("Streaming cache: ${Formatter.formatShortFileSize(context, graph.mediaCache.usedBytes())} " +
+            "(max ${Formatter.formatShortFileSize(context, nz.oldfolk.playback.MediaCache.MAX_BYTES)}). " +
+            "Holds your last 20 tracks and the next 20.")
         Text("Playlist downloads: ${Formatter.formatShortFileSize(context, graph.playlists.storageBytes())}")
 
         HorizontalDivider()
@@ -522,9 +546,96 @@ private fun AboutScreen(graph: AppGraph) {
         AlertDialog(
             onDismissRequest = { confirmReset = false },
             title = { Text("Reset listening history?") },
-            text = { Text("Tracks you've already heard can come up again.") },
-            confirmButton = { TextButton(onClick = { graph.history.clear(); confirmReset = false }) { Text("Reset") } },
+            text = { Text("Clears the History tab, and tracks you've already heard can come up again.") },
+            confirmButton = { TextButton(onClick = {
+                graph.history.clear(); graph.streamHistory.clear(); confirmReset = false
+            }) { Text("Reset") } },
             dismissButton = { TextButton(onClick = { confirmReset = false }) { Text("Cancel") } },
         )
     }
+}
+
+
+// ---------------------------------------------------------------------- history
+
+private sealed interface HistoryRow {
+    data class Past(val track: Track, val time: Long) : HistoryRow
+    data class Now(val track: Track) : HistoryRow
+    data class Ahead(val track: Track, val queueIndex: Int) : HistoryRow
+}
+
+/**
+ * Everything streamed on this phone (scroll up), the current track, and the
+ * tracks queued ahead. Recent and upcoming tracks are kept in the cache; older
+ * ones stream again when tapped.
+ */
+@Composable
+private fun HistoryScreen(graph: AppGraph, onBeforePlay: () -> Unit) {
+    val entries by graph.streamHistory.entries.collectAsState()
+    val state by graph.engine.state.collectAsState()
+    val current = state.current
+    val past = if (current != null && entries.lastOrNull()?.track?.key == current.key) entries.dropLast(1) else entries
+    val rows = buildList<HistoryRow> {
+        past.forEach { add(HistoryRow.Past(it.track, it.time)) }
+        current?.let { add(HistoryRow.Now(it)) }
+        if (state.currentIndex >= 0) {
+            state.queue.forEachIndexed { i, t -> if (i > state.currentIndex) add(HistoryRow.Ahead(t, i)) }
+        }
+    }
+    if (rows.isEmpty()) {
+        Text("Tracks you play will appear here.", Modifier.padding(16.dp))
+        return
+    }
+    // Open with the current track near the top: history is above, tracks ahead below.
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = (past.size - 1).coerceAtLeast(0))
+    val fmt = remember { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT) }
+
+    LazyColumn(state = listState, contentPadding = PaddingValues(vertical = 8.dp)) {
+        itemsIndexed(rows, key = { i, _ -> i }) { _, row ->
+            when (row) {
+                is HistoryRow.Past -> HistoryItem(graph, row.track, fmt.format(java.util.Date(row.time)), highlight = false) {
+                    onBeforePlay(); graph.engine.playTrack(row.track)
+                }
+                is HistoryRow.Now -> {
+                    HorizontalDivider()
+                    HistoryItem(graph, row.track, if (state.isPlaying) "Now playing" else "Current track", highlight = true) {
+                        onBeforePlay(); graph.engine.togglePlay()
+                    }
+                    if (state.queue.size > state.currentIndex + 1) {
+                        HorizontalDivider()
+                        Text("Up next", style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                    }
+                }
+                is HistoryRow.Ahead -> HistoryItem(graph, row.track, null, highlight = false) {
+                    onBeforePlay(); graph.engine.playQueued(row.queueIndex)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryItem(graph: AppGraph, t: Track, label: String?, highlight: Boolean, onClick: () -> Unit) {
+    val saved = remember(t.key) { graph.playlists.isDownloaded(t) || graph.mediaCache.isFullyCached(t.streamUrl) }
+    ListItem(
+        headlineContent = {
+            Text(t.title, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                fontWeight = if (highlight) FontWeight.Bold else null)
+        },
+        supportingContent = {
+            Text(listOfNotNull(t.artist ?: "Unknown", t.yearLabel, t.region, label).joinToString(" · "),
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
+        },
+        leadingContent = {
+            when {
+                highlight -> Icon(Icons.Filled.Equalizer, "Current", tint = MaterialTheme.colorScheme.primary)
+                saved -> Icon(Icons.Filled.OfflinePin, "Saved on this phone", tint = MaterialTheme.colorScheme.primary)
+                else -> Icon(Icons.Filled.CloudDownload, "Streams when played")
+            }
+        },
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .then(if (highlight) Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)) else Modifier),
+    )
 }

@@ -13,6 +13,7 @@ import androidx.media3.datasource.FileDataSource
 import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.CacheWriter
+import androidx.media3.datasource.cache.ContentMetadata
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import kotlinx.coroutines.CoroutineScope
@@ -29,7 +30,7 @@ import java.io.File
  * through it, and the next few radio tracks are prefetched into it so that
  * playback continues smoothly (and survives short connection drops).
  */
-class MediaCache(context: Context, maxBytes: Long = 300L * 1024 * 1024) {
+class MediaCache(context: Context, maxBytes: Long = MAX_BYTES) {
     val cache = SimpleCache(
         File(context.cacheDir, "media"),
         LeastRecentlyUsedCacheEvictor(maxBytes),
@@ -53,6 +54,18 @@ class MediaCache(context: Context, maxBytes: Long = 300L * 1024 * 1024) {
     }
 
     fun usedBytes(): Long = cache.cacheSpace
+
+    /** True when the whole file for [url] is in the cache. */
+    fun isFullyCached(url: String): Boolean = try {
+        val len = ContentMetadata.getContentLength(cache.getContentMetadata(url))
+        len > 0 && cache.isCached(url, 0, len)
+    } catch (_: Exception) {
+        false
+    }
+
+    companion object {
+        const val MAX_BYTES = 600L * 1024 * 1024
+    }
 
     private var prefetchJob: Job? = null
 

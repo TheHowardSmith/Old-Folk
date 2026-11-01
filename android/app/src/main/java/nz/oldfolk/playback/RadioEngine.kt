@@ -30,6 +30,7 @@ import nz.oldfolk.data.PlayHistory
 import nz.oldfolk.data.Playlist
 import nz.oldfolk.data.Playlists
 import nz.oldfolk.data.Settings
+import nz.oldfolk.data.StreamHistory
 import nz.oldfolk.data.Track
 import nz.oldfolk.data.TrackListRepository
 import nz.oldfolk.data.isOnline
@@ -37,9 +38,11 @@ import nz.oldfolk.data.isOnline
 /**
  * Owns the ExoPlayer and decides what plays next.
  *
- * Radio mode keeps [AHEAD] random, never-played tracks queued after the
- * current one (so notification/lock-screen "next" always works) and
- * prefetches the next [PREFETCH] into the disk cache. A track that fails is
+ * Radio mode queues random, never-played tracks after the current one:
+ * [START_AHEAD] before playback starts, then [STREAM_AHEAD] once streaming,
+ * and prefetches all of them into the disk cache in order (so skipping
+ * through tracks quickly stays smooth). The last [KEEP_BEHIND] played tracks
+ * stay in the queue (and cache) so "previous" works. A track that fails is
  * logged, skipped and replaced. Playlist mode plays a saved playlist (from
  * local downloads where available) on repeat.
  *
@@ -54,12 +57,15 @@ class RadioEngine(
     private val playlists: Playlists,
     private val failures: FailureLog,
     private val mediaCache: MediaCache,
+    private val streamHistory: StreamHistory,
 ) {
     enum class Mode { RADIO, PLAYLIST }
 
     data class UiState(
         val current: Track? = null,
         val upNext: List<Track> = emptyList(),
+        val queue: List<Track> = emptyList(),   // whole player queue (behind + current + ahead)
+        val currentIndex: Int = -1,
         val isPlaying: Boolean = false,
         val isBuffering: Boolean = false,
         val mode: Mode = Mode.RADIO,
@@ -78,7 +84,8 @@ class RadioEngine(
         .setWakeMode(C.WAKE_MODE_NETWORK)
         .build()
 
-    private val queued = HashMap<String, Track>()   // mediaId -> track
+    private val queued = HashMap<String, Track>()   // mediaId -> track (metadata for queue items)
+    private var streaming = false                   // has playback started this session?
     private var mode = Mode.RADIO
     private var playlistName: String? = null
     private var message: String? = null
@@ -104,6 +111,12 @@ class RadioEngine(
                 consecutiveErrors = 0
                 if (message != null && !waitingForNetwork) message = null
                 markPlayed()
+                if (!streaming) {
+                    // First playback: grow the queue from START_AHEAD to STREAM_AHEAD.
+                    streaming = true
+                    topUp()
+                    prefetchUpcoming()
+                }
             }
         }
 
@@ -141,6 +154,44 @@ class RadioEngine(
         else if (mode == Mode.RADIO) {
             topUp()
             if (player.hasNextMediaItem()) player.seekToNextMediaItem()
+        }
+        play()
+    }
+
+    /** Previous track in the queue, or restart the current one if there is none. */
+    fun previous() {
+        if (player.hasPreviousMediaItem()) player.seekToPreviousMediaItem() else player.seekTo(0)
+        play()
+    }
+
+    /** Play the queue item at [index] next (now), keeping the rest of the queue in order. */
+    fun playQueued(index: Int) {
+        val cur = player.currentMediaItemIndex
+        if (index !in 0 until player.mediaItemCount) return
+        if (index == cur) {
+            play(); return
+        }
+        val target = if (index < cur) cur else cur + 1
+        player.moveMediaItem(index, target)
+        player.seekToNextMediaItem()
+        play()
+    }
+
+    /** Play a track from the listening history: from the queue if it's still there, else stream it now. */
+    fun playTrack(t: Track) {
+        val id = t.key.toString()
+        for (i in 0 until player.mediaItemCount) {
+            if (player.getMediaItemAt(i).mediaId == id) {
+                playQueued(i); return
+            }
+        }
+        val local = playlists.localFile(t).takeIf { it.exists() }
+        val item = mediaItem(t, local?.let { Uri.fromFile(it) })
+        if (player.mediaItemCount == 0) {
+            player.setMediaItem(item)
+        } else {
+            player.addMediaItem(player.currentMediaItemIndex + 1, item)
+            player.seekToNextMediaItem()
         }
         play()
     }
@@ -196,16 +247,21 @@ class RadioEngine(
     private fun aheadCount(): Int =
         if (player.mediaItemCount == 0) 0 else player.mediaItemCount - player.currentMediaItemIndex - 1
 
-    /** Keep [AHEAD] tracks queued after the current one (radio mode). */
+    private fun targetAhead() = if (streaming) STREAM_AHEAD else START_AHEAD
+
+    private fun queuedKeys(): Set<Long> =
+        (0 until player.mediaItemCount).mapNotNull { player.getMediaItemAt(it).mediaId.toLongOrNull() }.toSet()
+
+    /** Keep [targetAhead] tracks queued after the current one (radio mode). */
     private fun topUp() {
         if (mode != Mode.RADIO) return
         val list = repo.state.value
         val genres = settings.genres.value
         var resets = 0
         var added = false
-        val needed = { if (player.mediaItemCount == 0) AHEAD + 1 else AHEAD - aheadCount() }
+        val needed = { if (player.mediaItemCount == 0) targetAhead() + 1 else targetAhead() - aheadCount() }
         while (needed() > 0) {
-            val exclude = queued.values.map { it.key }.toSet()
+            val exclude = queuedKeys()
             when (val r = Picker.pick(list.tracks, genres, history::contains, exclude)) {
                 is Picker.Result.Picked -> {
                     player.addMediaItem(mediaItem(r.track))
@@ -225,19 +281,16 @@ class RadioEngine(
         publish()
     }
 
-    /** Drop played items, keeping one behind the current track. */
+    /** Drop old items, keeping [KEEP_BEHIND] played tracks behind the current one. */
     private fun trimHistory() {
         val idx = player.currentMediaItemIndex
-        if (idx > 1) {
-            for (i in 0 until idx - 1) queued.remove(player.getMediaItemAt(i).mediaId)
-            player.removeMediaItems(0, idx - 1)
-        }
+        if (idx > KEEP_BEHIND) player.removeMediaItems(0, idx - KEEP_BEHIND)
     }
 
     private fun markPlayed() {
-        if (mode != Mode.RADIO) return
         val t = currentTrack() ?: return
-        history.add(t.key)
+        streamHistory.record(t)
+        if (mode == Mode.RADIO) history.add(t.key)
     }
 
     private fun currentTrack(): Track? = player.currentMediaItem?.let { queued[it.mediaId] }
@@ -245,8 +298,9 @@ class RadioEngine(
     private fun prefetchUpcoming() {
         val urls = ArrayList<String>()
         // The player buffers the current item itself; prefetch the ones after it.
+        // In queue order, so the next few are ready first and the rest follow.
         val start = player.currentMediaItemIndex + 1
-        for (i in start until minOf(player.mediaItemCount, start + PREFETCH)) {
+        for (i in start until minOf(player.mediaItemCount, start + STREAM_AHEAD)) {
             val uri = player.getMediaItemAt(i).localConfiguration?.uri ?: continue
             if (uri.scheme == "https") urls += uri.toString()
         }
@@ -270,7 +324,6 @@ class RadioEngine(
             return
         }
         val idx = player.currentMediaItemIndex
-        for (i in idx + 1 until count) queued.remove(player.getMediaItemAt(i).mediaId)
         if (idx + 1 < count) player.removeMediaItems(idx + 1, count)
         topUp()
         val genres = settings.genres.value
@@ -310,7 +363,6 @@ class RadioEngine(
         message = "Skipped a track that wouldn't play."
         val idx = player.currentMediaItemIndex
         if (mode == Mode.RADIO && idx in 0 until player.mediaItemCount) {
-            queued.remove(player.getMediaItemAt(idx).mediaId)
             player.removeMediaItem(idx)
             topUp()
         } else if (player.hasNextMediaItem()) {
@@ -355,11 +407,14 @@ class RadioEngine(
     // ------------------------------------------------------------------ state
 
     private fun publish() {
-        val upNext = ArrayList<Track>()
-        val idx = player.currentMediaItemIndex
-        for (i in idx + 1 until minOf(player.mediaItemCount, idx + 4)) {
-            queued[player.getMediaItemAt(i).mediaId]?.let { upNext += it }
+        val queue = ArrayList<Track>()
+        var idx = player.currentMediaItemIndex
+        for (i in 0 until player.mediaItemCount) {
+            val t = queued[player.getMediaItemAt(i).mediaId]
+            if (t != null) queue += t else if (i < idx) idx--
         }
+        if (player.mediaItemCount == 0) idx = -1
+        val upNext = if (idx >= 0) queue.drop(idx + 1).take(3) else emptyList()
         val list = repo.state.value
         val msg = message ?: when {
             list.error != null && list.tracks.isEmpty() -> list.error
@@ -371,6 +426,8 @@ class RadioEngine(
         _state.value = UiState(
             current = currentTrack(),
             upNext = upNext,
+            queue = queue,
+            currentIndex = idx,
             isPlaying = player.isPlaying,
             isBuffering = player.playbackState == Player.STATE_BUFFERING && player.playWhenReady,
             mode = mode,
@@ -381,8 +438,9 @@ class RadioEngine(
     }
 
     companion object {
-        const val AHEAD = 4
-        const val PREFETCH = 2
+        const val START_AHEAD = 5
+        const val STREAM_AHEAD = 20
+        const val KEEP_BEHIND = 20
         const val MAX_CONSECUTIVE_ERRORS = 6
     }
 }

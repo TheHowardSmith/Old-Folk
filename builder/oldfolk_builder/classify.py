@@ -32,6 +32,12 @@ WRITER_RE = re.compile(
     r"\s*\|?\s*([^|\n]{2,80})",
     re.I,
 )
+# Credits that are really instrumentation or genre notes, not writer names.
+INSTRUMENT_RE = re.compile(
+    r"\b(piano|vocals?|instrumental|bass|guitars?|drums?|trumpet|tenor|sax(ophone)?|orch(estra)?|"
+    r"trombone|clarinet|harmonica|violin|caller|accordion|banjo|fiddle|mandolin|organ|cornet|flute|"
+    r"polka|oberek|waltz|mazurka|hudba|sung by|music by|music|refrain|chorus|duet|quartet|trio|"
+    r"ensemble|band|unknown performer)\b", re.I)
 NOT_A_NAME = re.compile(r"^(none|n/?a|not? (listed|legible|given|shown)|none legible|illegible|"
                         r"unknown|unlisted|various|-+|\?+)$", re.I)
 
@@ -151,7 +157,7 @@ def extract_writers(meta: dict, files: list[FileChoice], rules: Rules) -> list[s
             low = name.lower()
             if not name or len(name) < 2 or len(name) > 40 or len(name.split()) > 5:
                 continue
-            if NOT_A_NAME.match(name):
+            if NOT_A_NAME.match(name) or INSTRUMENT_RE.search(name):
                 continue
             if low in rules.traditional_composers or low.startswith(("trad", "arr", "traditional")):
                 continue
@@ -205,6 +211,23 @@ def guess_region(meta: dict, tags: set[str], title: str, desc: str, genre: str |
     if genre and genre in rules.genre_region:
         return rules.genre_region[genre], "genre"
     return "Unknown", "none"
+
+
+def world_popular_genre(meta: dict, tags: set[str], title: str, desc: str, rules: Rules) -> str | None:
+    """'latinpop' / 'worldpop' for non-Western popular 78s, else None."""
+    wp = rules.world_popular
+    if not wp or tags & wp.get("hard_exclude", frozenset()):
+        return None
+    latin = tags & wp.get("latin_tags", frozenset())
+    pop = tags & wp.get("popular_tags", frozenset())
+    if not latin and not pop:
+        return None
+    region, _ = guess_region(meta, tags, title, desc, None, rules)
+    if latin and region in wp.get("latin_regions", []):
+        return "latinpop"
+    if region in wp.get("regions", []):
+        return "worldpop"
+    return None
 
 
 def clean_title(title: str) -> str:
@@ -282,9 +305,16 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     spoken = tags & rules.spoken_tags
     if spoken:
         return exclude(f"spoken word / non-music: {', '.join(sorted(spoken))}")
+    bands = sorted(tags & rules.band_tags) + find_words(f"{title} | {artist or ''}".lower(), rules.band_words)
+    if bands:
+        return exclude(f"military/regimental band: {', '.join(bands[:3])}")
     genre = specific_genre(tags, kind, rules)
     excluded = tags & rules.exclude_tags
     generic = is_generic_folk(tags - excluded, rules)
+    if not genre and not generic and kind == "78rpm":
+        genre = world_popular_genre(meta, tags, title, desc, rules)
+        if genre:
+            excluded = set()
     if excluded and not genre:
         if generic:
             flags.append(f"folk tag mixed with non-folk tags: {', '.join(sorted(excluded))}")
