@@ -306,6 +306,7 @@ class RadioEngine(
                     .setArtist(t.artist ?: "Unknown performer")
                     .setAlbumTitle("${t.yearLabel} · ${t.region}")
                     .setGenre(genreName)
+                    .setArtworkUri(Uri.parse(t.artUrl))
                     .setIsPlayable(true)
                     .setIsBrowsable(false)
                     .build()

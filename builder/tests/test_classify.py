@@ -205,3 +205,15 @@ def test_poor_and_worn_discs_excluded():
 def test_instrument_credits_are_not_writers():
     meta = {"genre": "Polka", "description": "Writer: Piano; Bass; Polka"}
     assert classify_item("p", "78rpm", item(meta), RULES).writers == []
+
+
+def test_pick_image_prefers_label_scan():
+    from oldfolk_builder.tracks import pick_image
+    files = [{"name": "x_spectrogram.png", "format": "Spectrogram", "source": "derivative"},
+             {"name": "Song - Band.png", "format": "PNG", "source": "derivative"},
+             {"name": "__ia_thumb.jpg", "format": "Item Tile", "source": "original"},
+             {"name": "x.jpg", "format": "JPEG", "source": "derivative"},
+             {"name": "x_itemimage.jpg", "format": "Item Image", "source": "original"}]
+    assert pick_image("x", files) == 1
+    assert pick_image("x", files[:4]) == "x.jpg"
+    assert pick_image("x", files[:3]) is None      # generic tile only: use the thumbnail service

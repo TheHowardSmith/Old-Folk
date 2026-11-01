@@ -13,6 +13,8 @@ data class Track(
     val year: Int?,
     val region: String,
     val genre: String,
+    /** Label/cover image: "1" = <id>_itemimage.jpg, "2" = <id>_itemimage.png, else a file name, null = none. */
+    val picture: String? = null,
 ) {
     /** Stable identity across list versions: used for "never repeat" and downloads. */
     val key: Long = keyOf(id, file)
@@ -23,6 +25,16 @@ data class Track(
 
     val detailsUrl: String get() = "https://archive.org/details/" + Uri.encode(id)
 
+    /** Disc label / album cover (falls back to the Archive's item thumbnail). */
+    val artUrl: String
+        get() = when (picture) {
+            null -> "https://archive.org/services/img/" + Uri.encode(id)
+            "1" -> "https://archive.org/download/" + Uri.encode(id) + "/" + Uri.encode(id + "_itemimage.jpg")
+            "2" -> "https://archive.org/download/" + Uri.encode(id) + "/" + Uri.encode(id + "_itemimage.png")
+            else -> "https://archive.org/download/" + Uri.encode(id) + "/" +
+                picture.split('/').joinToString("/") { Uri.encode(it) }
+        }
+
     /** "1928" or "78 rpm era" for undated discs. */
     val yearLabel: String get() = year?.toString() ?: "78 rpm era"
 
@@ -31,6 +43,7 @@ data class Track(
         artist?.let { put("a", it) }
         year?.let { put("y", it) }
         put("r", region); put("g", genre)
+        picture?.let { put("p", it.toIntOrNull() ?: it) }
     }
 
     companion object {
@@ -52,6 +65,7 @@ data class Track(
             year = if (o.has("y")) o.optInt("y").takeIf { it > 0 } else null,
             region = o.optString("r").ifBlank { "Unknown" },
             genre = o.optString("g").ifBlank { "world" },
+            picture = o.opt("p")?.toString()?.ifBlank { null },
         )
 
         fun parseShard(json: String): List<Track> {

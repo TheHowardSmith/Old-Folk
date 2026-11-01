@@ -68,8 +68,6 @@ fun TuningDial(year: Int?, station: String, playing: Boolean, modifier: Modifier
             .fillMaxWidth()
             .clip(shape)
             .background(Brush.verticalGradient(listOf(rc.dialFace, rc.dialFaceBottom)))
-            // glass sheen
-            .background(Brush.verticalGradient(0f to Color.White.copy(alpha = 0.07f), 0.5f to Color.Transparent))
             .border(1.5.dp, Brush.horizontalGradient(listOf(Color(0xFF8C6B33), Color(0xFFD9B872), Color(0xFF8C6B33))), shape)
             .padding(horizontal = 16.dp, vertical = 10.dp)
             .semantics { contentDescription = (year?.let { "Recorded around $it" } ?: "78 rpm era, date unknown") + ". $station" },
@@ -190,33 +188,29 @@ fun Knob(
         onClick = onClick,
         shape = CircleShape,
         color = if (primary) rc.ivory else rc.knob,
-        contentColor = if (primary) Color(0xFF2B1D12) else rc.knobIcon,
-        border = BorderStroke(if (primary) 3.dp else 2.dp,
-            Brush.linearGradient(listOf(Color(0xFFD9B872), Color(0xFF8C6B33)))),
-        shadowElevation = if (primary) 6.dp else 3.dp,
+        contentColor = if (primary) Color(0xFF3A2414) else rc.knobIcon,
+        border = BorderStroke(if (primary) 2.dp else 1.5.dp, rc.brass.copy(alpha = 0.8f)),
+        shadowElevation = 1.dp,
         modifier = Modifier.size(size).semantics { this.contentDescription = contentDescription },
     ) {
         Box(
             Modifier.fillMaxSize().drawBehind {
                 if (!primary) {
-                    // brass centre ring, like the knobs on the old set
-                    drawCircle(Color(0xFFC9A867).copy(alpha = 0.55f), radius = this.size.minDimension * 0.34f,
+                    // matte brass centre ring, like the knobs on the old set
+                    drawCircle(rc.brass.copy(alpha = 0.45f), radius = this.size.minDimension * 0.34f,
                         style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx()))
                 }
-                drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = if (primary) 0.5f else 0.08f), Color.Transparent),
-                    center = Offset(this.size.width * 0.35f, this.size.height * 0.3f), radius = this.size.minDimension * 0.6f))
             },
             contentAlignment = Alignment.Center,
         ) { content() }
     }
 }
 
-
 /** A small 78 rpm record: grooves and a coloured label (used for playlists). */
 @Composable
-fun RecordIcon(label: Color, modifier: Modifier = Modifier) {
+fun RecordIcon(label: Color, modifier: Modifier = Modifier.size(40.dp)) {
     Box(
-        modifier.size(40.dp).drawBehind {
+        modifier.drawBehind {
             val r = size.minDimension / 2
             drawCircle(Color(0xFF17120E), radius = r)
             for (i in 1..4) {
@@ -225,8 +219,6 @@ fun RecordIcon(label: Color, modifier: Modifier = Modifier) {
             }
             drawCircle(label, radius = r * 0.36f)
             drawCircle(Color(0xFF17120E), radius = r * 0.06f)
-            drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = 0.12f), Color.Transparent),
-                center = Offset(r * 0.6f, r * 0.5f), radius = r))
         },
     )
 }
@@ -244,5 +236,31 @@ fun DialStrip(text: String, modifier: Modifier = Modifier) {
     ) {
         Text(text.uppercase(), style = PlateLabel, color = rc.dialInk, maxLines = 1,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+    }
+}
+
+
+/**
+ * Disc label or album cover for the current track, in a brass-edged frame.
+ * A drawn 78 shows while it loads or when there is no image.
+ */
+@Composable
+fun AlbumArt(url: String?, modifier: Modifier = Modifier) {
+    val rc = LocalRadioColors.current
+    val shape = RoundedCornerShape(14.dp)
+    Box(
+        modifier.clip(shape).background(rc.cloth).border(1.dp, rc.brass.copy(alpha = 0.5f), shape),
+        contentAlignment = Alignment.Center,
+    ) {
+        RecordIcon(Color(0xFFB23A1E), Modifier.fillMaxSize(0.82f))
+        if (url != null) {
+            coil.compose.AsyncImage(
+                model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                    .data(url).crossfade(300).build(),
+                contentDescription = "Disc label or cover",
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 }

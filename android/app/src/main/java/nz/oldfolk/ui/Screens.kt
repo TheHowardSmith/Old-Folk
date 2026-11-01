@@ -209,7 +209,6 @@ data class RadioUi(
     val isPlaying: Boolean,
     val isBuffering: Boolean,
     val message: String?,
-    val upNext: List<Track>,
     val inPlaylist: Boolean,
     val listLoading: Boolean,
     val listProgress: String?,
@@ -249,7 +248,6 @@ private fun RadioScreen(graph: AppGraph, onBeforePlay: () -> Unit, onSave: (Trac
             isPlaying = state.isPlaying,
             isBuffering = state.isBuffering,
             message = state.message,
-            upNext = state.upNext,
             inPlaylist = state.mode == RadioEngine.Mode.PLAYLIST,
             listLoading = list.loading && list.tracks.isEmpty(),
             listProgress = if (list.loading && list.tracks.isNotEmpty() && !list.complete)
@@ -279,10 +277,12 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         TuningDial(year = track?.year, station = ui.station, playing = ui.isPlaying)
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
+        AlbumArt(track?.artUrl, Modifier.size(232.dp))
+        Spacer(Modifier.height(16.dp))
 
         // Now playing.
-        Column(Modifier.fillMaxWidth().heightIn(min = 150.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        Column(Modifier.fillMaxWidth().heightIn(min = 112.dp), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center) {
             if (track == null) {
                 Text(ui.message ?: "Press play to tune in", style = MaterialTheme.typography.titleMedium,
@@ -324,7 +324,7 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
         }
 
         // Controls on a faint speaker grille.
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(12.dp))
         Box(
             Modifier.fillMaxWidth().height(132.dp)
                 .clip(RoundedCornerShape(20.dp))
@@ -358,23 +358,6 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
             }
         }
 
-        if (ui.upNext.isNotEmpty()) {
-            Spacer(Modifier.height(16.dp))
-            SectionLabel("Up next")
-            ui.upNext.forEachIndexed { i, t ->
-                if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(t.title, style = TrackTitle, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(t.artist ?: "Unknown performer", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                    Text(t.yearLabel, style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 12.dp))
-                }
-            }
-        }
         ui.listProgress?.let {
             Spacer(Modifier.height(14.dp))
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

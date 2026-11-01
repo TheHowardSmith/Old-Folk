@@ -62,7 +62,7 @@ Output (not committed to git):
 - `r-<genre>-<n>.json`: **review set**, flagged tracks that are kept out of the app until checked
 - `flagged.csv`, `writers.csv`, `excluded.csv`, `report.md`: for manual review
 
-Shard format (short keys): `{"v":1,"g":"oldtime","t":[{"i":"<item id>","f":"<file name>","t":"<title>","a":"<artist>","y":1928,"r":"<region>","g":"<genre>"}]}`. Playback URL: `https://archive.org/download/{i}/{f}`.
+Shard format (short keys): `{"v":1,"g":"oldtime","t":[{"i":"<item id>","f":"<file name>","t":"<title>","a":"<artist>","y":1928,"r":"<region>","g":"<genre>","p":1}]}`. `p` is the label/cover image: `1` means `<item id>_itemimage.jpg`, `2` means `<item id>_itemimage.png`, otherwise a file name; when absent the app uses the Archive thumbnail. Playback URL: `https://archive.org/download/{i}/{f}`.
 
 ## Publishing
 

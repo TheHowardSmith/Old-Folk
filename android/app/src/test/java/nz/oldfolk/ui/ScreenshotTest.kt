@@ -33,7 +33,7 @@ class ScreenshotTest {
 
     private fun radio(t: Track?, playing: Boolean, msg: String? = null) = RadioUi(
         station = "Radio · all genres", track = t, genreName = t?.let { "Old-time & Hillbilly" },
-        isPlaying = playing, isBuffering = false, message = msg, upNext = if (t != null) upNext else emptyList(),
+        isPlaying = playing, isBuffering = false, message = msg,
         inPlaylist = false, listLoading = false, listProgress = null, showRetry = false,
     )
 

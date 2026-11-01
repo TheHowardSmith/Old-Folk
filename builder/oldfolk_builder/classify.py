@@ -18,7 +18,7 @@ import re
 from dataclasses import dataclass, field
 
 from .config import Rules
-from .tracks import FileChoice, pick_files
+from .tracks import FileChoice, pick_files, pick_image
 
 INCLUDE, FLAG, EXCLUDE = "include", "flag", "exclude"
 
@@ -52,6 +52,7 @@ class Track:
     region: str
     genre: str
     seconds: float | None = None
+    picture: str | int | None = None
 
 
 @dataclass
@@ -360,6 +361,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
         genre = rules.region_genre.get(region, "world")
     res.genre, res.region = genre, region
     various = (artist or "").strip().lower() in ("various", "various artists")
+    picture = pick_image(ident, files)
     multi = len(choices) > 1
 
     for c in choices:
@@ -381,7 +383,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
         res.tracks.append(Track(
             id=ident, file=c.name, title=t_title,
             artist=(c.artist or artist),
-            year=year, region=t_region, genre=t_genre, seconds=c.seconds,
+            year=year, region=t_region, genre=t_genre, seconds=c.seconds, picture=picture,
         ))
     if not res.tracks:
         return exclude("no MP3 of usable length")

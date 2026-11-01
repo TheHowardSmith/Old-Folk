@@ -23,6 +23,8 @@ def track_json(t: Track) -> dict:
         d["y"] = t.year
     d["r"] = t.region
     d["g"] = t.genre
+    if t.picture:
+        d["p"] = t.picture   # 1 = "<id>_itemimage.jpg", 2 = "<id>_itemimage.png", else a file name
     return d
 
 
