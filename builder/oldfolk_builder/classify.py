@@ -37,7 +37,7 @@ INSTRUMENT_RE = re.compile(
     r"\b(piano|vocals?|instrumental|bass|guitars?|drums?|trumpet|tenor|sax(ophone)?|orch(estra)?|"
     r"trombone|clarinet|harmonica|violin|caller|accordion|banjo|fiddle|mandolin|organ|cornet|flute|"
     r"polka|oberek|waltz|mazurka|hudba|sung by|music by|music|refrain|chorus|duet|quartet|trio|"
-    r"ensemble|band|unknown performer)\b", re.I)
+    r"ensemble|band|unknown performer|written by|words by|lyrics by)\b", re.I)
 NOT_A_NAME = re.compile(r"^(none|n/?a|not? (listed|legible|given|shown)|none legible|illegible|"
                         r"unknown|unlisted|various|-+|\?+)$", re.I)
 
