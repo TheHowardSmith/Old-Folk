@@ -1,0 +1,38 @@
+name: Report a track
+description: Something wrong with a track (rights concern, not folk, wrong details, won't play...)
+title: "Track report: "
+labels: ["track-report"]
+body:
+  - type: input
+    id: item
+    attributes:
+      label: Internet Archive item id
+      description: Filled in by the app.
+    validations:
+      required: true
+  - type: input
+    id: file
+    attributes:
+      label: File name
+  - type: input
+    id: track
+    attributes:
+      label: Title / performer / year (as shown in the app)
+  - type: dropdown
+    id: reason
+    attributes:
+      label: What's wrong?
+      options:
+        - Rights concern (may not be public domain, or should be removed)
+        - Restricted / sacred / culturally sensitive recording
+        - Not folk or traditional music
+        - Wrong title, performer, year, region or genre
+        - Doesn't play / broken audio
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Anything that helps (links, corrections). Rights holders can also email thehowardsmith@gmail.com.

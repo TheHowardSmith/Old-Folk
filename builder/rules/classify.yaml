@@ -1,0 +1,477 @@
+# Classification rules for the list builder.
+#
+# Matching is done on lower-cased "tags": the item's `genre` and `subject`
+# values, split on , ; and /. Keyword lists (`words`) match whole words in the
+# title, description, notes and subjects.
+#
+# Edit freely; re-run `oldfolk-build build` to reclassify from the cache
+# without re-downloading anything.
+
+# Genres shown in the app's genre picker. Order = display order.
+genres:
+  oldtime:      "Old-time & Hillbilly"
+  blues:        "Country Blues"
+  gospel:       "Gospel & Spirituals"
+  american:     "American Folk & Ballads"
+  british:      "British Isles & Celtic"
+  european:     "European Folk & Dance"
+  jewish:       "Klezmer & Jewish"
+  caribbean:    "Calypso & Caribbean"
+  latin:        "Latin American Folk"
+  african:      "African"
+  asia:         "Asian & Middle Eastern"
+  pacific:      "Hawaiian & Pacific"
+  field:        "Field Recordings & Work Songs"
+  world:        "Other Traditional"
+
+# Tag -> genre. First matching genre in this mapping order wins, so put the
+# most specific styles first.
+genre_tags:
+  field:
+    - field recording
+    - field recordings
+    - ethnomusicology
+    - ethnographic
+    - work songs
+    - work song
+    - prison songs
+    - chants
+    - chant
+    - lullaby
+    - lullabies
+    - indigenous music of north america
+    - home recording
+  blues:
+    - blues
+    - country blues
+    - delta blues
+    - piedmont blues
+  gospel:
+    - gospel
+    - spiritual
+    - spirituals
+    - negro spirituals
+    - sacred harp
+    - shape note
+    - gospel music
+  oldtime:
+    - hillbilly
+    - old time        # 78s only: GB's "Old Time" genre = string-band music
+    - old-time
+    - square dance
+    - country dance
+    - contra dance
+    - circle dance
+    - hoedown
+    - bluegrass
+    - cowboy
+    - banjo
+    - fiddle
+    - fiddle tunes
+    - appalachian
+    - country
+    - yodeling
+  caribbean:
+    - calypso
+    - mento
+    - caribbean
+    - trinidad
+    - biguine
+    - beguine
+    - merengue
+  pacific:
+    - hawaiian
+    - hawaiian waltz
+    - hula
+    - pacific
+    - polynesian
+    - maori
+    - samoan
+    - tahitian
+  african:
+    - african
+    - palm wine
+    - palm-wine
+    - highlife
+    - juju
+  jewish:
+    - klezmer
+    - jewish
+    - yiddish
+    - hebrew
+    - israeli
+  british:
+    - irish
+    - celtic
+    - scottish
+    - scotch song
+    - scotch ballad
+    - scottish country dance
+    - strathspey
+    - bagpipe
+    - uilleann
+    - jig
+    - reel
+    - hornpipe
+    - morris dance
+    - welsh
+    - english folk
+    - shanty
+    - sea shanties
+    - concertina
+  latin:
+    - corrido
+    - ranchera
+    - huapango
+    - son jarocho
+    - son
+    - mariachi
+    - baiao
+    - folklore argentino
+    - zamba
+    - chacarera
+    - cueca
+    - joropo
+  asia:
+    - japanese
+    - minyo
+    - min'yo
+    - min'yō
+    - arabian
+    - arabic
+    - turkish
+    - armenian
+    - persian
+    - indian
+    - java
+    - gamelan
+    - chinese
+    - korean
+  european:
+    - polka
+    - oberek
+    - mazurka
+    - mazur
+    - krakowiak
+    - kujawiak
+    - kolomyika
+    - schottische
+    - schottis
+    - landler
+    - rheinlander
+    - csárdás
+    - csardas
+    - gypsy
+    - greek
+    - rebetiko
+    - rembetiko
+    - fado
+    - flamenco
+    - volksmusik
+    - vise
+    - polish
+    - ukrainian
+    - hungarian
+    - balkan
+    - kolo
+
+# Tags that mean "this is folk/traditional" without saying which style.
+# Items with only these get a genre from their region (see region_genre).
+generic_folk_tags:
+  - folk
+  - folk song
+  - folk songs
+  - folk music
+  - folk dance
+  - folk dances
+  - folklore
+  - traditional
+  - traditional music
+  - ethnic
+  - world music
+  - folk, world, & country
+  - world
+  - ballad
+  - ballads
+
+# Fallback genre by region, for items with only generic folk tags.
+region_genre:
+  "Indigenous North America": field
+  "USA": american
+  "Canada": american
+  "British Isles": british
+  "Western Europe": european
+  "Nordic": european
+  "Central & Eastern Europe": european
+  "Southern Europe": european
+  "Middle East & Caucasus": asia
+  "South Asia": asia
+  "East Asia": asia
+  "Southeast Asia": asia
+  "Africa": african
+  "Caribbean": caribbean
+  "Latin America": latin
+  "Hawaii & Pacific": pacific
+
+# Any of these tags excludes the item outright (not folk under our rules),
+# unless it also carries a specific folk genre tag above.
+exclude_tags:
+  - jazz
+  - swing
+  - western swing
+  - big band
+  - dixieland
+  - be-bop
+  - bebop
+  - boogie woogie
+  - ragtime
+  - fox trot
+  - fox-trot
+  - slowfox
+  - one-step
+  - quickstep
+  - shimmy
+  - popular music
+  - pop
+  - popular
+  - schlager
+  - easy listening
+  - cocktail
+  - opera
+  - operetta
+  - operette
+  - comic opera
+  - classical
+  - klassisk
+  - orchestral
+  - symphonic
+  - concerto
+  - sonata
+  - overture
+  - ballet
+  - lieder
+  - art song
+  - aria
+  - oratorio
+  - cantata
+  - film
+  - soundtrack
+  - incidental music
+  - library music
+  - broadway
+  - musical
+  - theatre
+  - vaudeville
+  - minstrel song
+  - minstrel show
+  - rock
+  - rock and roll
+  - rock & roll
+  - rockabilly
+  - folk rock
+  - rhythm & blues
+  - r&b
+  - r&b music
+  - soul
+  - soul music
+  - doo-wop
+  - tango
+  - tango-fox
+  - rumba
+  - rhumba
+  - mambo
+  - cha-cha-cha
+  - bolero
+  - samba
+  - conga
+  - novelty
+  - electronic
+  - psychedelic
+  - psychedelic folk
+  - acid folk
+  - freak folk
+  - folk-pop
+  - folk pop
+  - contemporary folk
+  - singer-songwriter
+  - singer/songwriter
+
+# Not real recordings (e.g. MIDI rendered from sheet music): always excluded.
+synthetic_tags:
+  - omr
+  - midi
+  - synthesized
+  - computer generated
+  - text to speech
+
+# Spoken word / non-music: always excluded, even with folk tags.
+spoken_tags:
+  - spoken word
+  - spoken
+  - comedy
+  - comic
+  - comic song
+  - sermon
+  - story
+  - children's story
+  - fairy tale
+  - fable
+  - recitation
+  - poetry
+  - reading
+  - monologue
+  - monolog
+  - dialogue
+  - dialog
+  - sketch
+  - talking
+  - speech
+  - lecture
+  - narration
+  - documentary
+  - educational
+  - instructional
+  - instructional dance
+  - lesson
+  - language
+  - sound effects
+  - bird calls
+  - advertisement
+  - commercial
+  - radio program
+  - interview
+  - interviews
+  - oral history
+  - laughing record
+  - non-music
+  - exercise
+
+# Collections that are broadcasts / podcasts: excluded (mostly speech).
+exclude_collections:
+  - podcasts
+  - oldtimeradio
+  - radioprograms
+  - radioshowarchive
+  - auprofiles
+
+# Indigenous / ceremonial restrictions. If any phrase appears in the
+# description, notes, rights or subjects, the item is EXCLUDED.
+restricted_phrases:
+  - restricted
+  - access restricted
+  - culturally sensitive
+  - cultural sensitivity
+  - not for public
+  - not to be played
+  - not to be broadcast
+  - not for broadcast
+  - do not distribute
+  - do not copy
+  - permission of the community
+  - community permission
+  - with permission of the elders
+  - sacred and secret
+  - secret/sacred
+  - secret sacred
+  - men's business
+  - women's business
+  - sorry business
+  - traditional knowledge label
+  - tk label
+  - tk notice
+  - local contexts
+  - ceremonial use only
+  - for ceremonial use
+  - initiated only
+
+# Phrases that need a human look (ceremonial material without an explicit
+# restriction): FLAGGED, not excluded.
+ceremonial_words:
+  - ceremonial
+  - ceremony
+  - sacred song
+  - sacred songs
+  - ritual
+  - initiation
+  - funeral song
+  - mourning song
+  - burial
+  - shaman
+  - shamanic
+  - peyote
+  - medicine song
+
+# Indigenous recordings are always FLAGGED so a human can check community
+# protocols before they go into the app, even without restriction wording.
+indigenous_words:
+  - indigenous
+  - aboriginal
+  - torres strait
+  - first nations
+  - native american
+  - american indian
+  - maori
+  - māori
+  - inuit
+  - eskimo
+  - sami
+  - ainu
+  - pygmy
+  - pygmies
+
+# Words in title/description/subjects that suggest a later release, a
+# compilation, or a modern recording of an old song. FLAGGED for review
+# (only applied to non-78rpm items; 78s are single original discs).
+reissue_words:
+  - compilation
+  - compiled
+  - reissue
+  - re-issue
+  - reissued
+  - re-release
+  - rerelease
+  - remaster
+  - remastered
+  - anthology
+  - best of
+  - greatest hits
+  - the very best
+  - golden hits
+  - complete recordings
+  - box set
+  - boxed set
+  - cd
+  - compact disc
+  - digitally
+  - stereo remix
+  - revival
+  - tribute
+  - cover version
+  - covers
+  - re-recorded
+  - rerecorded
+
+# Names that count as "traditional" when seen as composer credits.
+traditional_composers:
+  - trad
+  - trad.
+  - traditional
+  - traditionnel
+  - tradicional
+  - tradizionale
+  - volkslied
+  - volksweise
+  - folk song
+  - folk
+  - anon
+  - anon.
+  - anonymous
+  - unknown
+  - public domain
+  - p.d.
+  - pd
+  - n/a
+
+# Track length limits in seconds.
+min_seconds: 30
+max_seconds: 2400

@@ -1,0 +1,21 @@
+name: Playback / download failures
+description: Sent from the app's About screen; lists tracks that failed on a phone.
+title: "Playback/download failures from the app"
+labels: ["playback-failures"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Each line is `item|file` followed by what failed. A maintainer check re-tests each file from a server
+        to tell missing files apart from connection or app problems on the phone.
+  - type: textarea
+    id: failures
+    attributes:
+      label: Failed tracks
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else? (optional)
