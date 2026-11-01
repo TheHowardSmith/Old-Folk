@@ -69,8 +69,11 @@ class MediaCache(context: Context, maxBytes: Long = MAX_BYTES) {
 
     private var prefetchJob: Job? = null
 
-    /** Replace the prefetch set; earlier unfinished prefetches are cancelled. */
-    fun prefetch(scope: CoroutineScope, urls: List<String>) {
+    /**
+     * Replace the prefetch set; earlier unfinished prefetches are cancelled.
+     * [afterCached] runs (on the IO thread) for each URL once it is fully cached.
+     */
+    fun prefetch(scope: CoroutineScope, urls: List<String>, afterCached: (String) -> Unit = {}) {
         prefetchJob?.cancel()
         prefetchJob = scope.launch(Dispatchers.IO) {
             for (url in urls) {
@@ -81,6 +84,8 @@ class MediaCache(context: Context, maxBytes: Long = MAX_BYTES) {
                     val job = coroutineContext[Job]
                     job?.invokeOnCompletion { writer.cancel() }
                     writer.cache()
+                    ensureActive()
+                    afterCached(url)
                 } catch (e: Exception) {
                     if (isActive) Log.i("MediaCache", "prefetch failed for $url: ${e.message}")
                 }

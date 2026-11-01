@@ -58,6 +58,7 @@ class RadioEngine(
     private val failures: FailureLog,
     private val mediaCache: MediaCache,
     private val streamHistory: StreamHistory,
+    private val levels: Levels,
 ) {
     enum class Mode { RADIO, PLAYLIST }
 
@@ -98,6 +99,7 @@ class RadioEngine(
 
     private val listener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            applyLevel()
             if (player.isPlaying) markPlayed()
             if (mode == Mode.RADIO) {
                 trimHistory()
@@ -122,6 +124,11 @@ class RadioEngine(
 
         override fun onPlayerError(error: PlaybackException) = handleError(error)
 
+        override fun onAudioSessionIdChanged(audioSessionId: Int) {
+            releaseEnhancer()
+            applyLevel()
+        }
+
         override fun onEvents(player: Player, events: Player.Events) = publish()
     }
 
@@ -132,6 +139,56 @@ class RadioEngine(
         }
         scope.launch(Dispatchers.Main) {
             settings.genres.drop(1).collect { onGenresChanged() }
+        }
+        scope.launch(Dispatchers.Main) {
+            // A measurement arrived: apply it if the current track has only just started.
+            levels.version.drop(1).collect { if (player.currentPosition < 3000) applyLevel() }
+        }
+    }
+
+    // ------------------------------------------------------------------ levelling
+
+    private var enhancer: android.media.audiofx.LoudnessEnhancer? = null
+
+    /**
+     * Bring the current track to the common level: loud tracks are turned down
+     * with the player volume, quiet ones boosted with LoudnessEnhancer (which
+     * limits peaks). Unmeasured tracks play unchanged until measured.
+     */
+    private fun applyLevel() {
+        val t = currentTrack()
+        val gain = t?.let { levels.gainDb(it.key) }
+        if (t != null && gain == null) measureInBackground(t)
+        val g = gain ?: 0f
+        player.volume = if (g < 0) Levels.dbToLinear(g) else 1f
+        val boostMb = if (g > 0) (g * 100).toInt() else 0
+        try {
+            if (boostMb > 0) {
+                val e = enhancer ?: android.media.audiofx.LoudnessEnhancer(player.audioSessionId).also { enhancer = it }
+                e.setTargetGain(boostMb)
+                e.enabled = true
+            } else {
+                enhancer?.enabled = false
+            }
+        } catch (e: Exception) {
+            // Some devices don't offer the effect; levelling then only turns loud tracks down.
+            releaseEnhancer()
+        }
+    }
+
+    private fun releaseEnhancer() {
+        runCatching { enhancer?.release() }
+        enhancer = null
+    }
+
+    /** Measure a track that is already on the phone (cached or downloaded) but has no reading yet. */
+    private fun measureInBackground(t: Track) {
+        val local = playlists.localFile(t)
+        scope.launch(Dispatchers.IO) {
+            when {
+                local.exists() -> levels.analyzeFile(t.key, local)
+                mediaCache.isFullyCached(t.streamUrl) -> levels.analyzeCached(t.key, mediaCache.cache, t.streamUrl)
+            }
         }
     }
 
@@ -304,7 +361,15 @@ class RadioEngine(
             val uri = player.getMediaItemAt(i).localConfiguration?.uri ?: continue
             if (uri.scheme == "https") urls += uri.toString()
         }
-        mediaCache.prefetch(scope, urls)
+        val keys = HashMap<String, Long>()
+        for (i in start until minOf(player.mediaItemCount, start + STREAM_AHEAD)) {
+            val item = player.getMediaItemAt(i)
+            val uri = item.localConfiguration?.uri ?: continue
+            item.mediaId.toLongOrNull()?.let { keys[uri.toString()] = it }
+        }
+        mediaCache.prefetch(scope, urls) { url ->
+            keys[url]?.let { key -> levels.analyzeCached(key, mediaCache.cache, url) }
+        }
     }
 
     private fun onListChanged(s: TrackListRepository.State) {

@@ -10,6 +10,7 @@ import nz.oldfolk.data.Playlists
 import nz.oldfolk.data.Settings
 import nz.oldfolk.data.StreamHistory
 import nz.oldfolk.data.TrackListRepository
+import nz.oldfolk.playback.Levels
 import nz.oldfolk.playback.MediaCache
 import nz.oldfolk.playback.RadioEngine
 import java.io.File
@@ -32,8 +33,9 @@ class AppGraph(app: Application) {
     val failures = FailureLog(app)
     val history = PlayHistory(File(app.filesDir, "played.bin"))
     val trackList = TrackListRepository(app, scope)
-    val playlists = Playlists(app, scope, failures)
+    val levels = Levels(File(app.filesDir, "levels.json"))
+    val playlists = Playlists(app, scope, failures, levels)
     val mediaCache = MediaCache(app)
     val streamHistory = StreamHistory(File(app.filesDir, "stream_history.jsonl"))
-    val engine = RadioEngine(app, scope, trackList, history, settings, playlists, failures, mediaCache, streamHistory)
+    val engine = RadioEngine(app, scope, trackList, history, settings, playlists, failures, mediaCache, streamHistory, levels)
 }
