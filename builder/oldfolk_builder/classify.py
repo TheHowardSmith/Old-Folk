@@ -296,6 +296,10 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     bands = sorted(tags & rules.band_tags) + find_words(f"{title} | {artist or ''}".lower(), rules.band_words)
     if bands:
         return exclude(f"military/regimental band: {', '.join(bands[:3])}")
+    teaching = find_words(f"{title} | {artist or ''} | {as_text(meta.get('publisher'))}".lower(),
+                          rules.instruction_ensembles)
+    if teaching:
+        return exclude(f"folk-dance instruction record: {teaching[0]}")
     genre = specific_genre(tags, kind, rules)
     excluded = tags & rules.exclude_tags
     generic = is_generic_folk(tags - excluded, rules)
@@ -359,6 +363,10 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     genre_from_region = genre is None
     if genre_from_region:
         genre = rules.region_genre.get(region, "world")
+    # Polkas get their own genre (so listeners can leave them out), including
+    # untagged discs with "polka" in the title.
+    if genre in ("european", "world", "american") and re.search(r"\bpolka\b", title, re.I):
+        genre = "polka"
     res.genre, res.region = genre, region
     various = (artist or "").strip().lower() in ("various", "various artists")
     picture = pick_image(ident, files)
