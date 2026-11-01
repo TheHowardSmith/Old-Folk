@@ -5,21 +5,29 @@ For each item it combines:
   1. US Copyright Office Public Records (publicrecords.copyright.gov): a title
      search finds the song's registration (year, claimant), renewal evidence
      (R/RE numbers) and usually the writers' full names ("/By A & B").
-  2. Library of Congress Name Authority File (id.loc.gov): death years for
-     those full names ("Rodgers, Jimmie, 1897-1933").
+  2. Death years for those full names from three sources, combined:
+     Library of Congress Name Authority File (id.loc.gov), the German National
+     Library's authority file GND (via lobid.org; strong on German, Austrian
+     and Central European writers), and Wikidata (links most national
+     libraries). VIAF blocks scripted access and is not used.
 
 and reports, per track:
   nz_composition  life+50: clear if every writer died <= NZ_CUTOFF
+  eu_composition  life+70 (EU and UK): clear if every writer died <= EU_CUTOFF
   us_composition  published <= US_COMP_CUTOFF -> public domain; 1931-1963 ->
                   protected only if renewed; 1964+ -> protected
   us_recording    pre-1972 recordings (Music Modernization Act): published
                   <= 1925 public domain as of 2026; later ones protected
+  eu_recording    EU/UK: recordings released before 1963 stayed public domain
+                  (the 2011 term extension only covered recordings still
+                  protected in 2013); later ones 70 years from release
 
 This is evidence for a human decision, not legal advice. "No renewal found"
 means none was found in the searchable records, not proof none exists.
 
 Usage:
   python scripts/rights_check.py --items items.jsonl --descriptions descs.json --sample 500
+  python scripts/rights_check.py --enrich rights_check.csv     # re-assess an earlier run
 """
 from __future__ import annotations
 
@@ -41,12 +49,17 @@ from oldfolk_builder.config import load_rules  # noqa: E402
 
 THIS_YEAR = 2026
 NZ_CUTOFF = THIS_YEAR - 51            # life + 50, to the end of the year: died 1975 or earlier
+EU_CUTOFF = THIS_YEAR - 71            # life + 70: died 1955 or earlier
 US_COMP_CUTOFF = THIS_YEAR - 96       # published 1930 or earlier (95 years)
 US_REC_CUTOFF = THIS_YEAR - 101       # pre-1947 recordings: 100 years -> 1925 or earlier
 
 UA = "OldFolkRightsCheck/0.1 (https://github.com/TheHowardSmith/Old-Folk; thehowardsmith@gmail.com)"
 CPRS = "https://api.publicrecords.copyright.gov/search_service_external/simple_search_dsl"
 LOC = "https://id.loc.gov/authorities/names/suggest2"
+GND = "https://lobid.org/gnd/search"
+MUSIC_GND = re.compile(r"komponist|musiker|textdichter|liedtexter|librettist|s[äa]nger|dirigent|kapellmeister|"
+                       r"lyriker|schlager|volksmusik|arrangeur|pianist|geiger|akkordeon|chorleiter|composer|musician",
+                       re.I)
 S = requests.Session()
 S.headers["User-Agent"] = UA
 
@@ -184,6 +197,99 @@ def loc_death(full_name: str) -> dict:
     return res
 
 
+_gnd_cache: dict[str, dict] = {}
+
+
+def gnd_death(full_name: str) -> dict:
+    """Death year from the German National Library authority file (lobid.org API)."""
+    if full_name in _gnd_cache:
+        return _gnd_cache[full_name]
+    parts = full_name.split()
+    q = f'preferredName:"{parts[-1]}, {" ".join(parts[:-1])}" OR variantName:"{parts[-1]}, {" ".join(parts[:-1])}"'
+    d = get_json(GND, {"q": q, "filter": "type:Person", "format": "json", "size": 10}, pause=0.3)
+    found = set()
+    for m in d.get("member", []) or []:
+        jobs = " ".join(p.get("label", "") for p in m.get("professionOrOccupation", []) or [])
+        if jobs and not MUSIC_GND.search(jobs):
+            continue
+        died = next((int(x[:4]) for x in m.get("dateOfDeath", []) or [] if x[:4].isdigit()), None)
+        born = next((int(x[:4]) for x in m.get("dateOfBirth", []) or [] if x[:4].isdigit()), None)
+        if died is None and born is not None and born < 1880:
+            continue   # no death date, but too old to matter
+        found.add(died)
+    if len(found) == 1:
+        died = found.pop()
+        res = {"status": "dead" if died else "no_death_date", "died": died}
+    elif not found:
+        res = {"status": "not_found"}
+    elif None not in found and len({y > NZ_CUTOFF for y in found}) == 1 and len({y > EU_CUTOFF for y in found}) == 1:
+        res = {"status": "dead", "died": max(found), "note": "several namesakes"}
+    else:
+        res = {"status": "ambiguous"}
+    _gnd_cache[full_name] = res
+    return res
+
+
+_wd_cache: dict[str, dict] = {}
+
+
+def wikidata_death(full_name: str) -> dict:
+    if full_name not in _wd_cache:
+        try:
+            import writer_deaths  # same folder
+            r = writer_deaths.lookup(full_name)
+        except Exception:
+            r = {"status": "unknown"}
+        if r.get("status") == "dead":
+            _wd_cache[full_name] = {"status": "dead", "died": r.get("died")}
+        elif r.get("status") == "alive_or_late":
+            _wd_cache[full_name] = ({"status": "dead", "died": r["died"]} if r.get("died")
+                                    else {"status": "no_death_date"})
+        else:
+            _wd_cache[full_name] = {"status": "not_found"}
+    return _wd_cache[full_name]
+
+
+def writer_death(full_name: str) -> dict:
+    """Combine LoC, GND and Wikidata. Returns {died, status, sources}.
+
+    status: dead (died is set), living_or_late (a source has the person but no
+    death date: treat as protected), unknown. Disagreeing death years resolve to
+    the latest one (the cautious choice).
+    """
+    results = {"loc": loc_death(full_name), "gnd": gnd_death(full_name)}
+    if all(r["status"] in ("not_found", "ambiguous") for r in results.values()):
+        results["wikidata"] = wikidata_death(full_name)
+    years = {k: r["died"] for k, r in results.items() if r["status"] == "dead" and r.get("died")}
+    if years:
+        return {"status": "dead", "died": max(years.values()), "sources": ",".join(sorted(years))}
+    if any(r["status"] == "no_death_date" for r in results.values()):
+        return {"status": "living_or_late", "died": None,
+                "sources": ",".join(k for k, r in results.items() if r["status"] == "no_death_date")}
+    return {"status": "unknown", "died": None, "sources": ""}
+
+
+def composition_status(deaths: dict[str, dict], cutoff: int) -> str:
+    if not deaths:
+        return "unknown"
+    if any(d["status"] == "living_or_late" for d in deaths.values()):
+        return "protected (writer living or no death date)"
+    late = [d["died"] for d in deaths.values() if d["status"] == "dead" and d["died"] > cutoff]
+    if late:
+        return f"protected (writer died {max(late)})"
+    if all(d["status"] == "dead" for d in deaths.values()):
+        return "public domain"
+    return "unknown"
+
+
+def eu_recording(year: int | None, is_78: bool = True) -> str:
+    if year is None:
+        return "public domain (78 rpm disc, released before 1963)" if is_78 else "unknown (undated)"
+    if year < 1963:
+        return "public domain (released before 1963)"
+    return f"protected until {year + 70}"
+
+
 def us_recording(year: int | None) -> str:
     if year is None:
         return "unknown (undated)"
@@ -208,14 +314,69 @@ def us_composition(pub_year: int | None, renewed: bool | None, found: bool) -> s
     return f"protected until {pub_year + 95}"
 
 
+def format_deaths(deaths: dict[str, dict]) -> str:
+    return "; ".join(f"{k}: {v['died'] or v['status']}" + (f" [{v['sources']}]" if v.get("sources") else "")
+                     for k, v in deaths.items())
+
+
+def enrich(path: str) -> list[dict]:
+    """Re-assess an earlier run's CSV with the current death sources and columns."""
+    rows = list(csv.DictReader(open(path, encoding="utf-8")))
+    out = []
+    for n, r in enumerate(rows, 1):
+        full = [x.strip() for x in r.get("full_names", "").split(";") if x.strip() and is_person_name(x.strip())]
+        deaths = {name: writer_death(name) for name in full[:4]}
+        rec_year = int(r["recorded"]) if str(r.get("recorded", "")).isdigit() else None
+        r.update({
+            "full_names": "; ".join(full), "deaths": format_deaths(deaths),
+            "nz_composition": composition_status(deaths, NZ_CUTOFF),
+            "eu_composition": composition_status(deaths, EU_CUTOFF),
+            "us_recording": us_recording(rec_year),
+            "eu_recording": eu_recording(rec_year),
+        })
+        out.append(r)
+        if n % 50 == 0:
+            print(f"  {n}/{len(rows)}", flush=True)
+    return out
+
+
+def summarize(out_rows: list[dict], out_path: str) -> None:
+    order = ["id", "title", "recorded", "credited", "copyright_office", "registered", "renewed", "full_names",
+             "deaths", "nz_composition", "eu_composition", "us_composition", "us_recording", "eu_recording"]
+    fields = order + [k for k in out_rows[0] if k not in order]
+    with open(out_path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=fields)
+        w.writeheader()
+        w.writerows(out_rows)
+
+    def bucket(s: str) -> str:
+        return re.sub(r" until \d+| \(writer died \d+\)| \(renewed\)| \(released before 1963\)| \(78 rpm disc, released before 1963\)", "", s)
+    total = len(out_rows)
+    print(f"\n{total} writer-credited tracks")
+    for col in ("copyright_office", "nz_composition", "eu_composition", "us_composition", "us_recording", "eu_recording"):
+        c = Counter(bucket(str(x.get(col, ""))) for x in out_rows)
+        print(f"{col:17}", ", ".join(f"{k}: {v} ({100 * v / total:.0f}%)" for k, v in c.most_common()))
+    names = [d for x in out_rows for d in x["deaths"].split("; ") if d]
+    resolved = sum(1 for d in names if re.search(r": \d{4}", d))
+    print(f"writer names looked up: {len(names)}, death year found: {resolved} ({100 * resolved / max(1, len(names)):.0f}%)")
+    print(f"results: {out_path}")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--items", required=True, help="JSONL of search rows (identifier, title, date, creator...)")
-    ap.add_argument("--descriptions", required=True, help="JSON {identifier: description}")
+    ap.add_argument("--enrich", help="re-assess an earlier output CSV (no Copyright Office calls)")
+    ap.add_argument("--items", help="JSONL of search rows (identifier, title, date, creator...)")
+    ap.add_argument("--descriptions", help="JSON {identifier: description}")
     ap.add_argument("--sample", type=int, default=500)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--out", default="rights_check.csv")
     args = ap.parse_args()
+    if args.enrich:
+        out = Path(args.enrich).with_name(Path(args.enrich).stem + "_enriched.csv")
+        summarize(enrich(args.enrich), str(out))
+        return
+    if not (args.items and args.descriptions):
+        ap.error("--items and --descriptions are required (or use --enrich)")
 
     rules = load_rules()
     rows = {}
@@ -243,42 +404,23 @@ def main():
         writers = credited[ident]
         cp = analyse_records(title, writers, search_cprs(title), rec_year) if title else {"found": False}
         full = cp.get("full_names") or [w for w in writers if is_person_name(w) and "." not in w.split()[0]]
-        deaths = {name: loc_death(name) for name in full[:4]}
-        died = [d.get("died") for d in deaths.values()]
-        if deaths and all(d["status"] == "dead" for d in deaths.values()):
-            nz = "public domain" if max(died) <= NZ_CUTOFF else f"protected (writer died {max(died)})"
-        elif any(d["status"] == "dead" and d["died"] > NZ_CUTOFF for d in deaths.values()):
-            nz = f"protected (writer died {max(x for x in died if x)})"
-        else:
-            nz = "unknown"
+        deaths = {name: writer_death(name) for name in full[:4]}
         pub = cp.get("first_year") or rec_year
         out_rows.append({
             "id": ident, "title": title, "recorded": rec_year or "", "credited": "; ".join(writers),
             "copyright_office": "found" if cp.get("found") else "not found",
             "registered": cp.get("first_year") or "", "renewed": cp.get("renewed", ""),
-            "full_names": "; ".join(full), "deaths": "; ".join(f"{k}: {v.get('died') or v['status']}" for k, v in deaths.items()),
-            "nz_composition": nz,
+            "full_names": "; ".join(full), "deaths": format_deaths(deaths),
+            "nz_composition": composition_status(deaths, NZ_CUTOFF),
+            "eu_composition": composition_status(deaths, EU_CUTOFF),
             "us_composition": us_composition(pub, cp.get("renewed"), cp.get("found", False)),
             "us_recording": us_recording(rec_year),
+            "eu_recording": eu_recording(rec_year),
         })
         if n % 25 == 0:
             print(f"  {n}/{len(ids)}", flush=True)
 
-    with open(args.out, "w", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(out_rows[0]))
-        w.writeheader()
-        w.writerows(out_rows)
-
-    def bucket(s: str) -> str:
-        return re.sub(r" until \d+| \(writer died \d+\)| \(renewed\)", "", s)
-    total = len(out_rows)
-    print(f"\n{total} writer-credited tracks")
-    for col in ("copyright_office", "nz_composition", "us_composition", "us_recording"):
-        c = Counter(bucket(str(x[col])) for x in out_rows)
-        print(f"{col:17}", ", ".join(f"{k}: {v} ({100 * v / total:.0f}%)" for k, v in c.most_common()))
-    both_us = sum(1 for x in out_rows if x["us_recording"] == "public domain" and "public domain" in x["us_composition"])
-    print(f"public domain in the US for both recording and composition: {both_us} ({100 * both_us / total:.0f}%)")
-    print(f"results: {args.out}")
+    summarize(out_rows, args.out)
 
 
 if __name__ == "__main__":
