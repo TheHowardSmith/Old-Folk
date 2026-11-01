@@ -318,6 +318,11 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     res.year, res.year_note = year, year_note
     if year is not None and year > rules.year_max:
         return exclude(f"dated {year} (after {rules.year_max})")
+    index = rules.load_schedules() if rules.exclude_us_claimed else None
+    if index is not None and not (year and year <= rules.us_public_domain_year):
+        claimed, owner = index.match(title, artist or "")
+        if claimed == "yes":
+            return exclude(f"recording claimed in the US (pre-1972 schedules): {owner}")
     if kind == "78rpm":
         if year is None:
             res.year_note = "undated 78rpm disc (format obsolete by mid-1960s)"

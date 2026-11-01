@@ -548,6 +548,14 @@ exclude_conditions:
 # false = keep them in the main list (the writer is still recorded in reports).
 flag_named_writers: false
 
+# Recordings claimed by a rights owner in the US Copyright Office's Pre-1972
+# Sound Recording Schedules (title + performer match) are excluded, unless
+# recorded in or before `us_public_domain_year` (US protection has expired).
+# Needs cache/pre1972_schedules.jsonl (scripts/fetch_pre1972_schedules.py);
+# when that file is missing the rule is skipped with a warning.
+exclude_us_claimed_recordings: true
+us_public_domain_year: 1925
+
 # Track length limits in seconds.
 min_seconds: 30
 max_seconds: 2400

@@ -15,7 +15,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -23,57 +22,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from oldfolk_builder.classify import as_text, parse_year  # noqa: E402
 
-GENERIC = set("""the and his her their with orchestra orch band trio quartet quintet sextet ensemble
-company co chorus choir singers players boys girls brothers sisters family string strings
-featuring feat vocal refrain accompaniment acc by of de la le el los las y e et und mit
-mr mrs miss mme dr sir jr sr""".split())
+from oldfolk_builder.schedules import ScheduleIndex  # noqa: E402
 
 
-def norm(s: str) -> str:
-    s = re.sub(r"\(.*?\)|\[.*?\]", " ", str(s).lower())
-    s = re.sub(r"[^\w ]+", " ", s)
-    return re.sub(r"\s+", " ", s).strip()
+def load_index(path: Path) -> ScheduleIndex:
+    return ScheduleIndex.load(path)
 
 
-def first_title(title: str) -> str:
-    t = str(title).replace('"', "").strip()
-    t = re.split(r";|\s-\s|\s/\s", t)[0]
-    t = re.sub(r"^\(?[a-d1-4][.)]\s*", "", t, flags=re.I)
-    return norm(t)
-
-
-def name_words(s: str) -> set[str]:
-    return {w for w in norm(s).split() if len(w) > 2 and w not in GENERIC}
-
-
-def as_list(v):
-    if v is None:
-        return []
-    return [x for x in (v if isinstance(v, list) else [v]) if x and str(x).strip()]
-
-
-def load_index(path: Path):
-    by_title = defaultdict(list)
-    for line in open(path, encoding="utf-8"):
-        d = json.loads(line)
-        artists = " ".join(as_list(d.get("artist")) + as_list(d.get("alt_artist")))
-        owner = ", ".join(as_list(d.get("rights_owner")))
-        for t in as_list(d.get("title")) + as_list(d.get("alt_title")):
-            key = first_title(t)
-            if key:
-                by_title[key].append((name_words(artists), owner))
-    return by_title
-
-
-def match(title: str, creator: str, index) -> tuple[str, str]:
-    cands = index.get(first_title(title), [])
-    if not cands:
-        return "no", ""
-    words = name_words(creator)
-    hits = [owner for aw, owner in cands if words and aw & words]
-    if hits:
-        return "yes", Counter(hits).most_common(1)[0][0]
-    return "title only", Counter(o for _, o in cands).most_common(1)[0][0]
+def match(title: str, creator: str, index: ScheduleIndex) -> tuple[str, str]:
+    return index.match(title, creator)
 
 
 def main():
@@ -85,7 +42,7 @@ def main():
     args = ap.parse_args()
 
     index = load_index(Path(args.schedules))
-    print(f"index: {sum(len(v) for v in index.values())} title entries, {len(index)} distinct titles")
+    print(f"index: {sum(len(v) for v in index.by_title.values())} title entries, {len(index.by_title)} distinct titles")
     rows = {}
     for line in open(args.items):
         r = json.loads(line)

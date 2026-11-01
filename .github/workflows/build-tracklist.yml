@@ -76,12 +76,43 @@ jobs:
           path: builder/cache
           key: tracklist-cache-${{ github.run_id }}
 
+      - name: Is fetching complete?
+        id: done
+        run: |
+          echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+          if [ "${{ inputs.mode }}" = "sample" ] || oldfolk-build status --require-complete; then
+            echo "complete=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "complete=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # US Pre-1972 Sound Recording Schedules (recordings claimed by labels),
+      # used to exclude claimed recordings. Refreshed monthly; ~35 min to fetch.
+      - name: Restore US pre-1972 schedules
+        id: sched
+        if: inputs.mode == 'full' && steps.done.outputs.complete == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: builder/cache/pre1972_schedules.jsonl
+          key: pre1972-schedules-${{ steps.done.outputs.month }}
+
+      - name: Fetch US pre-1972 schedules
+        if: inputs.mode == 'full' && steps.done.outputs.complete == 'true' && steps.sched.outputs.cache-hit != 'true'
+        run: python scripts/fetch_pre1972_schedules.py cache/pre1972_schedules.jsonl
+
+      - name: Save US pre-1972 schedules
+        if: inputs.mode == 'full' && steps.done.outputs.complete == 'true' && steps.sched.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: builder/cache/pre1972_schedules.jsonl
+          key: pre1972-schedules-${{ steps.done.outputs.month }}
+
       - name: Build
         id: build
         run: |
           if [ "${{ inputs.mode }}" = "sample" ]; then
             oldfolk-build build --sample --out ../dist
-          elif oldfolk-build status --require-complete; then
+          elif [ "${{ steps.done.outputs.complete }}" = "true" ]; then
             oldfolk-build build --out ../dist
           else
             echo "::notice::Fetch not finished yet; starting a continuation run."

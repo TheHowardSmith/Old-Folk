@@ -43,13 +43,37 @@ class Rules:
     exclude_conditions: frozenset[str] = frozenset()
     flag_named_writers: bool = True
     instruction_ensembles: tuple[str, ...] = ()
+    exclude_us_claimed: bool = False
+    us_public_domain_year: int = 1925
+    schedules: object = None          # ScheduleIndex, loaded on first use (see load_schedules)
+    schedules_path: Path | None = None
     band_tags: frozenset[str] = frozenset()
     band_words: tuple[str, ...] = ()
     overrides: dict = field(default_factory=dict)
 
+    def load_schedules(self):
+        """The US pre-1972 schedules index, loaded once on first use."""
+        if self.schedules is None and self.schedules_path is not None:
+            from .schedules import ScheduleIndex
+            self.schedules = ScheduleIndex.load(self.schedules_path)
+        return self.schedules
+
     # Tags that only count as folk evidence on 78rpm discs (on later LPs they
     # usually mean commercial country/pop).
     tags_78_only: frozenset[str] = frozenset({"country", "yodeling", "old time"})
+
+
+def _schedules_path(cls: dict) -> Path | None:
+    if not cls.get("exclude_us_claimed_recordings"):
+        return None
+    path = BUILDER_DIR / "cache" / "pre1972_schedules.jsonl"
+    if not path.exists():
+        import logging
+        logging.getLogger(__name__).warning(
+            "%s not found: US-claimed recordings will NOT be excluded "
+            "(run scripts/fetch_pre1972_schedules.py)", path)
+        return None
+    return path
 
 
 def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) -> Rules:
@@ -89,6 +113,9 @@ def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) 
         genre_region=dict(reg.get("genre_region") or {}),
         exclude_conditions=_lower_set(cls.get("exclude_conditions")),
         flag_named_writers=bool(cls.get("flag_named_writers", True)),
+        exclude_us_claimed=bool(cls.get("exclude_us_claimed_recordings", False)),
+        us_public_domain_year=int(cls.get("us_public_domain_year", 1925)),
+        schedules_path=_schedules_path(cls),
         instruction_ensembles=tuple(str(p).lower() for p in cls.get("instruction_ensembles") or []),
         band_tags=_lower_set(cls.get("band_tags")),
         band_words=tuple(str(p).lower() for p in cls.get("band_words") or []),

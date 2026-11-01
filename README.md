@@ -22,6 +22,7 @@ Old Folk plays a never-ending random stream of public-domain folk and field reco
 - **Background playback:** keeps playing with the screen off, with notification and lock-screen controls.
 - **Old-radio look:** a tuning dial whose needle points at the year of the recording, a green "magic eye" that glows while playing, bakelite-style knobs on a cloth grille. Light and dark themes.
 - **Even volume:** each track gets a quick level read when it downloads so everything plays at about the same loudness, and a limiter dips the sudden thumps and pops common on unmastered 78 transfers.
+- **Skips very noisy recordings:** the same read checks for heavy surface noise (hiss band vs music band, plus spectral flatness), and the radio skips tracks where the noise swamps the music, about 15% of 78s. It can be switched off under About; playlists always play everything.
 - **Smooth playback, even when skipping a lot:** 5 tracks are fetched ahead at first, then 20 ahead once you're streaming. Your last 20 tracks are kept too, so the previous button works instantly. Everything goes in a capped 600 MB cache, and tracks that won't play are skipped automatically. Fetching 20 ahead uses more mobile data.
 - **History tab:** scroll up through everything you've ever streamed on this phone, and down through the tracks coming next. Older tracks aren't stored on the phone; tapping one streams it again.
 - **Track details:** title, performer, year, region and genre, with a link to the recording's Internet Archive page.
@@ -80,6 +81,7 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 - Recordings whose descriptions say they are **restricted, sacred/secret or culturally sensitive are excluded**. Indigenous and ceremonial recordings are flagged for a human check.
 - Jazz, pop (including Latin dance music such as tango and bolero), classical, opera, spoken word, and military/regimental bands are excluded, as are folk-dance instruction records (arranged studio versions made for dance classes, e.g. Folkraft or Michael Herman's Folk Orchestra).
 - 78s graded **poor** or **worn** by the digitiser are excluded as too noisy.
+- Recordings a rights owner claims in the US Copyright Office's **Pre-1972 Sound Recording Schedules** (matched by title and performer) are excluded, unless recorded in 1925 or earlier, when US protection has expired. The index is refreshed monthly by the track-list workflow.
 - No audio is ever stored in this repository.
 
 ## Rights notice

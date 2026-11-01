@@ -18,6 +18,15 @@ class Settings(context: Context) {
         _genres.value = keys
     }
 
+    private val _skipNoisy = MutableStateFlow(prefs.getBoolean("skip_noisy", true))
+    /** Radio skips tracks the noise check flags as having heavy surface noise. */
+    val skipNoisy: StateFlow<Boolean> = _skipNoisy.asStateFlow()
+
+    fun setSkipNoisy(on: Boolean) {
+        prefs.edit().putBoolean("skip_noisy", on).apply()
+        _skipNoisy.value = on
+    }
+
     var askedNotificationPermission: Boolean
         get() = prefs.getBoolean("asked_notifications", false)
         set(v) = prefs.edit().putBoolean("asked_notifications", v).apply()

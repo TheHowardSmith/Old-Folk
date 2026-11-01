@@ -4,6 +4,7 @@ from oldfolk_builder.config import load_rules
 from oldfolk_builder.tracks import parse_length, pick_files
 
 RULES = load_rules()
+RULES.schedules_path = None   # tests never use the real US schedules index
 
 
 def mp3(name, original=None, fmt="VBR MP3", length="180.0", **extra):
@@ -235,3 +236,17 @@ def test_folk_dance_instruction_records_excluded():
         assert r.status == EXCLUDE and "instruction" in r.reasons[0]
     r = classify_item("j", "78rpm", item({"genre": "Folk Dance", "publisher": "Folk Dancer"}), RULES)
     assert r.status == EXCLUDE
+
+
+def test_us_claimed_recordings_excluded_unless_us_public_domain():
+    from oldfolk_builder.schedules import ScheduleIndex
+    rules = load_rules()
+    rules.exclude_us_claimed = True
+    rules.schedules = ScheduleIndex({"sally goodin": [(frozenset({"robertson"}), "Sony Music Entertainment")]})
+    meta = {"genre": "Old Time", "title": "Sally Goodin", "creator": "Eck Robertson"}
+    r = classify_item("s", "78rpm", item(meta), rules)
+    assert r.status == EXCLUDE and "Sony" in r.reasons[0]
+    # recorded 1922: US protection has expired, so the claim doesn't matter
+    assert classify_item("s", "78rpm", item(dict(meta, date="1922")), rules).status == INCLUDE
+    # same title, different performer: kept
+    assert classify_item("t", "78rpm", item(dict(meta, creator="Other Fiddler")), rules).status == INCLUDE
