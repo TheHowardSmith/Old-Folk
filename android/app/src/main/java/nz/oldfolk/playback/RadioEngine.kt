@@ -75,7 +75,19 @@ class RadioEngine(
         val playedCount: Int = 0,
     )
 
-    val player: ExoPlayer = ExoPlayer.Builder(context)
+    /** Audio chain: the spike limiter runs on every track before output. */
+    private val renderers = object : androidx.media3.exoplayer.DefaultRenderersFactory(context) {
+        override fun buildAudioSink(
+            context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean,
+        ): androidx.media3.exoplayer.audio.AudioSink =
+            androidx.media3.exoplayer.audio.DefaultAudioSink.Builder(context)
+                .setEnableFloatOutput(enableFloatOutput)
+                .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                .setAudioProcessors(arrayOf(SpikeLimiter()))
+                .build()
+    }
+
+    val player: ExoPlayer = ExoPlayer.Builder(context, renderers)
         .setMediaSourceFactory(DefaultMediaSourceFactory(mediaCache.dataSourceFactory))
         .setAudioAttributes(
             AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
