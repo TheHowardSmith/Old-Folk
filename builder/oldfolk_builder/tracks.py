@@ -56,6 +56,36 @@ def _as_text(value) -> str | None:
     return value or None
 
 
+IMAGE_RANK = {"item image": 0, "jpeg": 1, "png": 3, "item tile": 4, "jpeg thumb": 5, "thumbnail": 6}
+
+
+def pick_image(ident: str, files: list[dict]) -> str | int | None:
+    """Best cover/label image for an item.
+
+    Returns 1 / 2 for the standard "<id>_itemimage.jpg" / ".png" scans (stored
+    as one-character flags to keep shards small), another file name, or None
+    (the app then falls back to the Archive's thumbnail service).
+    """
+    best = None
+    for f in files:
+        name = f.get("name", "")
+        fmt = str(f.get("format", "")).lower()
+        if not name.lower().endswith((".jpg", ".jpeg", ".png")) or fmt == "spectrogram" or "spectrogram" in name:
+            continue
+        if fmt == "png" and f.get("source") == "derivative":
+            continue   # waveform/spectrogram-style renders of the audio
+        rank = IMAGE_RANK.get(fmt, 7)
+        if best is None or rank < best[0]:
+            best = (rank, name)
+    if best is None or best[0] >= 4:
+        return None    # only the generic tile: the thumbnail service serves the same
+    if best[1] == f"{ident}_itemimage.jpg":
+        return 1
+    if best[1] == f"{ident}_itemimage.png":
+        return 2
+    return best[1]
+
+
 def pick_files(files: list[dict]) -> list[FileChoice]:
     """One MP3 per underlying recording.
 

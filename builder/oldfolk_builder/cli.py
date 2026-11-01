@@ -111,7 +111,7 @@ def main(argv=None):
     s.add_argument("--sample", action="store_true", help="only the sample")
     s.add_argument("--limit", type=int, help="stop after N items (for testing)")
     s.add_argument("--workers", type=int, default=2, help="parallel requests (max 2)")
-    s.add_argument("--pause", type=float, default=0.5, help="seconds between requests per worker")
+    s.add_argument("--pause", type=float, default=0.25, help="seconds between requests per worker")
 
     s = sub.add_parser("build", help="classify cached items and write shards")
     s.add_argument("--sample", action="store_true", help="only the sample")

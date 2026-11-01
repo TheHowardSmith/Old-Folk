@@ -6,8 +6,8 @@ name: Build track list
 #
 # mode=sample : quick test list from a random sample of items (~10 min)
 # mode=full   : everything. Metadata fetching is slow and polite, so a run
-#               stops after ~5 h and saves its cache; run it again to resume.
-#               The list is published only once every item has been fetched.
+#               stops after ~5 h, saves its cache and starts the next run
+#               itself; the list is published once every item is fetched.
 
 on:
   workflow_dispatch:
@@ -25,6 +25,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # lets a full run start its own continuation
 
 concurrency:
   group: build-tracklist
@@ -65,7 +66,7 @@ jobs:
       - name: Fetch metadata (full, time-boxed)
         if: inputs.mode == 'full'
         run: |
-          timeout 290m oldfolk-build fetch || true
+          timeout 300m oldfolk-build fetch --pause 0.25 || true
           oldfolk-build status
 
       - name: Save metadata cache
@@ -83,9 +84,16 @@ jobs:
           elif oldfolk-build status --require-complete; then
             oldfolk-build build --out ../dist
           else
-            echo "::notice::Fetch not finished yet; run this workflow again to continue."
+            echo "::notice::Fetch not finished yet; starting a continuation run."
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "continue=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Start continuation run
+        if: steps.build.outputs.continue == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run build-tracklist.yml --ref "$GITHUB_REF_NAME" -f mode=full
 
       - name: Publish to the tracklist release
         if: steps.build.outputs.skip != 'true'

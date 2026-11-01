@@ -275,6 +275,8 @@ exclude_tags:
   - soul
   - soul music
   - doo-wop
+  - novelty
+  - electronic
   - tango
   - tango-fox
   - rumba
@@ -284,8 +286,6 @@ exclude_tags:
   - bolero
   - samba
   - conga
-  - novelty
-  - electronic
   - psychedelic
   - psychedelic folk
   - acid folk
@@ -303,6 +303,56 @@ synthetic_tags:
   - synthesized
   - computer generated
   - text to speech
+
+# Military / regimental bands: always excluded. `band_tags` match genre or
+# subject tags; `band_words` match the performer or title (whole words).
+band_tags:
+  - military
+  - militær
+  - march
+  - quick march
+  - medley march
+  - fox-march
+  - patriotic-us
+  - patriotic (non-us)
+  - anthem
+  - national
+band_words:
+  - regiment
+  - regimental
+  - military band
+  - military
+  - guards band
+  - band of the
+  - grenadier guards
+  - coldstream guards
+  - scots guards
+  - irish guards
+  - welsh guards
+  - life guards
+  - royal marines
+  - marine band
+  - army band
+  - navy band
+  - naval band
+  - air force band
+  - police band
+  - garde républicaine
+  - garde republicaine
+  - musikkår
+  - musikkorps
+  - flottans
+  - livgardets
+  - militærmusik
+  - militärmusik
+  - infantry
+  - artillery
+  - cavalry
+  - fusiliers
+  - pipes and drums
+  - pipes & drums
+  - drum corps
+  - bugle corps
 
 # Spoken word / non-music: always excluded, even with folk tags.
 spoken_tags:
@@ -471,6 +521,15 @@ traditional_composers:
   - p.d.
   - pd
   - n/a
+
+# Disc condition grades (78rpm `condition` field) that are excluded as too noisy.
+exclude_conditions:
+  - poor
+  - worn
+
+# Flag tracks that credit a named (non-traditional) writer for review?
+# false = keep them in the main list (the writer is still recorded in reports).
+flag_named_writers: false
 
 # Track length limits in seconds.
 min_seconds: 30

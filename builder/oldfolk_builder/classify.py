@@ -18,7 +18,7 @@ import re
 from dataclasses import dataclass, field
 
 from .config import Rules
-from .tracks import FileChoice, pick_files
+from .tracks import FileChoice, pick_files, pick_image
 
 INCLUDE, FLAG, EXCLUDE = "include", "flag", "exclude"
 
@@ -32,6 +32,12 @@ WRITER_RE = re.compile(
     r"\s*\|?\s*([^|\n]{2,80})",
     re.I,
 )
+# Credits that are really instrumentation or genre notes, not writer names.
+INSTRUMENT_RE = re.compile(
+    r"\b(piano|vocals?|instrumental|bass|guitars?|drums?|trumpet|tenor|sax(ophone)?|orch(estra)?|"
+    r"trombone|clarinet|harmonica|violin|caller|accordion|banjo|fiddle|mandolin|organ|cornet|flute|"
+    r"polka|oberek|waltz|mazurka|hudba|sung by|music by|music|refrain|chorus|duet|quartet|trio|"
+    r"ensemble|band|unknown performer|written by|words by|lyrics by)\b", re.I)
 NOT_A_NAME = re.compile(r"^(none|n/?a|not? (listed|legible|given|shown)|none legible|illegible|"
                         r"unknown|unlisted|various|-+|\?+)$", re.I)
 
@@ -46,6 +52,7 @@ class Track:
     region: str
     genre: str
     seconds: float | None = None
+    picture: str | int | None = None
 
 
 @dataclass
@@ -151,7 +158,7 @@ def extract_writers(meta: dict, files: list[FileChoice], rules: Rules) -> list[s
             low = name.lower()
             if not name or len(name) < 2 or len(name) > 40 or len(name.split()) > 5:
                 continue
-            if NOT_A_NAME.match(name):
+            if NOT_A_NAME.match(name) or INSTRUMENT_RE.search(name):
                 continue
             if low in rules.traditional_composers or low.startswith(("trad", "arr", "traditional")):
                 continue
@@ -264,6 +271,10 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     tags = extract_tags(meta)
     blob = " | ".join([title, desc, notes, rights, " | ".join(sorted(tags))]).lower()
 
+    condition = str(meta.get("condition") or "").strip().lower()
+    if condition in rules.exclude_conditions:
+        return exclude(f"disc condition: {condition}")
+
     # 1. Restricted / unavailable material.
     if str(meta.get("access-restricted-item", "")).lower() == "true":
         return exclude("access-restricted item (lending only)")
@@ -282,6 +293,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     spoken = tags & rules.spoken_tags
     if spoken:
         return exclude(f"spoken word / non-music: {', '.join(sorted(spoken))}")
+    bands = sorted(tags & rules.band_tags) + find_words(f"{title} | {artist or ''}".lower(), rules.band_words)
+    if bands:
+        return exclude(f"military/regimental band: {', '.join(bands[:3])}")
     genre = specific_genre(tags, kind, rules)
     excluded = tags & rules.exclude_tags
     generic = is_generic_folk(tags - excluded, rules)
@@ -338,7 +352,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     approved = {w.lower() for w in (ov.get("approved_writers") or [])}
     unapproved = [w for w in writers if w.lower() not in approved]
     res.writers = writers
-    if unapproved:
+    if unapproved and rules.flag_named_writers:
         flags.append(f"named writer (check composition rights): {'; '.join(unapproved[:4])}")
 
     region, region_src = guess_region(meta, tags, title, desc, genre, rules)
@@ -347,6 +361,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
         genre = rules.region_genre.get(region, "world")
     res.genre, res.region = genre, region
     various = (artist or "").strip().lower() in ("various", "various artists")
+    picture = pick_image(ident, files)
     multi = len(choices) > 1
 
     for c in choices:
@@ -368,7 +383,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
         res.tracks.append(Track(
             id=ident, file=c.name, title=t_title,
             artist=(c.artist or artist),
-            year=year, region=t_region, genre=t_genre, seconds=c.seconds,
+            year=year, region=t_region, genre=t_genre, seconds=c.seconds, picture=picture,
         ))
     if not res.tracks:
         return exclude("no MP3 of usable length")

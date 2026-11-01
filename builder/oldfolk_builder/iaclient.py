@@ -25,7 +25,7 @@ USER_AGENT_SUFFIX = " OldFolkListBuilder/1.0 (+https://github.com/thehowardsmith
 META_KEYS = (
     "identifier", "title", "creator", "date", "year", "genre", "subject", "description",
     "notes", "language", "coverage", "collection", "source", "publisher", "rights",
-    "licenseurl", "composer", "lyricist", "access-restricted-item", "mediatype", "runtime",
+    "licenseurl", "composer", "lyricist", "condition", "access-restricted-item", "mediatype", "runtime",
 )
 FILE_KEYS = ("name", "source", "format", "title", "creator", "length", "original", "track",
              "private", "composer", "size")

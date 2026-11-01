@@ -33,6 +33,7 @@ class Playlists(
     private val context: Context,
     private val scope: CoroutineScope,
     private val failures: FailureLog,
+    private val levels: nz.oldfolk.playback.Levels,
 ) {
     private val file = File(context.filesDir, "playlists.json")
     private val downloadDir = File(context.filesDir, "downloads").apply { mkdirs() }
@@ -113,6 +114,7 @@ class Playlists(
                 try {
                     Http.download(next.streamUrl, localFile(next)) { p -> setStatus(next.key, DownloadStatus.Downloading(p)) }
                     setStatus(next.key, DownloadStatus.Done)
+                    levels.analyzeFile(next.key, localFile(next))
                 } catch (e: Exception) {
                     Log.w("Playlists", "download failed: ${next.id}/${next.file}", e)
                     val reason = describe(e)

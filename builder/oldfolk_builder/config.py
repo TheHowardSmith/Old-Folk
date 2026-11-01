@@ -40,6 +40,10 @@ class Rules:
     max_seconds: float
     regions: dict[str, dict[str, tuple[str, ...]]]
     genre_region: dict[str, str]
+    exclude_conditions: frozenset[str] = frozenset()
+    flag_named_writers: bool = True
+    band_tags: frozenset[str] = frozenset()
+    band_words: tuple[str, ...] = ()
     overrides: dict = field(default_factory=dict)
 
     # Tags that only count as folk evidence on 78rpm discs (on later LPs they
@@ -82,5 +86,9 @@ def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) 
         max_seconds=float(cls.get("max_seconds", 2400)),
         regions=regions,
         genre_region=dict(reg.get("genre_region") or {}),
+        exclude_conditions=_lower_set(cls.get("exclude_conditions")),
+        flag_named_writers=bool(cls.get("flag_named_writers", True)),
+        band_tags=_lower_set(cls.get("band_tags")),
+        band_words=tuple(str(p).lower() for p in cls.get("band_words") or []),
         overrides=overrides,
     )
