@@ -1,0 +1,70 @@
+# Best-guess region. Checked in this order:
+#   1. genre/subject tags and title words (keywords below, whole-word match)
+#   2. the item's `language` field (languages below)
+#   3. the item's `coverage` field (keywords below)
+#   4. genre default (genre_region below)
+# The first region that matches wins. Keep keyword lists culture-specific;
+# "Spanish" is in Latin America only via language, because most Spanish-
+# language 78s on the Archive are Latin American.
+
+regions:
+  "Indigenous North America":
+    keywords: [eskimo, eskimos, inuit, inupiat, yupik, aleut, native american, american indian, first nations, navajo, navaho, apache, sioux, lakota, dakota sioux, cherokee, hopi, zuni, pueblo, iroquois, seneca, mohawk, ojibwe, ojibwa, chippewa, cree, blackfoot, crow indian, kiowa, comanche, cheyenne, arapaho, pawnee, osage, seminole, salish, kwakiutl, haida, tlingit, indigenous music of north america]
+    languages: [navajo, nav, cherokee, chr, lakota, lkt, inuktitut, iku, ojibwa, oji, cree, cre]
+  "British Isles":
+    keywords: [glasgow, edinburgh, dublin, belfast, highland, highlands, irish, ireland, scottish, scotland, scotch, welsh, wales, english folk, celtic, gaelic, uilleann, bagpipe, strathspey, hornpipe, morris, cornish, manx, hebrides, shetland, ulster, donegal, kerry, connaught]
+    languages: [irish, gaelic, scottish gaelic, welsh, gle, gla, wel, cym]
+  "USA":
+    keywords: [american music, american folk, appalachian, hillbilly, cowboy, bluegrass, old time, ozark, cajun, creole, zydeco, louisiana, kentucky, tennessee, virginia, carolina, georgia, texas, alabama, mississippi, arkansas, west virginia, sacred harp, negro spirituals, delta blues, piedmont]
+    coverage: [usa, united states, u.s.a, california, texas, new york, kentucky, tennessee, virginia, louisiana, mississippi]
+  "Canada":
+    keywords: [canada, canadian, quebec, québécois, acadian, newfoundland, cape breton, nova scotia]
+    coverage: [canada, quebec, newfoundland, nova scotia]
+  "Caribbean":
+    keywords: [calypso, trinidad, jamaica, jamaican, mento, cuba, cuban, afro-cuban, haiti, haitian, martinique, guadeloupe, biguine, beguine, bahamas, barbados, puerto rico, dominican, merengue]
+    languages: [haitian, creole]
+  "Latin America":
+    keywords: [panama, guatemala, honduras, nicaragua, ecuador, mexico, mexican, corrido, ranchera, huapango, mariachi, argentina, argentine, folklore argentino, chile, chilean, peru, peruvian, bolivia, colombia, venezuela, brazil, brazilian, baiao, choro, andean, zamba, chacarera, cueca, joropo, porro]
+    languages: [spanish, spa, portuguese (brazil), quechua, que, aymara, nahuatl, guarani]
+  "Hawaii & Pacific":
+    keywords: [new guinea, australia, australian, melanesia, melanesian, micronesia, solomon islands, vanuatu, new zealand, hawaiian, hawaii, hula, ukulele, steel guitar, maori, aotearoa, samoa, samoan, tahiti, tahitian, tonga, tongan, fiji, fijian, polynesian, pacific, papua, aboriginal, torres strait]
+    languages: [hawaiian, haw, maori, mao, mri, samoan, smo, tongan, ton, fijian, fij, tahitian, tah]
+  "Africa":
+    keywords: [malagasy, madagascar, pygmy, pygmies, ituri, bushmen, africa, african, palm wine, palm-wine, highlife, juju, congo, congolese, ghana, ghanaian, nigeria, nigerian, kenya, kenyan, zulu, xhosa, ethiopia, ethiopian, mali, senegal, sierra leone, uganda, tanzania, zimbabwe, mbira, kora]
+    languages: [swahili, swa, zulu, zul, xhosa, xho, yoruba, yor, igbo, ibo, hausa, hau, amharic, amh, twi, akan, aka, lingala, lin, wolof, wol, shona, sna]
+  "Middle East & Caucasus":
+    keywords: [hebrew, israeli, israel, arabian, arabic, arab, turkish, turkey, armenian, armenia, persian, iran, iranian, egypt, egyptian, syrian, lebanese, kurdish, georgian, azerbaijani, oud, maqam]
+    languages: [hebrew, heb, arabic, ara, turkish, tur, armenian, arm, hye, persian, per, fas, farsi, kurdish, kur, georgian, geo, kat, azerbaijani, aze, assyrian, syriac, syr]
+  "South Asia":
+    keywords: [india, indian, hindustani, carnatic, bengali, punjabi, pakistan, sri lanka, nepal, raga]
+    languages: [hindi, hin, bengali, ben, punjabi, pan, tamil, tam, telugu, tel, urdu, urd, marathi, mar, gujarati, guj, sinhala, sin, nepali, nep]
+  "East Asia":
+    keywords: [ainu, japan, japanese, minyo, min'yo, min'yō, shamisen, shakuhachi, koto, okinawa, okinawan, china, chinese, cantonese, korea, korean, mongolian, tibet, tibetan]
+    languages: [japanese, jpn, chinese, chi, zho, cantonese, mandarin, korean, kor, mongolian, mon, tibetan, tib, bod]
+  "Southeast Asia":
+    keywords: [borneo, sarawak, sabah, java, javanese, bali, balinese, gamelan, indonesia, indonesian, philippines, filipino, thai, thailand, vietnam, vietnamese, burma, burmese, malay, cambodia, laos]
+    languages: [thai, tha, vietnamese, vie, indonesian, ind, javanese, jav, malay, may, msa, tagalog, tgl, filipino, fil, burmese, bur, mya, khmer, khm, lao]
+  "Nordic":
+    keywords: [swedish, sweden, norwegian, norway, danish, denmark, finnish, finland, icelandic, iceland, sami, joik, faroese, vise, schottis, hardanger]
+    languages: [swedish, swe, norwegian, nor, nob, nno, danish, dan, finnish, fin, icelandic, ice, isl, sami, smi, faroese, fao]
+  "Central & Eastern Europe":
+    keywords: [gipsy, magyar, polish, poland, polka, oberek, mazurka, mazur, krakowiak, kujawiak, kolomyika, ukrainian, ukraine, russian, russia, czech, slovak, hungarian, hungary, csárdás, csardas, romanian, romania, serbian, croatian, slovenian, bulgarian, balkan, yugoslav, macedonian, albanian, lithuanian, latvian, estonian, belarusian, gypsy, romani, tamburitza, kolo, klezmer, yiddish]
+    languages: [polish, pol, ukrainian, ukr, russian, rus, czech, cze, ces, slovak, slo, slk, hungarian, hun, romanian, rum, ron, serbian, srp, croatian, hrv, scr, serbo-croation, serbo-croatian, slovenian, slv, bulgarian, bul, yugoslavian, macedonian, mac, mkd, albanian, alb, sqi, lithuanian, lit, latvian, lav, estonian, est, belarusian, bel, yiddish, yid, romani, rom]
+  "Southern Europe":
+    keywords: [greek, greece, rebetiko, rembetiko, bouzouki, italian, italy, neapolitan, sicilian, sardinian, tarantella, tarantelle, portugal, portuguese, fado, spain, spanish folk, flamenco, andalusian, basque, catalan, galician, maltese, cyprus, sephardic, ladino]
+    languages: [greek, gre, ell, italian, ita, neapolitan, nap, sicilian, scn, portuguese, por, catalan, cat, basque, baq, eus, galician, glg, maltese, mlt, ladino, lad]
+  "Western Europe":
+    keywords: [german, germany, austrian, austria, bavarian, tyrolean, tirol, alpine, swiss, switzerland, landler, ländler, rheinlander, volksmusik, yodel, french, france, breton, brittany, auvergne, occitan, dutch, netherlands, flemish, belgian, luxembourg]
+    languages: [german, ger, deu, french, fre, fra, dutch, dut, nld, flemish, swiss, breton, bre, occitan, oci, luxembourgish, ltz, frisian, fry]
+
+# When nothing above matches.
+genre_region:
+  oldtime: "USA"
+  blues: "USA"
+  gospel: "USA"
+  american: "USA"
+  british: "British Isles"
+  caribbean: "Caribbean"
+  pacific: "Hawaii & Pacific"
+  african: "Africa"
+  latin: "Latin America"

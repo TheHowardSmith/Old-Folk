@@ -1,0 +1,50 @@
+# --- Audio: never commit recordings ---
+*.mp3
+*.flac
+*.ogg
+*.oga
+*.opus
+*.wav
+*.m4a
+*.aac
+*.aif
+*.aiff
+*.wma
+
+# --- Generated track list / builder state ---
+builder/out*/
+builder/cache/
+*.sqlite
+*.sqlite3
+*.db
+/dist/
+
+# --- Secrets ---
+*.jks
+*.keystore
+keystore.properties
+local.properties
+.env
+*.pem
+secrets/
+
+# --- Python ---
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# --- Android / Gradle build output ---
+android/.gradle/
+android/build/
+android/app/build/
+android/**/build/
+android/captures/
+android/.kotlin/
+*.apk
+*.aab
+*.idx
+.idea/
+*.iml
+.DS_Store

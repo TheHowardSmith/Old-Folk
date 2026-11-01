@@ -1,0 +1,52 @@
+# Internet Archive searches that feed the list builder.
+#
+# Each source is one advanced-search query. Every item found is fetched once,
+# cached, and then classified offline, so broad queries are fine: the
+# classifier (rules/classify.yaml) decides what gets in.
+#
+# `kind` tells the classifier how much to trust the item's date:
+#   78rpm  - digitised shellac discs. The format itself was obsolete by the
+#            mid-1960s, so an undated 78 is still treated as pre-1970.
+#   other  - LPs, tapes, CDs, uploads. The date must be present, <= 1970 and
+#            look like the original recording date.
+
+year_max: 1970
+
+sources:
+  - name: 78rpm-by-genre
+    kind: 78rpm
+    query: >-
+      collection:78rpm AND mediatype:audio AND genre:(
+      Folk OR "Folk Dance" OR "Folk Song" OR folk OR Folklore OR Traditional OR Ethnic
+      OR Hillbilly OR "Old Time" OR "Square Dance" OR "Country Dance" OR "Contra Dance"
+      OR "Circle Dance" OR Hoedown OR Country OR country OR Bluegrass OR Cowboy OR Banjo
+      OR Hawaiian OR "Hawaiian Waltz" OR Hula OR Calypso OR Caribbean
+      OR Blues OR blues OR Gospel OR Spiritual OR spiritual
+      OR Greek OR Jewish OR Klezmer OR Hebrew OR Irish OR Jig OR Reel OR Hornpipe
+      OR Strathspey OR "Scotch Song" OR "Scotch Ballad" OR "Scottish Country Dance"
+      OR Bagpipe OR "Morris Dance" OR Shanty OR Polka OR Oberek OR Mazurka OR Mazur
+      OR Krakowiak OR Kujawiak OR Kolomyika OR Schottische OR Schottis OR Landler
+      OR Rheinlander OR Csárdás OR Gypsy OR Lullaby OR Yodeling OR Corrido OR Son
+      OR Flamenco OR Baiao OR African OR Arabian OR Turkish OR Japanese OR Java
+      OR Gamelan OR "Indigenous Music Of North America" OR vise OR Concertina)
+
+  - name: 78rpm-untagged-by-subject
+    kind: 78rpm
+    query: >-
+      collection:78rpm AND mediatype:audio AND NOT genre:* AND subject:(
+      folk OR "folk music" OR "folk songs" OR traditional OR hillbilly OR fiddle OR hawaiian OR calypso OR klezmer OR celtic OR irish
+      OR "field recording" OR ethnic)
+
+  - name: other-audio-dated
+    kind: other
+    query: >-
+      mediatype:audio AND NOT collection:78rpm
+      AND (year:[1880 TO 1970] OR date:[1880-01-01 TO 1970-12-31])
+      AND (subject:(folk OR "folk music" OR "folk songs" OR "folk song" OR traditional
+      OR "field recording" OR "field recordings" OR ethnomusicology OR ethnographic
+      OR "old-time" OR hillbilly OR bluegrass OR calypso OR hawaiian
+      OR klezmer OR "palm wine" OR "palm-wine" OR highlife OR minyo OR "min'yo"
+      OR rebetiko OR rembetiko OR fado OR flamenco OR "work songs" OR spirituals
+      OR ballads OR "sea shanties" OR "country blues")
+      OR genre:(folk OR "folk songs" OR "folk music" OR traditional
+      OR "field recordings" OR ethnic OR "Folk, World, & Country"))

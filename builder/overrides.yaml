@@ -1,0 +1,10 @@
+# Manual review decisions. These survive rebuilds.
+#
+# include:           item ids to include even though they were flagged
+# exclude:           item ids to always exclude (also use for removal requests)
+# approved_writers:  composer/writer names whose works are out of copyright
+#                    (e.g. died 1975 or earlier); their tracks stop being flagged
+
+include: []
+exclude: []
+approved_writers: []
