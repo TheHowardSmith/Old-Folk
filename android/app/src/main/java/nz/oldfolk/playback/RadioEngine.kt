@@ -491,7 +491,7 @@ class RadioEngine(
             if (t != null) queue += t else if (i < idx) idx--
         }
         if (player.mediaItemCount == 0) idx = -1
-        val upNext = if (idx >= 0) queue.drop(idx + 1).take(3) else emptyList()
+        val upNext = if (idx >= 0) queue.drop(idx + 1).take(5) else emptyList()
         val list = repo.state.value
         val msg = message ?: when {
             list.error != null && list.tracks.isEmpty() -> list.error

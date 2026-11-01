@@ -4,6 +4,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("app.cash.paparazzi")   // JVM screenshots of the UI (no emulator needed)
 }
 
 // Release signing comes from environment variables (set from GitHub Actions
