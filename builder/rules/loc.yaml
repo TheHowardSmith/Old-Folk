@@ -15,7 +15,7 @@
 # collection's folk character); `genre` is a fallback when tags give none.
 
 user_agent: "OldFolkListBuilder/1.0 (+https://github.com/thehowardsmith/old-folk)"
-pause: 1.0            # seconds between requests (one at a time)
+pause: 2.0            # seconds between requests (one at a time; loc.gov allows far more)
 
 collections:
   - slug: florida-folklife-from-the-works-progress-administration

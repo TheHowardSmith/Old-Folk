@@ -118,7 +118,7 @@ def item_id(record: dict) -> str:
 
 
 def harvest(store, cfg: LocConfig, client: LocClient | None = None, details: bool = True,
-            limit: int | None = None) -> dict:
+            limit: int | None = None, rules: Rules | None = None) -> dict:
     """Fetch every audio record of the configured collections (resumable)."""
     client = client or LocClient(cfg)
     found = 0
@@ -148,7 +148,13 @@ def harvest(store, cfg: LocConfig, client: LocClient | None = None, details: boo
             store.mark_ext_page(SOURCE, key)
             page += 1
     if details:
-        todo = [i for i, rec in store.ext_needing_detail(SOURCE) if not audio_urls(rec, None)]
+        # Only items that would make the list (or the review set) get the extra
+        # request; anything excluded for another reason never needs its MP3 link.
+        from .config import load_rules
+        rules = rules or load_rules()
+        colls = {i: c for i, c, _r, _d in store.ext_items(SOURCE)}
+        todo = [i for i, rec in store.ext_needing_detail(SOURCE)
+                if not audio_urls(rec, None) and worth_detail(i, colls.get(i, ""), rec, rules, cfg)]
         if limit:
             todo = todo[:limit]
         log.info("loc: %d items need their own JSON for the audio link", len(todo))
@@ -320,6 +326,12 @@ def classify_record(ident: str, coll_slug: str, record: dict, detail: dict | Non
                 t.genre = fallback
         res.genre = fallback
     return res
+
+
+def worth_detail(ident: str, coll: str, record: dict, rules: Rules, cfg: LocConfig) -> bool:
+    """Would this item be listed (or reviewed) if it had an MP3? Checked with a placeholder file."""
+    probe = dict(record, resources=[{"audio": "https://tile.loc.gov/probe.mp3"}])
+    return classify_record(ident, coll, probe, None, rules, cfg).status != EXCLUDE
 
 
 def classify_all(store, rules: Rules, cfg: LocConfig | None = None) -> list[ItemResult]:

@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS ext_pages (
 class Store:
     def __init__(self, path: Path):
         path.parent.mkdir(parents=True, exist_ok=True)
-        self.db = sqlite3.connect(str(path), check_same_thread=False)
+        self.db = sqlite3.connect(str(path), check_same_thread=False, timeout=60)
         self.db.executescript(SCHEMA)
         self.db.commit()
 
