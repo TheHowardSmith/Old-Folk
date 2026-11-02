@@ -503,6 +503,17 @@ indigenous_words:
   - ainu
   - pygmy
   - pygmies
+  # Small Indigenous peoples of Siberia and the Russian North
+  - chukchi
+  - evenki
+  - nenets
+  - khanty
+  - mansi
+  - nivkh
+  - koryak
+  - yukaghir
+  - nganasan
+  - selkup
 
 # Words in title/description/subjects that suggest a later release, a
 # compilation, or a modern recording of an old song. FLAGGED for review

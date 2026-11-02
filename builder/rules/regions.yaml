@@ -36,8 +36,8 @@ regions:
     keywords: [middle east, near east, hebrew, israeli, israel, arabian, arabic, arab, turkish, turkey, armenian, armenia, persian, iran, iranian, iraq, iraqi, egypt, egyptian, syrian, lebanese, palestinian, yemenite, yemen, kurdish, kurd, georgian, azerbaijan, azerbaijani, azerbaijanian, azeri, daghestan, dagestan, lezgin, lezginka, chechen, ossetian, circassian, abkhaz, oud, maqam]
     languages: [hebrew, heb, arabic, ara, turkish, tur, armenian, arm, hye, persian, per, fas, farsi, kurdish, kur, georgian, geo, kat, azerbaijani, aze, assyrian, syriac, syr]
   "Central Asia":
-    keywords: [central asia, tajik, tadjik, tajikistan, uzbek, uzbekistan, kazakh, kazak, kazakhstan, kyrgyz, kirghiz, kyrgyzstan, turkmen, turkmenistan, afghan, afghanistan, bukhara, samarkand, tatar, bashkir, dombra, dombara, dutar, komuz]
-    languages: [tajik, tgk, uzbek, uzb, kazakh, kaz, kyrgyz, kir, turkmen, tuk, tatar, tat, bashkir, bak, pashto, pus, dari, prs]
+    keywords: [central asia, tajik, tadjik, tajikistan, uzbek, uzbekistan, kazakh, kazak, kazakhstan, kyrgyz, kirghiz, kyrgyzstan, turkmen, turkmenistan, afghan, afghanistan, bukhara, samarkand, tatar, bashkir, dombra, dombara, dutar, komuz, siberia, siberian, tuva, tuvan, tuvinian, khoomei, altai, altaian, khakas, buryat, buriat, yakut, sakha]
+    languages: [tajik, tgk, uzbek, uzb, kazakh, kaz, kyrgyz, kir, turkmen, tuk, tatar, tat, bashkir, bak, pashto, pus, dari, prs, tuvinian, tyv, buriat, bua, yakut, sah, altai, alt]
   "South Asia":
     keywords: [india, indian, hindustani, carnatic, bengali, punjabi, pakistan, sri lanka, nepal, raga]
     languages: [hindi, hin, bengali, ben, punjabi, pan, tamil, tam, telugu, tel, urdu, urd, marathi, mar, gujarati, guj, sinhala, sin, nepali, nep]
@@ -51,7 +51,7 @@ regions:
     keywords: [swedish, sweden, norwegian, norway, danish, denmark, finnish, finland, icelandic, iceland, sami, joik, faroese, vise, schottis, hardanger]
     languages: [swedish, swe, norwegian, nor, nob, nno, danish, dan, finnish, fin, icelandic, ice, isl, sami, smi, faroese, fao]
   "Central & Eastern Europe":
-    keywords: [gipsy, magyar, polish, poland, polka, oberek, mazurka, mazur, krakowiak, kujawiak, kolomyika, ukrainian, ukraine, russian, russia, czech, slovak, hungarian, hungary, csárdás, csardas, romanian, romania, serbian, croatian, slovenian, bulgarian, balkan, yugoslav, macedonian, albanian, lithuanian, latvian, estonian, belarusian, gypsy, romani, tamburitza, kolo, klezmer, yiddish]
+    keywords: [gipsy, magyar, polish, poland, polka, oberek, mazurka, mazur, krakowiak, kujawiak, kolomyika, ukrainian, ukraine, russian, russia, cossack, cossacks, don cossack, kuban, czech, slovak, hungarian, hungary, csárdás, csardas, romanian, romania, serbian, croatian, slovenian, bulgarian, balkan, yugoslav, macedonian, albanian, lithuanian, latvian, estonian, belarusian, gypsy, romani, tamburitza, kolo, klezmer, yiddish]
     languages: [polish, pol, ukrainian, ukr, russian, rus, czech, cze, ces, slovak, slo, slk, hungarian, hun, romanian, rum, ron, serbian, srp, croatian, hrv, scr, serbo-croation, serbo-croatian, slovenian, slv, bulgarian, bul, yugoslavian, macedonian, mac, mkd, albanian, alb, sqi, lithuanian, lit, latvian, lav, estonian, est, belarusian, bel, yiddish, yid, romani, rom]
   "Southern Europe":
     keywords: [greek, greece, rebetiko, rembetiko, bouzouki, italian, italy, neapolitan, sicilian, sardinian, tarantella, tarantelle, portugal, portuguese, fado, spain, spanish folk, flamenco, andalusian, basque, catalan, galician, maltese, cyprus, sephardic, ladino]

@@ -336,3 +336,14 @@ def test_indian_music_has_its_own_genre():
     assert r.genre == "southasia"
     r = classify_item("x", "78rpm", item({"subject": ["Folk"], "language": "hin"}), RULES)
     assert r.genre == "southasia" and r.region == "South Asia"
+
+
+def test_russian_is_european_and_siberian_is_asian():
+    r = classify_item("x", "78rpm", item({"subject": ["Folk"], "title": "Don Cossack Song"}), RULES)
+    assert (r.region, r.genre) == ("Central & Eastern Europe", "european")
+    r = classify_item("x", "78rpm", item({"subject": ["Folk"], "title": "Russian Folk Song"}), RULES)
+    assert r.genre == "european"
+    r = classify_item("x", "other", item({"subject": ["Folk"], "title": "Tuvan Throat Singing", "date": "1960"}), RULES)
+    assert (r.region, r.genre) == ("Central Asia", "asia")
+    r = classify_item("x", "other", item({"subject": ["Folk"], "title": "Chukchi Songs", "date": "1960"}), RULES)
+    assert r.status == FLAG
