@@ -195,11 +195,13 @@ def classify_record(ident: str, rec: dict, rules: Rules, cfg: ImsConfig,
     }
     res = classify_item(ident, "other", data, rules)
     res.id = rid
+    # Polkas keep their own genre (so listeners can leave them out), as everywhere else.
+    app_genre = "polka" if genre.lower() in ("polca", "polka") else "latin"
     for t in res.tracks:
         t.id, t.url, t.page, t.source, t.picture = rid, audio, rec.get("pageUrl"), cfg.credit, None
-        t.region, t.genre = "Latin America", "latin"
+        t.region, t.genre = "Latin America", app_genre
     if res.status in (INCLUDE, FLAG):
-        res.region, res.genre = "Latin America", "latin"
+        res.region, res.genre = "Latin America", app_genre
     return res
 
 

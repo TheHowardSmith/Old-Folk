@@ -40,3 +40,8 @@ def test_not_yet_public_domain_or_pop_excluded():
     assert ims.classify_record("1", rec(publicDomainYear=None), RULES, CFG, this_year=2026).status == EXCLUDE
     r = ims.classify_record("1", rec(genre={"name": "Samba"}), RULES, CFG, this_year=2026)
     assert r.status == EXCLUDE and "popular" in r.reasons[0]
+
+
+def test_brazilian_polcas_go_to_polka():
+    r = ims.classify_record("1", rec(genre={"name": "Polca"}), RULES, CFG, this_year=2026)
+    assert r.status == INCLUDE and r.tracks[0].genre == "polka"
