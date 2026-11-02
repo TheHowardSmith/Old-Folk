@@ -86,3 +86,9 @@ def test_item_json_segments_become_tracks():
 def test_songs_of_america_only_takes_field_recordings():
     r = classify(record(genre=["Popular music"]), coll="songs-of-america")
     assert r.status == EXCLUDE
+
+
+def test_collection_level_rights_check_counts():
+    rec = record(rights="https://www.loc.gov/collections/static/rights/lomax-michigan.html")
+    assert classify(rec, coll="alan-lomax-in-michigan").status == INCLUDE
+    assert classify(rec, coll="blues-gospel-and-the-fort-valley-music-festivals").status == FLAG

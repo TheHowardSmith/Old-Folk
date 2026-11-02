@@ -24,8 +24,16 @@ collections:
     tags: [folk music]
   - slug: sidney-robertson-cowell-northern-california-folk-music
     tags: [folk music]
+    # Checked 2026-11-02 (collection rights page): "the Library of Congress is not aware
+    # of any U.S. copyright protection ... or any other restrictions"; recorded by a WPA
+    # (U.S. Government) employee 1938-40, so not eligible for copyright. Notes only
+    # privacy/publicity rights and rights in the underlying songs.
+    rights_checked: "no known restrictions (collection rights page, WPA government work)"
   - slug: alan-lomax-in-michigan
     tags: [folk music]
+    # Checked 2026-11-02: "not aware of any U.S. copyright protection ... or any other
+    # restrictions"; the notes below it concern respect for communities and privacy only.
+    rights_checked: "no known restrictions (collection rights page)"
   - slug: henry-reed-fiddle-tunes
     tags: [folk music, fiddle tunes, old time]
     genre: oldtime
@@ -38,11 +46,17 @@ collections:
     tags: [folk music]
   - slug: captain-pearl-r-nye-life-on-the-erie-and-ohio-canal
     tags: [folk music]
+    # Checked 2026-11-02: same "not aware of any U.S. copyright protection ... or any
+    # other restrictions" statement, plus a request to treat the material with respect.
+    rights_checked: "no known restrictions (collection rights page)"
   - slug: songs-of-america
     only_field_recordings: true     # the rest is sheet music and Jukebox discs
     tags: [folk music]
 
-# An item is accepted only if its rights text contains one of these.
+# An item is accepted only if its rights text contains one of these, or its
+# collection has `rights_checked` (its collection-level rights page was read and
+# says there are no known restrictions). blues-gospel-and-the-fort-valley-music-
+# festivals is still unchecked, so its items stay in the review set.
 rights_ok:
   - no known restrictions
   - no known copyright restriction

@@ -316,7 +316,8 @@ def classify_record(ident: str, coll_slug: str, record: dict, detail: dict | Non
         t.source = "Library of Congress"
     if res.status == INCLUDE or res.status == FLAG:
         rights = meta["rights"].lower()
-        if not any(p in rights for p in cfg.rights_ok):
+        checked = (coll or {}).get("rights_checked")
+        if not checked and not any(p in rights for p in cfg.rights_ok):
             note = f"loc rights statement needs checking: {meta['rights'][:80] or 'none'}"
             res.reasons = ([] if res.status == INCLUDE else res.reasons) + [note]
             res.status = FLAG
