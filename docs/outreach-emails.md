@@ -1,6 +1,6 @@
 # Outreach emails to archives (drafts)
 
-Drafts for asking archives to let Old Folk stream their public-domain recordings.
+Drafts for asking archives to let Old Folk Air stream their public-domain recordings.
 Fill in the bracketed parts before sending.
 
 | Archive | Why we need to ask | Contact |
@@ -13,11 +13,11 @@ Fill in the bracketed parts before sending.
 
 ## Base email (adapt per archive)
 
-**Subject:** Streaming your public-domain recordings in Old Folk, a free folk-music radio app
+**Subject:** Streaming your public-domain recordings in Old Folk Air, a free folk-music radio app
 
 Dear [name / team],
 
-I run Old Folk, a free, non-commercial Android app that plays an endless random stream of traditional and field recordings from around the world. There are no ads, accounts or fees, and the code is open source: https://github.com/TheHowardSmith/Old-Folk
+I run Old Folk Air, a free, non-commercial Android app that plays an endless random stream of traditional and field recordings from around the world. There are no ads, accounts or fees, and the code is open source: https://github.com/TheHowardSmith/Old-Folk
 
 We'd love to include recordings from [collection], limited to items that are in the public domain or that you mark as freely usable.
 
@@ -35,7 +35,7 @@ We're happy to follow any conditions you set: attribution wording, which collect
 
 With thanks,
 [Your name]
-Old Folk · thehowardsmith@gmail.com
+Old Folk Air · thehowardsmith@gmail.com
 
 ## Instituto Moreira Salles (Discografia Brasileira), in Portuguese
 
@@ -45,7 +45,7 @@ Check the Portuguese with a native speaker if possible.
 
 Prezada equipe do IMS,
 
-Sou o responsável pelo Old Folk, um aplicativo gratuito e sem fins comerciais que toca gravações tradicionais e de campo do mundo todo. Gostaríamos de incluir as gravações da Discografia Brasileira que já estão em domínio público, em gêneros regionais como toada, embolada, coco e moda de viola.
+Sou o responsável pelo Old Folk Air, um aplicativo gratuito e sem fins comerciais que toca gravações tradicionais e de campo do mundo todo. Gostaríamos de incluir as gravações da Discografia Brasileira que já estão em domínio público, em gêneros regionais como toada, embolada, coco e moda de viola.
 
 O aplicativo toca cada faixa diretamente dos servidores do IMS, credita o Instituto Moreira Salles em todas as faixas com link para a página da gravação, e não permite baixar nem redistribuir os arquivos.
 
@@ -60,11 +60,11 @@ Their legal notice reserves all use and forbids copying audio unless explicitly
 allowed, and asks for respect for the cultural heritage of the communities of
 origin. Much of the collection is ritual material, so the ask is narrow.
 
-**Objet :** Demande d'autorisation : écoute en streaming d'enregistrements du CREM dans l'application Old Folk
+**Objet :** Demande d'autorisation : écoute en streaming d'enregistrements du CREM dans l'application Old Folk Air
 
 Madame, Monsieur,
 
-Je développe Old Folk, une application Android gratuite, sans publicité et sans but lucratif, qui propose une écoute continue d'enregistrements traditionnels et de terrain du monde entier. Le code est libre : https://github.com/TheHowardSmith/Old-Folk
+Je développe Old Folk Air, une application Android gratuite, sans publicité et sans but lucratif, qui propose une écoute continue d'enregistrements traditionnels et de terrain du monde entier. Le code est libre : https://github.com/TheHowardSmith/Old-Folk
 
 Nous aimerions, avec votre accord, proposer à l'écoute une sélection d'enregistrements du CREM : uniquement des items en consultation libre, antérieurs à 1971, dont le droit d'utilisation le permet, en excluant tout ce qui relève du rituel, du sacré ou de contenus sensibles pour les communautés d'origine.
 
@@ -80,7 +80,7 @@ Nous suivrions bien sûr toutes les conditions que vous fixeriez : collections c
 
 Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
 
-[Votre nom] · Old Folk · thehowardsmith@gmail.com
+[Votre nom] · Old Folk Air · thehowardsmith@gmail.com
 
 ## National Diet Library (Japan), Rekion: Japanese, with an English version
 
@@ -90,11 +90,11 @@ only through its own player. About 440 internet-public recordings are folk
 songs (民謡・俚謡). The ask: may an app stream them, or can NDL supply access?
 Have a native speaker check the Japanese.
 
-**件名：** 歴史的音源（保護期間満了）の音声を無料アプリ「Old Folk」で配信することについてのご相談
+**件名：** 歴史的音源（保護期間満了）の音声を無料アプリ「Old Folk Air」で配信することについてのご相談
 
 国立国会図書館 関西館 電子図書館課 御中
 
-突然のご連絡失礼いたします。Old Folk という、世界の民謡・伝統音楽の古い録音を連続再生する、無料・広告なし・非営利の Android アプリを開発しております（ソースコード公開：https://github.com/TheHowardSmith/Old-Folk）。
+突然のご連絡失礼いたします。Old Folk Air という、世界の民謡・伝統音楽の古い録音を連続再生する、無料・広告なし・非営利の Android アプリを開発しております（ソースコード公開：https://github.com/TheHowardSmith/Old-Folk）。
 
 歴史的音源のうち「インターネット公開（保護期間満了）」の民謡・俚謡の録音を、アプリでお聴きいただけるようにしたいと考えております。
 
@@ -106,22 +106,22 @@ Have a native speaker check the Japanese.
 
 何卒よろしくお願い申し上げます。
 
-[お名前] · Old Folk · thehowardsmith@gmail.com
+[お名前] · Old Folk Air · thehowardsmith@gmail.com
 
 *English version:*
 
-**Subject:** Streaming out-of-copyright Rekion recordings in Old Folk, a free folk-music app
+**Subject:** Streaming out-of-copyright Rekion recordings in Old Folk Air, a free folk-music app
 
 Dear Digital Library Division,
 
-I develop Old Folk, a free, ad-free, non-commercial Android app that plays historical traditional and folk recordings from around the world (open source: https://github.com/TheHowardSmith/Old-Folk). We would like to include Rekion's internet-public (protection term expired) folk-song recordings (民謡・俚謡).
+I develop Old Folk Air, a free, ad-free, non-commercial Android app that plays historical traditional and folk recordings from around the world (open source: https://github.com/TheHowardSmith/Old-Folk). We would like to include Rekion's internet-public (protection term expired) folk-song recordings (民謡・俚謡).
 
 Each recording would be credited to the National Diet Library with a link to its Rekion page. Playback runs through an encrypted cache inside the app, so listeners cannot save or redistribute files, and we prefetch at most two recordings ahead to keep the load on your servers low.
 
 Could you tell us (1) whether the app may play the audio directly from your servers, and (2) if not, whether NDL could provide audio files or another form of access for out-of-copyright recordings? We are happy to register as a continuous user if required.
 
 With thanks,
-[Your name] · Old Folk · thehowardsmith@gmail.com
+[Your name] · Old Folk Air · thehowardsmith@gmail.com
 
 ## Archive of Indian Music
 
@@ -129,11 +129,11 @@ All rights reserved; audio only on SoundCloud, whose terms forbid ripping and
 genre-service embeds. The ask is for files (or direct links) for recordings
 that are out of copyright in India, which we'd host ourselves if needed.
 
-**Subject:** Featuring the Archive of Indian Music's early 78s in Old Folk, a free folk-music radio app
+**Subject:** Featuring the Archive of Indian Music's early 78s in Old Folk Air, a free folk-music radio app
 
 Dear Archive of Indian Music team,
 
-I run Old Folk, a free, non-commercial Android app with no ads or accounts that plays an endless stream of historical traditional recordings from around the world (open source: https://github.com/TheHowardSmith/Old-Folk). Your restorations of early Indian 78s are exactly the kind of recordings our listeners love, and we'd be honoured to include them.
+I run Old Folk Air, a free, non-commercial Android app with no ads or accounts that plays an endless stream of historical traditional recordings from around the world (open source: https://github.com/TheHowardSmith/Old-Folk). Your restorations of early Indian 78s are exactly the kind of recordings our listeners love, and we'd be honoured to include them.
 
 Because your recordings are published on SoundCloud, whose terms don't allow an app like ours to use them, we would only do this with your permission and on your terms. We're thinking of recordings that are out of copyright in India: traditional, devotional and folk material on 78s from roughly before 1960.
 
@@ -144,7 +144,7 @@ Because your recordings are published on SoundCloud, whose terms don't allow an 
 Would you be open to this?
 
 Warm regards,
-[Your name] · Old Folk · thehowardsmith@gmail.com
+[Your name] · Old Folk Air · thehowardsmith@gmail.com
 
 ## Max Hunter Collection (Springfield-Greene County Library, Missouri)
 
@@ -152,11 +152,11 @@ About 1,600 Ozark folk songs recorded 1956-76, as direct MP3s. The library belie
 most are public domain but limits use to educational and research purposes. Only
 recordings made in 1970 or earlier would be used.
 
-**Subject:** Including the Max Hunter Collection in Old Folk, a free folk-music radio app
+**Subject:** Including the Max Hunter Collection in Old Folk Air, a free folk-music radio app
 
 Dear Local History team,
 
-I run Old Folk, a free, non-commercial Android app (no ads, no accounts, open source: https://github.com/TheHowardSmith/Old-Folk) that plays an endless stream of historical traditional and field recordings, so that more people hear them. The Max Hunter Collection's Ozark ballads and fiddle tunes would be a wonderful part of it.
+I run Old Folk Air, a free, non-commercial Android app (no ads, no accounts, open source: https://github.com/TheHowardSmith/Old-Folk) that plays an endless stream of historical traditional and field recordings, so that more people hear them. The Max Hunter Collection's Ozark ballads and fiddle tunes would be a wonderful part of it.
 
 Your site asks that the recordings be used for educational and research purposes, so we wanted to ask first. We would only include recordings made in 1970 or earlier.
 
@@ -168,4 +168,4 @@ Your site asks that the recordings be used for educational and research purposes
 Would the library be happy for us to do this, and are there any conditions you'd like us to follow?
 
 With thanks,
-[Your name] · Old Folk · thehowardsmith@gmail.com
+[Your name] · Old Folk Air · thehowardsmith@gmail.com

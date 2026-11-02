@@ -1,12 +1,12 @@
-# Old Folk
+# Old Folk Air
 
-## [⬇ Download the Android app (old-folk.apk)](https://github.com/TheHowardSmith/Old-Folk/releases/latest/download/old-folk.apk)
+## [⬇ Download the Android app (old-folk-air.apk)](https://github.com/TheHowardSmith/Old-Folk/releases/latest/download/old-folk-air.apk)
 
 Open that link on your Android phone (Android 8 or newer), then open the downloaded file to install it. Android may ask you to allow installing apps from your browser. No account or sign-up is needed. All versions are on the [Releases page](https://github.com/TheHowardSmith/Old-Folk/releases).
 
 ---
 
-Old Folk plays a never-ending random stream of public-domain folk and field recordings from around the world, streamed directly from the archives that hold them: the [Internet Archive](https://archive.org), the [Library of Congress](https://www.loc.gov/audio/), Finnish archives through [Finna](https://www.finna.fi) (the National Library of Finland and the Finnish Literature Society), and the Instituto Moreira Salles' [Discografia Brasileira](https://discografiabrasileira.com.br). There is no streaming server: a vetted track list is published as small JSON files, and the app picks random tracks from it and plays them straight from the archive that holds them.
+Old Folk Air plays a never-ending random stream of public-domain folk and field recordings from around the world, streamed directly from the archives that hold them: the [Internet Archive](https://archive.org), the [Library of Congress](https://www.loc.gov/audio/), Finnish archives through [Finna](https://www.finna.fi) (the National Library of Finland and the Finnish Literature Society), the Instituto Moreira Salles' [Discografia Brasileira](https://discografiabrasileira.com.br), and the [Digital South Asia Library](https://dsal.uchicago.edu/LSI/)'s Linguistic Survey of India recordings. There is no streaming server: a vetted track list is published as small JSON files, and the app picks random tracks from it and plays them straight from the archive that holds them.
 
 <p>
 <img src="android/app/src/test/snapshots/images/nz.oldfolk.ui_ScreenshotTest_radioPlayingLight.png" width="200" alt="Radio screen, light">
@@ -54,7 +54,7 @@ oldfolk-build search            # find candidate items (fast)
 oldfolk-build sample --n 200    # optional: pick a test sample
 oldfolk-build fetch --sample    # fetch metadata (drop --sample for the full run)
 oldfolk-build build --sample    # classify and write out-sample/ (or out/)
-oldfolk-build ext-fetch         # optional: harvest loc.gov (rules/loc.yaml) and Finna (rules/finna.yaml)
+oldfolk-build ext-fetch         # optional: harvest loc.gov, Finna and DSAL (rules/loc.yaml, finna.yaml, dsal.yaml)
 oldfolk-build ext-fetch --source ims --minutes 60   # optional, slow: Discografia Brasileira (5 s per page)
 ```
 
@@ -72,7 +72,7 @@ Shard format (short keys): `{"v":1,"g":"oldtime","t":[{"i":"<item id>","f":"<fil
 
 ## Publishing
 
-- **App:** every push to `main` that changes `android/` runs **Release APK**, which builds a signed APK and publishes it as the latest release (`old-folk.apk`). Signing uses the repository secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`.
+- **App:** every push to `main` that changes `android/` runs **Release APK**, which builds a signed APK and publishes it as the latest release (`old-folk-air.apk`). Signing uses the repository secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`.
 - **Track list:** run the **Build track list** workflow (Actions tab → Build track list → Run workflow). `sample` builds a quick test list; `full` builds everything, resuming across runs (each run fetches for about 5 hours). The files are published to the `tracklist` release, which the app reads from `https://github.com/TheHowardSmith/Old-Folk/releases/download/tracklist/`.
 
 To build the app yourself: install Android Studio (or JDK 17 plus the Android SDK), then run `cd android && ./gradlew assembleDebug`. UI screenshots are rendered without a device by Paparazzi: `./gradlew recordPaparazziDebug` (images in `android/app/src/test/snapshots/images/`).
@@ -91,15 +91,16 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 - **Library of Congress** recordings come only from the historical folk field-recording collections listed in `builder/rules/loc.yaml` (the National Jukebox, licensed from Sony, is not used). Each item's own rights statement must say there are no known restrictions; anything else goes to the review set. Spoken word and transfers the Library describes as barely audible are left out.
 - **Finna** recordings must be online with an open usage-rights code: public domain/free use (mostly the National Library of Finland's 78s) or CC BY-NC-ND (the Finnish Literature Society's field recordings, which the app streams unaltered, non-commercially and credited). Speech, Sámi joik (flagged for review) and anything after 1970 are left out.
 - **Discografia Brasileira** recordings must already be in the public domain in Brazil by the site's own public-domain year (author's death + 70 and recording + 70 years) and be in a traditional or regional genre (toada, embolada, cateretê, coco, lundu, moda de viola, choro, baião...); popular-song genres such as samba and marcha are left out. The site is harvested at its requested pace of one page every 5 seconds, by its own scheduled workflow.
+- **Linguistic Survey of India** gramophone recordings (1913–1929, Digital South Asia Library): only the songs, in some 40 Indian, Nepali and Burmese languages; speech samples are left out.
 - No audio is ever stored in this repository.
 
 ## Rights notice
 
-The recordings are hosted by the **Internet Archive**, the **Library of Congress**, the **National Library of Finland**, the **Finnish Literature Society** and the **Instituto Moreira Salles**, not by this project, and are **not covered by this repository's licenses**. To the best of our knowledge they are no longer protected by copyright: every track meets the [selection rules](#selection-rules) above (recorded or released in 1970 or earlier, not claimed by a rights holder in the US Copyright Office's pre-1972 schedules, and no restrictions noted by the archive).
+The recordings are hosted by the **Internet Archive**, the **Library of Congress**, the **National Library of Finland**, the **Finnish Literature Society**, the **Instituto Moreira Salles** and the **Digital South Asia Library**, not by this project, and are **not covered by this repository's licenses**. To the best of our knowledge they are no longer protected by copyright: every track meets the [selection rules](#selection-rules) above (recorded or released in 1970 or earlier, not claimed by a rights holder in the US Copyright Office's pre-1972 schedules, and no restrictions noted by the archive).
 
-Rights holders who want a recording removed from the list can email **thehowardsmith@gmail.com**, or open an issue on this repository.
+Rights holders who want a recording removed from the list can email **thehowardsmith@gmail.com**, or open an issue on this repository. Removed items are added to `builder/overrides.yaml` so they never return.
 
-**Archives and libraries:** if you look after a collection of traditional or historical recordings and would like listeners to hear them through Old Folk, please get in touch at the same address. The app streams from your own servers, credits your institution on every track with a link back to your catalogue, and never copies or re-hosts your files. Removed items are added to `builder/overrides.yaml` so they never return.
+**Archives and libraries:** if you look after a collection of traditional or historical recordings and would like listeners to hear them through Old Folk Air, please get in touch at the same address. The app streams from your own servers, credits your institution on every track with a link back to your catalogue, and never copies or re-hosts your files.
 
 ## Licenses
 

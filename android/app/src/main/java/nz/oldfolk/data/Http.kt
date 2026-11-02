@@ -9,7 +9,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-val USER_AGENT = "OldFolk/${BuildConfig.VERSION_NAME} (Android; +https://github.com/${BuildConfig.REPO})"
+val USER_AGENT = "OldFolkAir/${BuildConfig.VERSION_NAME} (Android; +https://github.com/${BuildConfig.REPO})"
 
 class HttpStatusException(val code: Int, url: String) : IOException("HTTP $code for $url")
 

@@ -14,7 +14,7 @@
 # `tags` are added to every item of the collection (so the classifier sees the
 # collection's folk character); `genre` is a fallback when tags give none.
 
-user_agent: "OldFolkListBuilder/1.0 (+https://github.com/thehowardsmith/old-folk)"
+user_agent: "OldFolkAirListBuilder/1.0 (+https://github.com/thehowardsmith/old-folk)"
 pause: 2.0            # seconds between requests (one at a time; loc.gov allows far more)
 
 collections:

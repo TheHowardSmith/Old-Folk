@@ -39,7 +39,7 @@ class FinnaConfig:
     spoken_subjects: frozenset[str]
     indigenous_subjects: frozenset[str]
     ceremonial_subjects: frozenset[str]
-    user_agent: str = "OldFolkListBuilder/1.0"
+    user_agent: str = "OldFolkAirListBuilder/1.0"
     pause: float = 1.0
     extra: dict = field(default_factory=dict)
 
@@ -56,7 +56,7 @@ def load_config(path: Path = RULES_DIR / "finna.yaml") -> FinnaConfig:
         spoken_subjects=low(d.get("spoken_subjects")),
         indigenous_subjects=low(d.get("indigenous_subjects")),
         ceremonial_subjects=low(d.get("ceremonial_subjects")),
-        user_agent=str(d.get("user_agent") or "OldFolkListBuilder/1.0"),
+        user_agent=str(d.get("user_agent") or "OldFolkAirListBuilder/1.0"),
         pause=float(d.get("pause", 1.0)),
     )
 

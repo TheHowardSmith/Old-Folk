@@ -99,6 +99,8 @@ def write_all(results: list[ItemResult], out: Path, genres: dict[str, str],
 def item_url(ident: str) -> str:
     if ident.startswith("loc:"):
         return f"https://www.loc.gov/item/{ident[4:]}/"
+    if ident.startswith("dsal:"):
+        return "https://dsal.uchicago.edu/LSI/"
     if ident.startswith("finna:"):
         return f"https://www.finna.fi/Record/{ident[6:]}"
     return f"https://archive.org/details/{ident}"

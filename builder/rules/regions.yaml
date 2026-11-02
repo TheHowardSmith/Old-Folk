@@ -45,7 +45,7 @@ regions:
     keywords: [ainu, japan, japanese, minyo, min'yo, min'yō, shamisen, shakuhachi, koto, okinawa, okinawan, china, chinese, cantonese, korea, korean, mongolian, tibet, tibetan]
     languages: [japanese, jpn, chinese, chi, zho, cantonese, mandarin, korean, kor, mongolian, mon, tibetan, tib, bod]
   "Southeast Asia":
-    keywords: [borneo, sarawak, sabah, java, javanese, bali, balinese, gamelan, indonesia, indonesian, philippines, filipino, thai, thailand, vietnam, vietnamese, burma, burmese, malay, cambodia, laos]
+    keywords: [borneo, sarawak, sabah, java, javanese, bali, balinese, gamelan, indonesia, indonesian, philippines, filipino, thai, thailand, vietnam, vietnamese, burma, burmese, myanmar, karen, kachin, danaw, arakanese, malay, cambodia, laos]
     languages: [thai, tha, vietnamese, vie, indonesian, ind, javanese, jav, malay, may, msa, tagalog, tgl, filipino, fil, burmese, bur, mya, khmer, khm, lao]
   "Nordic":
     keywords: [swedish, sweden, norwegian, norway, danish, denmark, finnish, finland, icelandic, iceland, sami, joik, faroese, vise, schottis, hardanger]

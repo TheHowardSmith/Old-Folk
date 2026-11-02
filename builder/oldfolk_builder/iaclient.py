@@ -19,7 +19,7 @@ from urllib3.util.retry import Retry
 
 log = logging.getLogger(__name__)
 
-USER_AGENT_SUFFIX = " OldFolkListBuilder/1.0 (+https://github.com/thehowardsmith/old-folk)"
+USER_AGENT_SUFFIX = " OldFolkAirListBuilder/1.0 (+https://github.com/thehowardsmith/old-folk)"
 
 # Only these metadata keys are kept in the cache (keeps the DB small).
 META_KEYS = (

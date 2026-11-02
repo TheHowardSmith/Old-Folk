@@ -1,4 +1,4 @@
-# Reuse and streaming terms of four archives: findings for Old Folk
+# Reuse and streaming terms of four archives: findings for Old Folk Air
 
 Checked on 2026-11-02, mostly with direct HTTP fetches of the archives' own pages and some JSON/XML endpoints. Quotes are copied from the fetched pages. Translations are mine. Items marked **[UNVERIFIED]** could not be confirmed from a primary source. Items marked **[BLOCKED]** were behind a bot check, a maintenance page or the sandbox network policy. None of those was bypassed.
 
@@ -64,7 +64,7 @@ The sign-up form refers to "Persyaratan dan Ketentuan Penggunaan" ("Terms and Co
 - SoundCloud: "You must not copy, rip or capture …". Its API terms forbid caching, offline playback and "stream ripping".
 - YouTube: "You are not allowed to: access, reproduce, download … any Content except … as expressly authorized … or with prior written permission". YouTube's API policies forbid audio-only extraction, background play and storing copies.
 
-Embedding is allowed within limits. SoundCloud's widget may **not** be used to build "a content service of which Content from the Platform forms a material part", or a destination dedicated to "a particular genre", without SoundCloud's written consent. Both conditions describe Old Folk.
+Embedding is allowed within limits. SoundCloud's widget may **not** be used to build "a content service of which Content from the Platform forms a material part", or a destination dedicated to "a particular genre", without SoundCloud's written consent. Both conditions describe Old Folk Air.
 
 ---
 

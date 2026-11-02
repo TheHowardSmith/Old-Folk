@@ -50,7 +50,7 @@ class LocConfig:
     music_genres: frozenset[str]
     spoken_genres: frozenset[str]
     poor_quality_phrases: tuple[str, ...]
-    user_agent: str = "OldFolkListBuilder/1.0"
+    user_agent: str = "OldFolkAirListBuilder/1.0"
     pause: float = 1.0
     by_slug: dict[str, dict] = field(default_factory=dict)
 
@@ -68,7 +68,7 @@ def load_config(path: Path = RULES_DIR / "loc.yaml") -> LocConfig:
         music_genres=frozenset(low(d.get("music_genres"))),
         spoken_genres=frozenset(low(d.get("spoken_genres"))),
         poor_quality_phrases=low(d.get("poor_quality_phrases")),
-        user_agent=str(d.get("user_agent") or "OldFolkListBuilder/1.0"),
+        user_agent=str(d.get("user_agent") or "OldFolkAirListBuilder/1.0"),
         pause=float(d.get("pause", 1.0)),
     )
 

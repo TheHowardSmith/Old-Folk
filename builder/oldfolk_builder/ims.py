@@ -41,7 +41,7 @@ class ImsConfig:
     sitemap: str
     folk_genres: frozenset[str]
     credit: str = "Instituto Moreira Salles"
-    user_agent: str = "OldFolkListBuilder/1.0"
+    user_agent: str = "OldFolkAirListBuilder/1.0"
     pause: float = 5.0
 
 
@@ -52,7 +52,7 @@ def load_config(path: Path = RULES_DIR / "ims.yaml") -> ImsConfig:
         sitemap=d.get("sitemap", "https://discografiabrasileira.com.br/sitemap.xml"),
         folk_genres=frozenset(str(g).lower() for g in d.get("folk_genres") or []),
         credit=str(d.get("credit") or "Instituto Moreira Salles"),
-        user_agent=str(d.get("user_agent") or "OldFolkListBuilder/1.0"),
+        user_agent=str(d.get("user_agent") or "OldFolkAirListBuilder/1.0"),
         pause=float(d.get("pause", 5.0)),
     )
 

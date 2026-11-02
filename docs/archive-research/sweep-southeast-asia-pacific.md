@@ -1,6 +1,6 @@
 # Archive sweep: Southeast Asia and the Pacific
 
-Swept 2026-11-02 for Old Folk (folk, traditional and field recordings from 1970 or earlier, public domain or openly licensed, streamed from the host archive).
+Swept 2026-11-02 for Old Folk Air (folk, traditional and field recordings from 1970 or earlier, public domain or openly licensed, streamed from the host archive).
 
 **Limits on this sweep (please read):**
 - The shared WebSearch budget ran out partway through. Countries searched after that point (Laos, Timor-Leste, Brunei, Solomon Islands, Cook Islands, Tonga/Samoa in depth, Torres Strait in depth) were covered only through direct checks on sites (curl), the Pratinada/CREM metadata API and Internet Archive queries. Nothing was searched in local languages for those countries. A follow-up pass with fresh search budget would help there.
@@ -146,7 +146,7 @@ Swept 2026-11-02 for Old Folk (folk, traditional and field recordings from 1970 
 - https://digital.library.manoa.hawaii.edu/collections/show/59 (Cloudflare Turnstile). Dirk Vogel collection: 6,000 78s, 2,650 LPs. Audio is "Restricted to UH Mānoa" or available in the Hamilton Library reading room.
 
 ### 3.12 AIATSIS, NFSA and state libraries (exclude / not usable) [blocked / search-only]
-- AIATSIS (https://aiatsis.gov.au , Cloudflare challenge): access is case by case; "some materials may be subject to access conditions required by Indigenous communities and/or depositors". Example finding aids require CEO permission (Karajarri, MS 5151) or depositor permission (Moyle). **Exclude** under Old Folk's sacred and sensitive rule.
+- AIATSIS (https://aiatsis.gov.au , Cloudflare challenge): access is case by case; "some materials may be subject to access conditions required by Indigenous communities and/or depositors". Example finding aids require CEO permission (Karajarri, MS 5151) or depositor permission (Moyle). **Exclude** under Old Folk Air's sacred and sensitive rule.
 - NFSA (Cloudflare challenge): holds Meredith copies (https://www.nfsa.gov.au/collection/curated/sam-griffiths-jack-luscombe-john-meredith-folklore-collection).
 - SLQ: audio "free to use for personal research and study" only; sheet-music dataset is CC BY 4.0 (https://www.data.qld.gov.au/dataset/music-queensland). SLNSW: 1968–72 South Pacific Festival reels "in copyright, reproduction restricted".
 

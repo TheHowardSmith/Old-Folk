@@ -36,7 +36,7 @@ class ScreenshotTest {
         inPlaylist = false, listLoading = false, listProgress = null, showRetry = false,
     )
 
-    private fun shot(dark: Boolean, tab: Tab, title: String = "Old Folk", content: @Composable () -> Unit) =
+    private fun shot(dark: Boolean, tab: Tab, title: String = "Old Folk Air", content: @Composable () -> Unit) =
         paparazzi.snapshot {
             OldFolkTheme(dark = dark) {
                 AppFrame(tab, title, showBack = false, showAboutButton = true, onBack = {}, onAbout = {}, onTab = {}, content = content)

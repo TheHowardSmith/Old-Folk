@@ -1,6 +1,6 @@
 # Archive sweep: Latin America and the Caribbean
 
-Date: 2026-11-02. Researcher: sub-agent sweep for Old Folk.
+Date: 2026-11-02. Researcher: sub-agent sweep for Old Folk Air.
 
 **Read this first: limits of this sweep**
 - **The web-search budget ran out partway through.** The 200-search limit is shared across all agents in this turn. After that, the only checks were direct `curl` requests to hosts I already knew about. No search engines were scraped. Several countries got only host checks or background knowledge, and the checklist marks them "NOT SEARCHED (budget)". A follow-up pass is needed for Central America, Venezuela, Ecuador, Bolivia, Paraguay, Cuba, the Dominican Republic, Haiti (in part), the Guianas, the French Antilles archives, the Bahamas, Barbados and the European ethnological museums.

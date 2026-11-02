@@ -150,7 +150,7 @@ jobs:
         run: |
           if ! gh release view tracklist >/dev/null 2>&1; then
             gh release create tracklist --prerelease --title "Track list" \
-              --notes "Track list data for the Old Folk app (CC0). Updated by the Build track list workflow."
+              --notes "Track list data for the Old Folk Air app (CC0). Updated by the Build track list workflow."
           fi
           # Shards first, index last, then remove assets that are no longer listed.
           gh release upload tracklist s-*.json r-*.json flagged.csv writers.csv excluded.csv report.md summary.json --clobber
@@ -158,7 +158,7 @@ jobs:
           for a in $(gh release view tracklist --json assets -q '.assets[].name'); do
             [ -e "$a" ] || gh release delete-asset tracklist "$a" -y
           done
-          gh release edit tracklist --notes "Track list data for the Old Folk app (CC0). Version $(jq .v index.json), $(jq .n index.json) tracks, mode: ${{ inputs.mode }}."
+          gh release edit tracklist --notes "Track list data for the Old Folk Air app (CC0). Version $(jq .v index.json), $(jq .n index.json) tracks, mode: ${{ inputs.mode }}."
 
       - name: Summary
         if: steps.build.outputs.skip != 'true'

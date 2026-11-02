@@ -9,7 +9,7 @@
 # full harvest of ~63,000 recording pages takes days; it runs in its own
 # scheduled, resumable workflow and keeps its own cache (cache-ims/ims.sqlite).
 
-user_agent: "OldFolkListBuilder/1.0 (+https://github.com/thehowardsmith/old-folk)"
+user_agent: "OldFolkAirListBuilder/1.0 (+https://github.com/thehowardsmith/old-folk)"
 pause: 5.0
 sitemap: https://discografiabrasileira.com.br/sitemap.xml
 credit: Instituto Moreira Salles

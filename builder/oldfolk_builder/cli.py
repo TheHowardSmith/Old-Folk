@@ -74,7 +74,7 @@ def cmd_fetch(args, rules, store):
 
 
 def cmd_ext_fetch(args, rules, store):
-    from . import finna, ims, loc
+    from . import dsal, finna, ims, loc
     if args.source == "ims":      # slow (5 s per page): its own cache file and workflow
         ims_store = Store(Path(args.ims_db))
         print(json.dumps({"ims": ims.harvest(ims_store, ims.load_config(), minutes=args.minutes,
@@ -82,6 +82,8 @@ def cmd_ext_fetch(args, rules, store):
         return
     if args.source in ("finna", "all"):
         print(json.dumps({"finna": finna.harvest(store, finna.load_config())}))
+    if args.source in ("dsal", "all"):
+        print(json.dumps({"dsal": dsal.harvest(store, dsal.load_config())}))
     if args.source in ("loc", "all"):
         cfg = loc.load_config()
         if args.only:
@@ -96,8 +98,8 @@ def cmd_build(args, rules, store):
     if not results:
         sys.exit("no fetched items - run `fetch` first")
     if not args.no_ext:
-        from . import finna, loc
-        for name, mod in (("loc.gov", loc), ("finna", finna)):
+        from . import dsal, finna, loc
+        for name, mod in (("loc.gov", loc), ("finna", finna), ("dsal", dsal)):
             ext = mod.classify_all(store, rules)
             log.info("%s: %d items in the cache", name, len(ext))
             results += ext
@@ -151,8 +153,8 @@ def main(argv=None):
     s.add_argument("--ims-db", default=str(BUILDER_DIR / "cache-ims" / "ims.sqlite"))
 
     s = sub.add_parser("ext-fetch", help="harvest other archives (loc.gov, finna.fi) into the cache")
-    s.add_argument("--source", choices=("all", "loc", "finna", "ims"), default="all",
-                   help="'all' = loc + finna; 'ims' (Discografia Brasileira) runs on its own, slowly")
+    s.add_argument("--source", choices=("all", "loc", "finna", "dsal", "ims"), default="all",
+                   help="'all' = loc + finna + dsal; 'ims' (Discografia Brasileira) runs on its own, slowly")
     s.add_argument("--minutes", type=float, help="ims: stop after this many minutes")
     s.add_argument("--ims-db", default=str(BUILDER_DIR / "cache-ims" / "ims.sqlite"))
     s.add_argument("--only", nargs="*", help="loc.gov collection slugs to harvest")

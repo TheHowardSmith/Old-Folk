@@ -1,7 +1,7 @@
 # Archive research
 
 Research notes on online archives of historical folk, traditional and field
-recordings, gathered to find sources Old Folk could stream (or ask to stream).
+recordings, gathered to find sources Old Folk Air could stream (or ask to stream).
 Each report rates archives as **good fit** (stream directly), **ask permission**
 (worth an outreach email; drafts in [../outreach-emails.md](../outreach-emails.md))
 or **not usable**, with sources. Claims are marked verified, search-only or blocked.

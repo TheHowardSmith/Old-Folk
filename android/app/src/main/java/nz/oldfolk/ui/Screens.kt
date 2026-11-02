@@ -126,7 +126,7 @@ fun OldFolkAppUi(graph: AppGraph, onBeforePlay: () -> Unit) {
         tab = tab,
         title = when {
             showAbout -> "About"
-            tab == Tab.RADIO -> "Old Folk"
+            tab == Tab.RADIO -> "Old Folk Air"
             else -> tab.label
         },
         showBack = showAbout || (tab == Tab.PLAYLISTS && openPlaylist != null),
@@ -751,7 +751,7 @@ private fun AboutScreen(graph: AppGraph) {
         onClearFailures = { graph.failures.clear() },
         onGitHub = { Links.open(context, Links.repoUrl) },
         onSkipNoisy = { graph.settings.setSkipNoisy(it) },
-        onEmail = { Links.open(context, "mailto:$CONTACT_EMAIL?subject=" + Uri.encode("Old Folk: our recordings")) },
+        onEmail = { Links.open(context, "mailto:$CONTACT_EMAIL?subject=" + Uri.encode("Old Folk Air: our recordings")) },
     )
     if (confirmReset) {
         AlertDialog(
@@ -772,7 +772,7 @@ fun AboutContent(
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Old Folk plays public-domain folk and field recordings from around the world, streamed straight from the archives that hold them: the Internet Archive, the Library of Congress, Finnish archives via Finna, and the Instituto Moreira Salles.",
+        Text("Old Folk Air plays public-domain folk and field recordings from around the world, streamed straight from the archives that hold them: the Internet Archive, the Library of Congress, Finnish archives via Finna, the Instituto Moreira Salles and the Digital South Asia Library.",
             style = MaterialTheme.typography.bodyLarge)
         AboutCard("Rights") {
             Text("The recordings are hosted by those archives and aren't covered by this app's license. " +
@@ -784,7 +784,7 @@ fun AboutContent(
         }
         AboutCard("For archives and libraries") {
             Text("Do you look after a collection of traditional or historical recordings? We'd love to help more " +
-                "people hear them. Old Folk streams straight from your own servers, credits your institution on every " +
+                "people hear them. Old Folk Air streams straight from your own servers, credits your institution on every " +
                 "track with a link back to your catalogue, and never copies or re-hosts your files. If you'd like your " +
                 "recordings included, or want to set conditions, please get in touch.",
                 style = MaterialTheme.typography.bodyMedium)

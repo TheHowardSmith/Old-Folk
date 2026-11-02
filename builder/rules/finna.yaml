@@ -6,7 +6,7 @@
 #                (mostly the Finnish Literature Society's field recordings)
 # Every record still goes through the normal classifier and needs a date <= 1970.
 
-user_agent: "OldFolkListBuilder/1.0 (+https://github.com/thehowardsmith/old-folk)"
+user_agent: "OldFolkAirListBuilder/1.0 (+https://github.com/thehowardsmith/old-folk)"
 pause: 1.0
 api: https://api.finna.fi/v1/search
 rights:
