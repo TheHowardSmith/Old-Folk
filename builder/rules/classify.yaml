@@ -21,6 +21,7 @@ genres:
   latin:        "Latin American Folk"
   african:      "African"
   asia:         "Asian & Middle Eastern"
+  southasia:    "Indian & South Asian"
   pacific:      "Hawaiian & Pacific"
   field:        "Field Recordings & Work Songs"
   world:        "Other Traditional"
@@ -133,6 +134,18 @@ genre_tags:
     - chacarera
     - cueca
     - joropo
+  southasia:
+    - indian
+    - hindustani
+    - carnatic
+    - raga
+    - qawwali
+    - sitar
+    - shehnai
+    - sarangi
+    - bengali
+    - punjabi
+    - tamil
   asia:
     - japanese
     - minyo
@@ -143,7 +156,6 @@ genre_tags:
     - turkish
     - armenian
     - persian
-    - indian
     - java
     - gamelan
     - chinese
@@ -207,7 +219,8 @@ region_genre:
   "Central & Eastern Europe": european
   "Southern Europe": european
   "Middle East & Caucasus": asia
-  "South Asia": asia
+  "South Asia": southasia
+  "Central Asia": asia
   "East Asia": asia
   "Southeast Asia": asia
   "Africa": african
@@ -631,6 +644,7 @@ traditional_art_words:
   - dastgah
 traditional_art_regions:
   - South Asia
+  - Central Asia
   - East Asia
   - Southeast Asia
   - Middle East & Caucasus

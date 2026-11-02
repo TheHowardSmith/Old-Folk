@@ -18,10 +18,10 @@ Old Folk plays a never-ending random stream of public-domain folk and field reco
 ## What the app does
 
 - **Endless radio:** random tracks, and your phone never repeats one until you've heard everything in your selection.
-- **Genres:** pick one or more (old-time, blues, Celtic, klezmer, polka, calypso, Hawaiian, African, Asian and Middle Eastern traditional music, field recordings...). Polka is a genre of its own, so it's easy to leave out.
+- **Genres:** pick one or more (old-time, blues, Celtic, klezmer, polka, calypso, Hawaiian, African, Indian and South Asian, Asian and Middle Eastern traditional music, field recordings...). Polka is a genre of its own, so it's easy to leave out.
 - **Background playback:** keeps playing with the screen off, with notification and lock-screen controls.
 - **Old-radio look:** a tuning dial whose needle points at the year of the recording, a green "magic eye" that glows while playing, bakelite-style knobs on a cloth grille. Light and dark themes.
-- **Even volume:** each track gets a quick level read when it downloads so everything plays at about the same loudness, and a limiter dips the sudden thumps and pops common on unmastered 78 transfers.
+- **Even volume:** each track gets a quick level read when it downloads so everything plays at about the same loudness, and a limiter dips the sudden thumps and pops common on unmastered 78 transfers. Transfers with sound on only one channel are played on both speakers, at the same loudness as everything else.
 - **Skips very noisy recordings:** the same read checks for heavy surface noise (hiss band vs music band, plus spectral flatness), and the radio skips tracks where the noise swamps the music, about 15% of 78s. It can be switched off under About; playlists always play everything.
 - **Smooth playback, even when skipping a lot:** 5 tracks are fetched ahead at first, then 20 ahead once you're streaming. Your last 20 tracks are kept too, so the previous button works instantly. Everything goes in a capped 600 MB cache, and tracks that won't play are skipped automatically. Fetching 20 ahead uses more mobile data.
 - **History tab:** scroll up through everything you've ever streamed on this phone, and down through the tracks coming next. Older tracks aren't stored on the phone; tapping one streams it again.
@@ -77,7 +77,7 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 
 ## Selection rules
 
-- Only recordings believed to have been **recorded or released in 1970 or earlier** (New Zealand protects sound recordings for 50 years; 1970 leaves a safety margin).
+- Only recordings believed to have been **recorded or released in 1970 or earlier**.
 - Undated 78 rpm discs are treated as pre-1970, because the format was obsolete by the mid-1960s.
 - Items whose date looks unreliable (compilations, reissues, LPs dated before LPs existed, text mentioning later years, modern recordings of old songs) are **flagged for review**, not included.
 - Songs credited to a named (non-traditional) writer are currently **kept**; their writers are listed in `writers.csv` and `builder/scripts/writer_deaths.py` estimates how many would need removing if composition copyright is enforced.
@@ -91,7 +91,7 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 
 ## Rights notice
 
-The recordings are hosted by the **Internet Archive** and the **Library of Congress**, not by this project, and are **not covered by this repository's licenses**. Tracks were selected because they are believed to be in the public domain in **New Zealand**. Their status may be different in other countries; check your local law before reusing them.
+The recordings are hosted by the **Internet Archive** and the **Library of Congress**, not by this project, and are **not covered by this repository's licenses**. To the best of our knowledge they are no longer protected by copyright: every track meets the [selection rules](#selection-rules) above (recorded or released in 1970 or earlier, not claimed by a rights holder in the US Copyright Office's pre-1972 schedules, and no restrictions noted by the archive).
 
 Rights holders who want a recording removed from the list can email **thehowardsmith@gmail.com**, or open an issue on this repository. Removed items are added to `builder/overrides.yaml` so they never return.
 

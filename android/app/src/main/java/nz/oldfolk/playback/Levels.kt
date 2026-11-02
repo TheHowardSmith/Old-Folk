@@ -136,6 +136,14 @@ class Levels(private val file: File) {
                 c.start()
 
                 val windows = ArrayList<Double>()   // mean square per window
+                // Per-channel mean squares (stereo only), for one-sided transfers that
+                // ChannelFixer plays on both speakers: those are measured on the loud channel.
+                val windowsL = ArrayList<Double>()
+                val windowsR = ArrayList<Double>()
+                var winL = 0.0
+                var winR = 0.0
+                var totalL = 0.0
+                var totalR = 0.0
                 var mono = FloatArray(rate * NoiseCheck.SECONDS)  // first seconds, channels averaged
                 var monoLen = 0
                 var frameSum = 0f
@@ -177,6 +185,7 @@ class Levels(private val file: File) {
                         while (shorts.hasRemaining()) {
                             val v = shorts.get() / 32768.0
                             winSum += v * v
+                            if (channels == 2) { if (chan == 0) winL += v * v else winR += v * v }
                             frameSum += v.toFloat()
                             if (++chan >= channels) {
                                 if (monoLen < mono.size) mono[monoLen++] = frameSum / channels
@@ -184,7 +193,11 @@ class Levels(private val file: File) {
                             }
                             if (++winCount >= winSize) {
                                 windows += winSum / winCount
-                                winSum = 0.0; winCount = 0
+                                if (channels == 2) {
+                                    windowsL += winL / (winCount / 2.0); windowsR += winR / (winCount / 2.0)
+                                    totalL += winL; totalR += winR
+                                }
+                                winSum = 0.0; winCount = 0; winL = 0.0; winR = 0.0
                             }
                             total++
                         }
@@ -193,7 +206,12 @@ class Levels(private val file: File) {
                     }
                 }
                 val noiseResult = if (monoLen >= rate * 8) NoiseCheck.analyze(mono, monoLen, rate) else null
-                return Reading(gatedLoudness(windows), noiseResult)
+                val measured = when (oneSided(totalL, totalR)) {
+                    1 -> windowsL
+                    2 -> windowsR
+                    else -> windows
+                }
+                return Reading(gatedLoudness(measured), noiseResult)
             } catch (e: Exception) {
                 Log.i(TAG, "level read failed: ${e.message}")
                 return null
@@ -202,6 +220,17 @@ class Levels(private val file: File) {
                 runCatching { codec?.release() }
                 ex.release()
             }
+        }
+
+        /**
+         * 1 if only the left channel carries sound, 2 if only the right, else 0
+         * (same -30 dB rule as [ChannelFixer]).
+         */
+        fun oneSided(energyL: Double, energyR: Double): Int = when {
+            energyL <= 0.0 && energyR <= 0.0 -> 0
+            energyR < energyL * 1e-3 -> 1
+            energyL < energyR * 1e-3 -> 2
+            else -> 0
         }
 
         /** Mean loudness of windows above an absolute (-60 dB) and relative (-15 dB) gate. */

@@ -33,8 +33,11 @@ regions:
     keywords: [malagasy, madagascar, pygmy, pygmies, ituri, bushmen, africa, african, palm wine, palm-wine, highlife, juju, congo, congolese, ghana, ghanaian, nigeria, nigerian, kenya, kenyan, zulu, xhosa, ethiopia, ethiopian, mali, senegal, sierra leone, uganda, tanzania, zimbabwe, mbira, kora]
     languages: [swahili, swa, zulu, zul, xhosa, xho, yoruba, yor, igbo, ibo, hausa, hau, amharic, amh, twi, akan, aka, lingala, lin, wolof, wol, shona, sna]
   "Middle East & Caucasus":
-    keywords: [hebrew, israeli, israel, arabian, arabic, arab, turkish, turkey, armenian, armenia, persian, iran, iranian, egypt, egyptian, syrian, lebanese, kurdish, georgian, azerbaijani, oud, maqam]
+    keywords: [middle east, near east, hebrew, israeli, israel, arabian, arabic, arab, turkish, turkey, armenian, armenia, persian, iran, iranian, iraq, iraqi, egypt, egyptian, syrian, lebanese, palestinian, yemenite, yemen, kurdish, kurd, georgian, azerbaijan, azerbaijani, azerbaijanian, azeri, daghestan, dagestan, lezgin, lezginka, chechen, ossetian, circassian, abkhaz, oud, maqam]
     languages: [hebrew, heb, arabic, ara, turkish, tur, armenian, arm, hye, persian, per, fas, farsi, kurdish, kur, georgian, geo, kat, azerbaijani, aze, assyrian, syriac, syr]
+  "Central Asia":
+    keywords: [central asia, tajik, tadjik, tajikistan, uzbek, uzbekistan, kazakh, kazak, kazakhstan, kyrgyz, kirghiz, kyrgyzstan, turkmen, turkmenistan, afghan, afghanistan, bukhara, samarkand, tatar, bashkir, dombra, dombara, dutar, komuz]
+    languages: [tajik, tgk, uzbek, uzb, kazakh, kaz, kyrgyz, kir, turkmen, tuk, tatar, tat, bashkir, bak, pashto, pus, dari, prs]
   "South Asia":
     keywords: [india, indian, hindustani, carnatic, bengali, punjabi, pakistan, sri lanka, nepal, raga]
     languages: [hindi, hin, bengali, ben, punjabi, pan, tamil, tam, telugu, tel, urdu, urd, marathi, mar, gujarati, guj, sinhala, sin, nepali, nep]
@@ -67,4 +70,5 @@ genre_region:
   caribbean: "Caribbean"
   pacific: "Hawaii & Pacific"
   african: "Africa"
+  southasia: "South Asia"
   latin: "Latin America"

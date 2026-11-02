@@ -797,9 +797,10 @@ fun AboutContent(
             style = MaterialTheme.typography.bodyLarge)
         AboutCard("Rights") {
             Text("The recordings are hosted by the Internet Archive and the Library of Congress and aren't covered by this app's license. " +
-                "They were chosen because they're believed to be in the public domain in New Zealand " +
-                "(recorded or released in 1970 or earlier). Their status may differ in other countries. " +
-                "Rights holders can request removal at thehowardsmith@gmail.com.",
+                "To the best of our knowledge they are no longer protected by copyright: every track meets our selection " +
+                "criteria (recorded or released in 1970 or earlier, not claimed by a rights holder in the US Copyright " +
+                "Office's records, and no restrictions noted by the archive). " +
+                "If you hold the rights to a recording and want it removed, email thehowardsmith@gmail.com.",
                 style = MaterialTheme.typography.bodyMedium)
         }
         AboutCard("Sound") {

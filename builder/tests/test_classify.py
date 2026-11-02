@@ -316,3 +316,23 @@ def test_vintagesense_series_excluded():
                             "subject": "indian; folk; film; classical; hindi",
                             "collection": ["78rpm", "audio_music"]}), RULES)
     assert r.status == EXCLUDE and "VintageSense" in r.reasons[0]
+
+
+def test_central_asian_tracks_are_not_african_despite_bad_language_tag():
+    files = [mp3("01.mp3", title="Amu (Tajik Folk Song)"), mp3("02.mp3", title="Lezginka (Daghestan Dance)"),
+             mp3("03.mp3", title="Dombara (Kazakh Folk Song)")]
+    r = classify_item("x", "other", item({"title": "Folk Music Of The S.S.R. Middle East",
+                                          "subject": ["Folk"], "date": "1956",
+                                          "language": ["eng", "uzb", "hau"]}, files), RULES)
+    regions = {t.title: t.region for t in r.tracks}
+    assert regions["Amu (Tajik Folk Song)"] == "Central Asia"
+    assert regions["Dombara (Kazakh Folk Song)"] == "Central Asia"
+    assert regions["Lezginka (Daghestan Dance)"] == "Middle East & Caucasus"
+    assert {t.genre for t in r.tracks} == {"asia"}
+
+
+def test_indian_music_has_its_own_genre():
+    r = classify_item("x", "78rpm", item({"subject": ["Folk", "Hindustani"], "title": "Raga Bhairavi"}), RULES)
+    assert r.genre == "southasia"
+    r = classify_item("x", "78rpm", item({"subject": ["Folk"], "language": "hin"}), RULES)
+    assert r.genre == "southasia" and r.region == "South Asia"

@@ -75,7 +75,7 @@ class RadioEngine(
         val playedCount: Int = 0,
     )
 
-    /** Audio chain: the spike limiter runs on every track before output. */
+    /** Audio chain: one-sided transfers go to both speakers, then the spike limiter, on every track. */
     private val renderers = object : androidx.media3.exoplayer.DefaultRenderersFactory(context) {
         override fun buildAudioSink(
             context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean,
@@ -83,7 +83,7 @@ class RadioEngine(
             androidx.media3.exoplayer.audio.DefaultAudioSink.Builder(context)
                 .setEnableFloatOutput(enableFloatOutput)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-                .setAudioProcessors(arrayOf(SpikeLimiter()))
+                .setAudioProcessors(arrayOf(ChannelFixer(), SpikeLimiter()))
                 .build()
     }
 
