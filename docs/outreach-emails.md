@@ -1,9 +1,15 @@
 # Outreach emails to archives (drafts)
 
 Drafts for asking archives to let Old Folk stream their public-domain recordings.
-Fill in the bracketed parts before sending. Tailored versions for CREM, Japan's
-National Diet Library, the Max Hunter Collection and the Archive of Indian Music
-will be added once their terms and contacts are confirmed.
+Fill in the bracketed parts before sending.
+
+| Archive | Why we need to ask | Contact |
+|---|---|---|
+| Instituto Moreira Salles (Brazil) | Not needed, but a list of public-domain recordings saves days of crawling | contact form on discografiabrasileira.com.br |
+| CREM-CNRS (France) | Legal notice: all use reserved, audio copying forbidden unless explicitly allowed | crem.lesc (at) cnrs.fr, or the head of the CREM archives |
+| National Diet Library (Japan) | Out-of-copyright recordings are free to reuse, but NDL supplies no files and streams only through its own player | contact form: https://www.ndl.go.jp/form/jp/service/contact/index.html (Kansai-kan, Digital Library Division) |
+| Archive of Indian Music | All rights reserved; streaming only, on SoundCloud (which forbids ripping and genre-service embeds) | info@archiveofindianmusic.org |
+| Max Hunter Collection (Springfield-Greene County Library) | Use limited to "educational and research purposes" | library's local history department |
 
 ## Base email (adapt per archive)
 
@@ -47,3 +53,119 @@ Hoje, para encontrar as gravações em domínio público, precisaríamos percorr
 
 Muito obrigado,
 [Seu nome] · thehowardsmith@gmail.com
+
+## CREM-CNRS (Archives sonores du CNRS – Musée de l'Homme), in French
+
+Their legal notice reserves all use and forbids copying audio unless explicitly
+allowed, and asks for respect for the cultural heritage of the communities of
+origin. Much of the collection is ritual material, so the ask is narrow.
+
+**Objet :** Demande d'autorisation : écoute en streaming d'enregistrements du CREM dans l'application Old Folk
+
+Madame, Monsieur,
+
+Je développe Old Folk, une application Android gratuite, sans publicité et sans but lucratif, qui propose une écoute continue d'enregistrements traditionnels et de terrain du monde entier. Le code est libre : https://github.com/TheHowardSmith/Old-Folk
+
+Nous aimerions, avec votre accord, proposer à l'écoute une sélection d'enregistrements du CREM : uniquement des items en consultation libre, antérieurs à 1971, dont le droit d'utilisation le permet, en excluant tout ce qui relève du rituel, du sacré ou de contenus sensibles pour les communautés d'origine.
+
+Concrètement :
+
+- l'application lit les fichiers directement depuis vos serveurs (ou via votre lecteur intégrable, si vous le préférez) : nous ne copions ni ne réhébergeons aucun fichier ;
+- chaque morceau est crédité au CREM-CNRS, avec un lien vers sa notice dans vos archives ;
+- l'écoute passe par un cache chiffré que seule l'application peut lire : rien ne peut être téléchargé ni redistribué ;
+- les requêtes sont limitées (deux morceaux préchargés au plus, une requête à la fois pour la mise à jour de la liste) ;
+- nous retirons immédiatement tout enregistrement sur simple demande, y compris à la demande des communautés, des interprètes ou de leurs ayants droit.
+
+Nous suivrions bien sûr toutes les conditions que vous fixeriez : collections concernées, mention à faire figurer, volume de requêtes. Seriez-vous disposés à envisager une telle utilisation ?
+
+Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+
+[Votre nom] · Old Folk · thehowardsmith@gmail.com
+
+## National Diet Library (Japan), Rekion: Japanese, with an English version
+
+NDL's reuse page says out-of-copyright items ("インターネット公開（保護期間満了）")
+may be used freely without applying, but Rekion provides no files and streams
+only through its own player. About 440 internet-public recordings are folk
+songs (民謡・俚謡). The ask: may an app stream them, or can NDL supply access?
+Have a native speaker check the Japanese.
+
+**件名：** 歴史的音源（保護期間満了）の音声を無料アプリ「Old Folk」で配信することについてのご相談
+
+国立国会図書館 関西館 電子図書館課 御中
+
+突然のご連絡失礼いたします。Old Folk という、世界の民謡・伝統音楽の古い録音を連続再生する、無料・広告なし・非営利の Android アプリを開発しております（ソースコード公開：https://github.com/TheHowardSmith/Old-Folk）。
+
+歴史的音源のうち「インターネット公開（保護期間満了）」の民謡・俚謡の録音を、アプリでお聴きいただけるようにしたいと考えております。
+
+- 各録音に国立国会図書館の出典を明記し、歴史的音源の該当ページへのリンクを表示します。
+- 音声はアプリ内の暗号化キャッシュでのみ再生され、利用者がファイルとして保存・再配布することはできません。
+- 貴館のサーバーへの負荷を抑えるため、先読みは最大2曲までとします。
+
+つきましては、(1) アプリから貴館のサーバーの音声を直接再生してよいか、(2) 難しい場合、保護期間満了の音源について音声ファイルの提供や別の利用方法をご検討いただけるか、ご教示いただけますと幸いです。継続利用の登録が必要であれば手続きいたします。
+
+何卒よろしくお願い申し上げます。
+
+[お名前] · Old Folk · thehowardsmith@gmail.com
+
+*English version:*
+
+**Subject:** Streaming out-of-copyright Rekion recordings in Old Folk, a free folk-music app
+
+Dear Digital Library Division,
+
+I develop Old Folk, a free, ad-free, non-commercial Android app that plays historical traditional and folk recordings from around the world (open source: https://github.com/TheHowardSmith/Old-Folk). We would like to include Rekion's internet-public (protection term expired) folk-song recordings (民謡・俚謡).
+
+Each recording would be credited to the National Diet Library with a link to its Rekion page. Playback runs through an encrypted cache inside the app, so listeners cannot save or redistribute files, and we prefetch at most two recordings ahead to keep the load on your servers low.
+
+Could you tell us (1) whether the app may play the audio directly from your servers, and (2) if not, whether NDL could provide audio files or another form of access for out-of-copyright recordings? We are happy to register as a continuous user if required.
+
+With thanks,
+[Your name] · Old Folk · thehowardsmith@gmail.com
+
+## Archive of Indian Music
+
+All rights reserved; audio only on SoundCloud, whose terms forbid ripping and
+genre-service embeds. The ask is for files (or direct links) for recordings
+that are out of copyright in India, which we'd host ourselves if needed.
+
+**Subject:** Featuring the Archive of Indian Music's early 78s in Old Folk, a free folk-music radio app
+
+Dear Archive of Indian Music team,
+
+I run Old Folk, a free, non-commercial Android app with no ads or accounts that plays an endless stream of historical traditional recordings from around the world (open source: https://github.com/TheHowardSmith/Old-Folk). Your restorations of early Indian 78s are exactly the kind of recordings our listeners love, and we'd be honoured to include them.
+
+Because your recordings are published on SoundCloud, whose terms don't allow an app like ours to use them, we would only do this with your permission and on your terms. We're thinking of recordings that are out of copyright in India: traditional, devotional and folk material on 78s from roughly before 1960.
+
+- Every track would credit the Archive of Indian Music, with a link to your website.
+- Playback runs through an encrypted cache inside the app: listeners can't download, save or redistribute anything.
+- If you could share direct audio links (or files that we would host privately just for streaming in the app), we would follow any conditions you set on which recordings, how they're credited and for how long.
+
+Would you be open to this?
+
+Warm regards,
+[Your name] · Old Folk · thehowardsmith@gmail.com
+
+## Max Hunter Collection (Springfield-Greene County Library, Missouri)
+
+About 1,600 Ozark folk songs recorded 1956-76, as direct MP3s. The library believes
+most are public domain but limits use to educational and research purposes. Only
+recordings made in 1970 or earlier would be used.
+
+**Subject:** Including the Max Hunter Collection in Old Folk, a free folk-music radio app
+
+Dear Local History team,
+
+I run Old Folk, a free, non-commercial Android app (no ads, no accounts, open source: https://github.com/TheHowardSmith/Old-Folk) that plays an endless stream of historical traditional and field recordings, so that more people hear them. The Max Hunter Collection's Ozark ballads and fiddle tunes would be a wonderful part of it.
+
+Your site asks that the recordings be used for educational and research purposes, so we wanted to ask first. We would only include recordings made in 1970 or earlier.
+
+- The app plays each recording directly from your website and never copies or re-hosts it.
+- Every track credits the Springfield-Greene County Library's Max Hunter Collection, with a link to the song's page.
+- Playback runs through an encrypted cache inside the app, so listeners can't download or redistribute files.
+- Only the next two songs are fetched ahead, so the load on your server stays small.
+
+Would the library be happy for us to do this, and are there any conditions you'd like us to follow?
+
+With thanks,
+[Your name] · Old Folk · thehowardsmith@gmail.com
