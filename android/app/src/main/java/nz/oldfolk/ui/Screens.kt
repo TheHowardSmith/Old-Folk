@@ -1,5 +1,7 @@
 package nz.oldfolk.ui
 
+import android.net.Uri
+
 import android.text.format.Formatter
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -95,7 +97,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import nz.oldfolk.AppGraph
 import nz.oldfolk.BuildConfig
-import nz.oldfolk.data.DownloadStatus
 import nz.oldfolk.data.Genre
 import nz.oldfolk.data.Playlist
 import nz.oldfolk.data.Track
@@ -439,26 +440,24 @@ private fun GenreRow(name: String, count: Int, checked: Boolean, onClick: () -> 
 @Composable
 private fun PlaylistsScreen(graph: AppGraph, onOpen: (String) -> Unit) {
     val playlists by graph.playlists.playlists.collectAsState()
-    val downloads by graph.playlists.downloads.collectAsState()
     var creating by remember { mutableStateOf(false) }
-    PlaylistsContent(playlists, downloads, onOpen, onNew = { creating = true })
+    PlaylistsContent(playlists, onOpen, onNew = { creating = true })
     if (creating) NameDialog("New playlist", "", onDismiss = { creating = false }) { graph.playlists.create(it); creating = false }
 }
 
 @Composable
 fun PlaylistsContent(
-    playlists: List<Playlist>, downloads: Map<Long, DownloadStatus>, onOpen: (String) -> Unit, onNew: () -> Unit,
+    playlists: List<Playlist>, onOpen: (String) -> Unit, onNew: () -> Unit,
 ) {
     LazyColumn(contentPadding = PaddingValues(16.dp)) {
         item {
-            Text("Save tracks from the Radio screen with \"Save\". Playlist tracks are downloaded to this phone so they play offline.",
+            Text("Save tracks from the Radio screen with \"Save\". Playlists stream, like the radio.",
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(12.dp))
             Button(onClick = onNew) { Text("New playlist") }
             Spacer(Modifier.height(12.dp))
         }
         items(playlists, key = { it.id }) { p ->
-            val done = p.tracks.count { downloads[it.key] == DownloadStatus.Done }
             val rc = LocalRadioColors.current
             Card(
                 onClick = { onOpen(p.id) },
@@ -468,7 +467,7 @@ fun PlaylistsContent(
             ) {
                 ListItem(
                     headlineContent = { Text(p.name, style = TrackTitle) },
-                    supportingContent = { Text("${plural(p.tracks.size, "track")} · $done on this phone") },
+                    supportingContent = { Text(plural(p.tracks.size, "track")) },
                     leadingContent = {
                         val labels = listOf(Color(0xFFB23A1E), Color(0xFF2E5E8C), Color(0xFF3F6B3A), Color(0xFF8C6B2F))
                         RecordIcon(labels[(p.id.hashCode() and 0x7fffffff) % labels.size])
@@ -485,7 +484,6 @@ private fun PlaylistDetailScreen(
     graph: AppGraph, id: String, onBeforePlay: () -> Unit, onPlayed: () -> Unit, onGone: () -> Unit,
 ) {
     val playlists by graph.playlists.playlists.collectAsState()
-    val downloads by graph.playlists.downloads.collectAsState()
     val p = playlists.firstOrNull { it.id == id }
     if (p == null) {
         LaunchedEffect(id) { onGone() }
@@ -494,20 +492,19 @@ private fun PlaylistDetailScreen(
     var renaming by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     PlaylistDetailContent(
-        p, downloads,
+        p,
         onPlay = { i -> onBeforePlay(); graph.engine.playPlaylist(p, i); onPlayed() },
         onShuffle = { onBeforePlay(); graph.engine.playPlaylist(p, p.tracks.indices.random(), shuffle = true); onPlayed() },
         onRename = { renaming = true },
         onDelete = { confirmDelete = true },
         onRemove = { graph.playlists.remove(p.id, it) },
-        onRetry = { graph.playlists.retryFailed() },
     )
     if (renaming) NameDialog("Rename playlist", p.name, onDismiss = { renaming = false }) { graph.playlists.rename(p.id, it); renaming = false }
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
             title = { Text("Delete \"${p.name}\"?") },
-            text = { Text("Its downloaded tracks will be removed from your phone (unless another playlist has them).") },
+            text = { Text("The playlist will be removed. The recordings stay in the radio's selection.") },
             confirmButton = { TextButton(onClick = { confirmDelete = false; graph.playlists.delete(p.id); onGone() }) { Text("Delete") } },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
         )
@@ -516,9 +513,9 @@ private fun PlaylistDetailScreen(
 
 @Composable
 fun PlaylistDetailContent(
-    p: Playlist, downloads: Map<Long, DownloadStatus>,
+    p: Playlist,
     onPlay: (Int) -> Unit, onShuffle: () -> Unit, onRename: () -> Unit, onDelete: () -> Unit,
-    onRemove: (Track) -> Unit, onRetry: () -> Unit,
+    onRemove: (Track) -> Unit,
 ) {
     LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
         item {
@@ -535,34 +532,14 @@ fun PlaylistDetailContent(
                 IconButton(onClick = onRename) { Icon(Icons.Filled.Edit, "Rename") }
                 IconButton(onClick = onDelete) { Icon(Icons.Filled.Delete, "Delete playlist") }
             }
-            if (p.tracks.any { downloads[it.key] is DownloadStatus.Failed }) {
-                TextButton(onClick = onRetry, modifier = Modifier.padding(horizontal = 8.dp)) { Text("Retry failed downloads") }
-            }
             if (p.tracks.isEmpty()) Text("No tracks yet. Use \"Save\" on the Radio screen.", Modifier.padding(16.dp))
         }
         itemsIndexed(p.tracks, key = { _, t -> t.key }) { index, t ->
-            val s = downloads[t.key]
             ListItem(
                 headlineContent = { Text(t.title, style = TrackTitle, maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                supportingContent = {
-                    Column {
-                        Text("${t.artist ?: "Unknown"} · ${t.yearLabel}")
-                        when (s) {
-                            is DownloadStatus.Failed -> Text("Download failed: ${s.reason}", style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error)
-                            is DownloadStatus.Downloading -> LinearProgressIndicator(progress = { s.progress },
-                                modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
-                            else -> {}
-                        }
-                    }
-                },
-                leadingContent = {
-                    when (s) {
-                        DownloadStatus.Done -> Icon(Icons.Filled.CheckCircle, "Downloaded", tint = LocalRadioColors.current.brass)
-                        is DownloadStatus.Failed -> Icon(Icons.Filled.ErrorOutline, "Download failed", tint = MaterialTheme.colorScheme.error)
-                        else -> Icon(Icons.Filled.CloudDownload, "Waiting to download")
-                    }
-                },
+                supportingContent = { Text("${t.artist ?: "Unknown"} · ${t.yearLabel}") },
+                leadingContent = { Text("${index + 1}", style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 trailingContent = { IconButton(onClick = { onRemove(t) }) { Icon(Icons.Filled.Delete, "Remove") } },
                 colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
                 modifier = Modifier.clickable { onPlay(index) },
@@ -640,7 +617,7 @@ private fun HistoryScreen(graph: AppGraph, onBeforePlay: () -> Unit) {
     HistoryContent(
         rows = rows,
         isPlaying = state.isPlaying,
-        isSaved = { t -> graph.playlists.isDownloaded(t) || graph.mediaCache.isFullyCached(t.streamUrl) },
+        isSaved = { t -> graph.mediaCache.isFullyCached(t.streamUrl) },
         onRow = { row ->
             onBeforePlay()
             when (row) {
@@ -734,6 +711,8 @@ private fun HistoryItem(t: Track, label: String?, saved: Boolean, kind: Int, onC
 
 // ====================================================================== about
 
+const val CONTACT_EMAIL = "thehowardsmith@gmail.com"
+
 data class AboutInfo(
     val listVersion: String,
     val tracksLoaded: Int,
@@ -741,7 +720,6 @@ data class AboutInfo(
     val played: Int,
     val failures: Int,
     val cache: String,
-    val downloads: String,
     val appVersion: String,
     val skipNoisy: Boolean = true,
     val noisySkipped: Int = 0,
@@ -766,7 +744,6 @@ private fun AboutScreen(graph: AppGraph) {
             failures = failures.size,
             cache = "${Formatter.formatShortFileSize(context, graph.mediaCache.usedBytes())} of " +
                 Formatter.formatShortFileSize(context, MediaCache.MAX_BYTES),
-            downloads = Formatter.formatShortFileSize(context, graph.playlists.storageBytes()),
             appVersion = BuildConfig.VERSION_NAME,
         ),
         onReset = { confirmReset = true },
@@ -774,6 +751,7 @@ private fun AboutScreen(graph: AppGraph) {
         onClearFailures = { graph.failures.clear() },
         onGitHub = { Links.open(context, Links.repoUrl) },
         onSkipNoisy = { graph.settings.setSkipNoisy(it) },
+        onEmail = { Links.open(context, "mailto:$CONTACT_EMAIL?subject=" + Uri.encode("Old Folk: our recordings")) },
     )
     if (confirmReset) {
         AlertDialog(
@@ -790,6 +768,7 @@ private fun AboutScreen(graph: AppGraph) {
 fun AboutContent(
     info: AboutInfo, onReset: () -> Unit, onSendReport: () -> Unit, onClearFailures: () -> Unit, onGitHub: () -> Unit,
     onSkipNoisy: (Boolean) -> Unit = {},
+    onEmail: () -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -800,14 +779,22 @@ fun AboutContent(
                 "To the best of our knowledge they are no longer protected by copyright: every track meets our selection " +
                 "criteria (recorded or released in 1970 or earlier, not claimed by a rights holder in the US Copyright " +
                 "Office's records, and no restrictions noted by the archive). " +
-                "If you hold the rights to a recording and want it removed, email thehowardsmith@gmail.com.",
+                "If you hold the rights to a recording and want it removed, email $CONTACT_EMAIL.",
                 style = MaterialTheme.typography.bodyMedium)
+        }
+        AboutCard("For archives and libraries") {
+            Text("Do you look after a collection of traditional or historical recordings? We'd love to help more " +
+                "people hear them. Old Folk streams straight from your own servers, credits your institution on every " +
+                "track with a link back to your catalogue, and never copies or re-hosts your files. If you'd like your " +
+                "recordings included, or want to set conditions, please get in touch.",
+                style = MaterialTheme.typography.bodyMedium)
+            OutlinedButton(onClick = onEmail) { Text(CONTACT_EMAIL) }
         }
         AboutCard("Sound") {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Skip very noisy recordings", style = MaterialTheme.typography.bodyLarge)
-                    Text("Each track is checked for heavy surface noise after it downloads. " +
+                    Text("Each track is checked for heavy surface noise when it's fetched. " +
                         "Noisy ones are skipped on the radio (playlists always play everything)." +
                         if (info.noisySkipped > 0) " ${plural(info.noisySkipped, "track")} flagged so far." else "",
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -833,8 +820,8 @@ fun AboutContent(
             }
         }
         AboutCard("Storage") {
-            Text("Streaming cache: ${info.cache} (your last 20 tracks and the next 20)")
-            Text("Playlist downloads: ${info.downloads}")
+            Text("Streaming cache: ${info.cache} (your last 20 tracks and the next 20). " +
+                "It's encrypted and only this app can play it; recordings are never saved to the phone as files.")
         }
         TextButton(onClick = onGitHub) { Text("Project on GitHub") }
         Text("App version ${info.appVersion} · Code: Apache-2.0 · Track list: CC0",

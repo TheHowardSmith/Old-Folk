@@ -6,11 +6,13 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.AesCipherDataSink
+import androidx.media3.datasource.AesCipherDataSource
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.FileDataSource
-import androidx.media3.datasource.TransferListener
+import androidx.media3.datasource.cache.CacheDataSink
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.CacheWriter
 import androidx.media3.datasource.cache.ContentMetadata
@@ -29,13 +31,20 @@ import java.io.File
  * Streaming cache: a capped LRU disk cache in cacheDir. Streams are read
  * through it, and the next few radio tracks are prefetched into it so that
  * playback continues smoothly (and survives short connection drops).
+ *
+ * Everything is stored encrypted (AES-CTR, keyed per file and position) with a
+ * key held by the Android Keystore ([CacheKey]), so cached recordings can only
+ * be played by this app, not copied off the phone and shared as files.
  */
 class MediaCache(context: Context, maxBytes: Long = MAX_BYTES) {
-    val cache = SimpleCache(
-        File(context.cacheDir, "media"),
-        LeastRecentlyUsedCacheEvictor(maxBytes),
-        StandaloneDatabaseProvider(context),
-    )
+    private val secret = CacheKey.load(context)
+
+    val cache: SimpleCache = run {
+        File(context.cacheDir, "media").deleteRecursively()      // older, unencrypted cache
+        val dir = File(context.cacheDir, "media-enc")
+        if (secret.fresh) dir.deleteRecursively()                 // written with a key we no longer have
+        SimpleCache(dir, LeastRecentlyUsedCacheEvictor(maxBytes), StandaloneDatabaseProvider(context))
+    }
 
     private val http = DefaultHttpDataSource.Factory()
         .setUserAgent(USER_AGENT)
@@ -43,15 +52,24 @@ class MediaCache(context: Context, maxBytes: Long = MAX_BYTES) {
         .setConnectTimeoutMs(15_000)
         .setReadTimeoutMs(20_000)
 
+    private val decrypting = DataSource.Factory { AesCipherDataSource(secret.key, FileDataSource()) }
+
     val cachedHttp: CacheDataSource.Factory = CacheDataSource.Factory()
         .setCache(cache)
         .setUpstreamDataSourceFactory(http)
+        .setCacheReadDataSourceFactory(decrypting)
+        .setCacheWriteDataSinkFactory {
+            // The scratch buffer keeps the player's copy of the data unencrypted.
+            AesCipherDataSink(secret.key, CacheDataSink(cache, CacheDataSink.DEFAULT_FRAGMENT_SIZE), ByteArray(SCRATCH))
+        }
         .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
 
-    /** Local playlist downloads are read directly; everything else goes through the cache. */
-    val dataSourceFactory = DataSource.Factory {
-        RoutingDataSource(FileDataSource(), cachedHttp.createDataSource())
-    }
+    /** Reads only what is already cached (for the level and noise check). */
+    val cacheOnly: CacheDataSource.Factory = CacheDataSource.Factory()
+        .setCache(cache)
+        .setCacheReadDataSourceFactory(decrypting)
+
+    val dataSourceFactory: DataSource.Factory = cachedHttp
 
     fun usedBytes(): Long = cache.cacheSpace
 
@@ -65,6 +83,7 @@ class MediaCache(context: Context, maxBytes: Long = MAX_BYTES) {
 
     companion object {
         const val MAX_BYTES = 600L * 1024 * 1024
+        private const val SCRATCH = 16 * 1024
     }
 
     private var prefetchJob: Job? = null
@@ -90,40 +109,6 @@ class MediaCache(context: Context, maxBytes: Long = MAX_BYTES) {
                     if (isActive) Log.i("MediaCache", "prefetch failed for $url: ${e.message}")
                 }
             }
-        }
-    }
-}
-
-private class RoutingDataSource(
-    private val file: DataSource,
-    private val net: DataSource,
-) : DataSource {
-    private var current: DataSource? = null
-
-    override fun addTransferListener(transferListener: TransferListener) {
-        file.addTransferListener(transferListener)
-        net.addTransferListener(transferListener)
-    }
-
-    override fun open(dataSpec: DataSpec): Long {
-        val scheme = dataSpec.uri.scheme
-        val ds = if (scheme == null || scheme == "file") file else net
-        current = ds
-        return ds.open(dataSpec)
-    }
-
-    override fun read(buffer: ByteArray, offset: Int, length: Int): Int =
-        current?.read(buffer, offset, length) ?: throw IllegalStateException("not opened")
-
-    override fun getUri(): Uri? = current?.uri
-
-    override fun getResponseHeaders(): Map<String, List<String>> = current?.responseHeaders ?: emptyMap()
-
-    override fun close() {
-        try {
-            current?.close()
-        } finally {
-            current = null
         }
     }
 }

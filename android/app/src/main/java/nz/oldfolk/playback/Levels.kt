@@ -11,7 +11,6 @@ import android.util.Log
 import androidx.media3.common.C
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
-import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.ContentMetadata
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,8 +24,8 @@ import kotlin.math.log10
 import kotlin.math.pow
 
 /**
- * Loudness levelling and noise check. When a track has been downloaded
- * (prefetched into the cache, or saved for a playlist) its first [MAX_SECONDS]
+ * Loudness levelling and noise check. When a track has been fetched into the
+ * playback cache, its first [MAX_SECONDS]
  * are decoded once:
  *  - a gated RMS loudness is measured (a simplified EBU R128-style reading);
  *    the playback gain that brings it to [TARGET_DB] is applied by
@@ -66,16 +65,11 @@ class Levels(private val file: File) {
 
     fun has(key: Long) = gains.containsKey(key)
 
-    fun analyzeCached(key: Long, cache: Cache, url: String) {
+    fun analyzeCached(key: Long, media: MediaCache, url: String) {
         if (has(key)) return
-        val size = ContentMetadata.getContentLength(cache.getContentMetadata(url))
+        val size = ContentMetadata.getContentLength(media.cache.getContentMetadata(url))
         if (size <= 0) return
-        CacheMediaDataSource(cache, url, size).use { src -> store(key, read { it.setDataSource(src) }) }
-    }
-
-    fun analyzeFile(key: Long, f: File) {
-        if (has(key) || !f.exists()) return
-        store(key, read { it.setDataSource(f.absolutePath) })
+        CacheMediaDataSource(media.cacheOnly, url, size).use { src -> store(key, read { it.setDataSource(src) }) }
     }
 
     private fun store(key: Long, reading: Reading?) {
@@ -248,8 +242,11 @@ class Levels(private val file: File) {
 }
 
 /** Lets MediaExtractor read a fully cached stream straight from the media cache. */
-private class CacheMediaDataSource(cache: Cache, private val key: String, private val length: Long) : MediaDataSource() {
-    private val factory = CacheDataSource.Factory().setCache(cache)   // no upstream: cache only
+private class CacheMediaDataSource(
+    private val factory: CacheDataSource.Factory,   // cache only, decrypting
+    private val key: String,
+    private val length: Long,
+) : MediaDataSource() {
     private var ds: DataSource? = null
     private var pos = -1L
 

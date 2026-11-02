@@ -3,7 +3,6 @@ package nz.oldfolk.ui
 import androidx.compose.runtime.Composable
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
-import nz.oldfolk.data.DownloadStatus
 import nz.oldfolk.data.Genre
 import nz.oldfolk.data.Playlist
 import nz.oldfolk.data.Track
@@ -65,10 +64,9 @@ class ScreenshotTest {
         )
     }
     @Test fun playlistsLight() = shot(false, Tab.PLAYLISTS, "Playlists") {
-        PlaylistsContent(listOf(Playlist("1", "Kitchen dances", upNext), Playlist("2", "Sunday blues", listOf(track))),
-            mapOf(upNext[0].key to DownloadStatus.Done, upNext[1].key to DownloadStatus.Done), {}, {})
+        PlaylistsContent(listOf(Playlist("1", "Kitchen dances", upNext), Playlist("2", "Sunday blues", listOf(track))), {}, {})
     }
     @Test fun aboutDark() = shot(true, Tab.RADIO, "About") {
-        AboutContent(AboutInfo("202611011030", 24870, "9/9", 312, 2, "210 MB of 600 MB", "48 MB", "0.1.7"), {}, {}, {}, {})
+        AboutContent(AboutInfo("202611011030", 24870, "9/9", 312, 2, "210 MB of 600 MB", "0.1.7"), {}, {}, {}, {})
     }
 }

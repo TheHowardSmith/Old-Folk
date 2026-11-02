@@ -27,7 +27,8 @@ Old Folk plays a never-ending random stream of public-domain folk and field reco
 - **History tab:** scroll up through everything you've ever streamed on this phone, and down through the tracks coming next. Older tracks aren't stored on the phone; tapping one streams it again.
 - **Track details:** title, performer, year, region and genre, with a link to the recording's page at the archive that holds it.
 - **Light on the archives:** each track is downloaded once and then played from the phone's cache. Recordings from smaller archives than archive.org are only fetched two tracks ahead, so skipping through the queue doesn't download files from them that nobody hears.
-- **Playlists:** save tracks you like; they're downloaded to your phone so they play offline (no storage cap).
+- **Playlists:** save tracks you like and play them back any time. They stream like the radio does.
+- **Nothing to copy:** recordings are never saved to the phone as files. The playback cache is encrypted with a key held in the phone's secure keystore, so only the app can play it.
 - **Report this track:** opens a pre-filled GitHub issue (rights concerns, wrong details, not folk...).
 - **Failure reports:** tracks that fail to play or download are logged with the reason and whether the phone was online. From the About screen you can send them to this repository as a pre-filled issue, so we can check whether the file is really gone or it was a connection or app problem.
 
@@ -96,7 +97,9 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 
 The recordings are hosted by the **Internet Archive**, the **Library of Congress**, the **National Library of Finland**, the **Finnish Literature Society** and the **Instituto Moreira Salles**, not by this project, and are **not covered by this repository's licenses**. To the best of our knowledge they are no longer protected by copyright: every track meets the [selection rules](#selection-rules) above (recorded or released in 1970 or earlier, not claimed by a rights holder in the US Copyright Office's pre-1972 schedules, and no restrictions noted by the archive).
 
-Rights holders who want a recording removed from the list can email **thehowardsmith@gmail.com**, or open an issue on this repository. Removed items are added to `builder/overrides.yaml` so they never return.
+Rights holders who want a recording removed from the list can email **thehowardsmith@gmail.com**, or open an issue on this repository.
+
+**Archives and libraries:** if you look after a collection of traditional or historical recordings and would like listeners to hear them through Old Folk, please get in touch at the same address. The app streams from your own servers, credits your institution on every track with a link back to your catalogue, and never copies or re-hosts your files. Removed items are added to `builder/overrides.yaml` so they never return.
 
 ## Licenses
 
