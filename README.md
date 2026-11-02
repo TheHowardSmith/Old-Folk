@@ -6,7 +6,7 @@ Open that link on your Android phone (Android 8 or newer), then open the downloa
 
 ---
 
-Old Folk plays a never-ending random stream of public-domain folk and field recordings from around the world, streamed directly from the [Internet Archive](https://archive.org) and the [Library of Congress](https://www.loc.gov/audio/). There is no streaming server: a vetted track list is published as small JSON files, and the app picks random tracks from it and plays them straight from the archive that holds them.
+Old Folk plays a never-ending random stream of public-domain folk and field recordings from around the world, streamed directly from the archives that hold them: the [Internet Archive](https://archive.org), the [Library of Congress](https://www.loc.gov/audio/), Finnish archives through [Finna](https://www.finna.fi) (the National Library of Finland and the Finnish Literature Society), and the Instituto Moreira Salles' [Discografia Brasileira](https://discografiabrasileira.com.br). There is no streaming server: a vetted track list is published as small JSON files, and the app picks random tracks from it and plays them straight from the archive that holds them.
 
 <p>
 <img src="android/app/src/test/snapshots/images/nz.oldfolk.ui_ScreenshotTest_radioPlayingLight.png" width="200" alt="Radio screen, light">
@@ -53,7 +53,8 @@ oldfolk-build search            # find candidate items (fast)
 oldfolk-build sample --n 200    # optional: pick a test sample
 oldfolk-build fetch --sample    # fetch metadata (drop --sample for the full run)
 oldfolk-build build --sample    # classify and write out-sample/ (or out/)
-oldfolk-build ext-fetch         # optional: harvest the Library of Congress collections in rules/loc.yaml
+oldfolk-build ext-fetch         # optional: harvest loc.gov (rules/loc.yaml) and Finna (rules/finna.yaml)
+oldfolk-build ext-fetch --source ims --minutes 60   # optional, slow: Discografia Brasileira (5 s per page)
 ```
 
 Fetching is polite (at most 2 requests at a time for the Internet Archive, one at a time with a pause for loc.gov, retries with backoff) and resumable: everything is cached in `builder/cache/oldfolk.sqlite`, so it can be stopped and restarted at any time. `build` works only from the cache, so rules can be tuned and re-run offline.
@@ -62,11 +63,11 @@ Output (not committed to git):
 
 - `index.json`: list version, genres and shard list
 - `s-<genre>-<n>.json`: the track list, about 5,000 tracks per shard
-- `x-<genre>-<n>.json`: tracks from other archives (Library of Congress), listed under `ext` in the index so older app versions skip them
+- `x-<genre>-<n>.json`: tracks from other archives (Library of Congress, Finna, Discografia Brasileira), listed under `ext` in the index so older app versions skip them
 - `r-<genre>-<n>.json`: **review set**, flagged tracks that are kept out of the app until checked
 - `flagged.csv`, `writers.csv`, `excluded.csv`, `report.md`: for manual review
 
-Shard format (short keys): `{"v":1,"g":"oldtime","t":[{"i":"<item id>","f":"<file name>","t":"<title>","a":"<artist>","y":1928,"r":"<region>","g":"<genre>","p":1}]}`. `p` is the label/cover image: `1` means `<item id>_itemimage.jpg`, `2` means `<item id>_itemimage.png`, otherwise a file name; when absent the app uses the Archive thumbnail. Playback URL: `https://archive.org/download/{i}/{f}`. Tracks from other archives add `u` (full audio URL) and `w` (web page), and their `i` is prefixed, e.g. `loc:flwpa000003`.
+Shard format (short keys): `{"v":1,"g":"oldtime","t":[{"i":"<item id>","f":"<file name>","t":"<title>","a":"<artist>","y":1928,"r":"<region>","g":"<genre>","p":1}]}`. `p` is the label/cover image: `1` means `<item id>_itemimage.jpg`, `2` means `<item id>_itemimage.png`, otherwise a file name; when absent the app uses the Archive thumbnail. Playback URL: `https://archive.org/download/{i}/{f}`. Tracks from other archives add `u` (full audio URL), `w` (web page) and `s` (the institution credited in the app), and their `i` is prefixed, e.g. `loc:flwpa000003`, `finna:sks.…`, `ims:19508`.
 
 ## Publishing
 
@@ -87,11 +88,13 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 - 78s graded **poor** or **worn** by the digitiser are excluded as too noisy.
 - Recordings a rights owner claims in the US Copyright Office's **Pre-1972 Sound Recording Schedules** (matched by title and performer) are excluded, unless recorded in 1925 or earlier, when US protection has expired. The index is refreshed monthly by the track-list workflow.
 - **Library of Congress** recordings come only from the historical folk field-recording collections listed in `builder/rules/loc.yaml` (the National Jukebox, licensed from Sony, is not used). Each item's own rights statement must say there are no known restrictions; anything else goes to the review set. Spoken word and transfers the Library describes as barely audible are left out.
+- **Finna** recordings must be online with an open usage-rights code: public domain/free use (mostly the National Library of Finland's 78s) or CC BY-NC-ND (the Finnish Literature Society's field recordings, which the app streams unaltered, non-commercially and credited). Speech, Sámi joik (flagged for review) and anything after 1970 are left out.
+- **Discografia Brasileira** recordings must already be in the public domain in Brazil by the site's own public-domain year (author's death + 70 and recording + 70 years) and be in a traditional or regional genre (toada, embolada, cateretê, coco, lundu, moda de viola, choro, baião...); popular-song genres such as samba and marcha are left out. The site is harvested at its requested pace of one page every 5 seconds, by its own scheduled workflow.
 - No audio is ever stored in this repository.
 
 ## Rights notice
 
-The recordings are hosted by the **Internet Archive** and the **Library of Congress**, not by this project, and are **not covered by this repository's licenses**. To the best of our knowledge they are no longer protected by copyright: every track meets the [selection rules](#selection-rules) above (recorded or released in 1970 or earlier, not claimed by a rights holder in the US Copyright Office's pre-1972 schedules, and no restrictions noted by the archive).
+The recordings are hosted by the **Internet Archive**, the **Library of Congress**, the **National Library of Finland**, the **Finnish Literature Society** and the **Instituto Moreira Salles**, not by this project, and are **not covered by this repository's licenses**. To the best of our knowledge they are no longer protected by copyright: every track meets the [selection rules](#selection-rules) above (recorded or released in 1970 or earlier, not claimed by a rights holder in the US Copyright Office's pre-1972 schedules, and no restrictions noted by the archive).
 
 Rights holders who want a recording removed from the list can email **thehowardsmith@gmail.com**, or open an issue on this repository. Removed items are added to `builder/overrides.yaml` so they never return.
 

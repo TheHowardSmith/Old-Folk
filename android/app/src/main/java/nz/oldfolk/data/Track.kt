@@ -19,6 +19,8 @@ data class Track(
     val url: String? = null,
     /** The recording's web page, likewise. */
     val page: String? = null,
+    /** Holding institution to credit, for recordings outside the Internet Archive. */
+    val source: String? = null,
 ) {
     /** Stable identity across list versions: used for "never repeat" and downloads. */
     val key: Long = keyOf(id, file)
@@ -36,6 +38,7 @@ data class Track(
     val sourceName: String
         get() = when {
             url == null -> "Internet Archive"
+            source != null -> source
             url.contains("loc.gov") -> "Library of Congress"
             else -> Uri.parse(url).host ?: "web"
         }
@@ -61,6 +64,7 @@ data class Track(
         picture?.let { put("p", it.toIntOrNull() ?: it) }
         url?.let { put("u", it) }
         page?.let { put("w", it) }
+        source?.let { put("s", it) }
     }
 
     companion object {
@@ -85,6 +89,7 @@ data class Track(
             picture = o.opt("p")?.toString()?.ifBlank { null },
             url = o.optString("u").ifBlank { null },
             page = o.optString("w").ifBlank { null },
+            source = o.optString("s").ifBlank { null },
         )
 
         fun parseShard(json: String): List<Track> {

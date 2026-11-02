@@ -29,6 +29,8 @@ def track_json(t: Track) -> dict:
         d["u"] = t.url       # not on the Internet Archive: full audio URL ...
     if t.page:
         d["w"] = t.page      # ... and web page
+    if t.source:
+        d["s"] = t.source    # holding institution, credited in the app
     return d
 
 
@@ -97,6 +99,8 @@ def write_all(results: list[ItemResult], out: Path, genres: dict[str, str],
 def item_url(ident: str) -> str:
     if ident.startswith("loc:"):
         return f"https://www.loc.gov/item/{ident[4:]}/"
+    if ident.startswith("finna:"):
+        return f"https://www.finna.fi/Record/{ident[6:]}"
     return f"https://archive.org/details/{ident}"
 
 
@@ -140,7 +144,7 @@ def summarize(results: list[ItemResult]) -> dict:
     for r in results:
         tracks[r.status] += len(r.tracks)
     inc = [t for r in results if r.status == INCLUDE for t in r.tracks]
-    by_source = collections.Counter("loc" if t.url else "ia" for t in inc)
+    by_source = collections.Counter(t.source or "Internet Archive" for t in inc)
     return {
         "items": dict(status),
         "tracks": dict(tracks),

@@ -53,6 +53,14 @@ jobs:
           key: tracklist-cache-${{ github.run_id }}
           restore-keys: tracklist-cache-
 
+      # Discografia Brasileira pages, harvested by harvest-ims.yml.
+      - name: Restore Discografia Brasileira cache
+        uses: actions/cache/restore@v4
+        with:
+          path: builder/cache-ims
+          key: ims-cache-none
+          restore-keys: ims-cache-
+
       - name: Search
         run: oldfolk-build search
 
@@ -79,9 +87,10 @@ jobs:
             echo "complete=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # Recordings from the Library of Congress (rules/loc.yaml): one request at a
-      # time, cached with the rest, so later runs only fetch what's new.
-      - name: Fetch loc.gov recordings (time-boxed)
+      # Recordings from the Library of Congress (rules/loc.yaml) and Finna
+      # (rules/finna.yaml): one request at a time, cached with the rest, so
+      # later runs only fetch what's new.
+      - name: Fetch loc.gov and Finna recordings (time-boxed)
         if: steps.done.outputs.complete == 'true'
         run: |
           timeout 40m oldfolk-build ext-fetch || echo "::notice::loc.gov harvest not finished; continues next run"

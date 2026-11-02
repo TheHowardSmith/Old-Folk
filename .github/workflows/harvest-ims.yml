@@ -1,0 +1,50 @@
+name: Harvest Discografia Brasileira
+
+# Slowly harvests recording pages from Discografia Brasileira (Instituto
+# Moreira Salles), honouring its robots.txt crawl delay of 5 seconds. Each run
+# fetches for up to 5 hours and keeps its progress in its own cache, so the
+# first full harvest takes a few days of scheduled runs; after that, runs only
+# pick up new pages. The track-list build reads the latest cache.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harvest-ims
+  cancel-in-progress: false
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    defaults:
+      run:
+        working-directory: builder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+
+      - name: Restore harvest cache
+        uses: actions/cache/restore@v4
+        with:
+          path: builder/cache-ims
+          key: ims-cache-${{ github.run_id }}
+          restore-keys: ims-cache-
+
+      - name: Harvest (time-boxed)
+        run: oldfolk-build ext-fetch --source ims --minutes 290
+
+      - name: Save harvest cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: builder/cache-ims
+          key: ims-cache-${{ github.run_id }}

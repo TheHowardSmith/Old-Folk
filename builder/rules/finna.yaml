@@ -1,0 +1,65 @@
+# Finna (finna.fi, Finland's national search service) as a source of recordings.
+#
+# Only sound records that are online and carry an open usage-rights code:
+#   0/A Free/    public domain or free use (mostly the National Library's 78s)
+#   0/E NC-ND/   CC BY-NC-ND: free, unaltered, non-commercial use with credit
+#                (mostly the Finnish Literature Society's field recordings)
+# Every record still goes through the normal classifier and needs a date <= 1970.
+
+user_agent: "OldFolkListBuilder/1.0 (+https://github.com/thehowardsmith/old-folk)"
+pause: 1.0
+api: https://api.finna.fi/v1/search
+rights:
+  - "0/A Free/"
+  - "0/E NC-ND/"
+
+# Holding institutions (Finna `building` codes) and how the app credits them.
+# Institutions not listed are skipped.
+holders:
+  NLF: National Library of Finland
+  FINLIT: Finnish Literature Society
+  SLS: Society of Swedish Literature in Finland
+
+# Finnish/Swedish subject words that mark traditional music (added as "folk").
+folk_subjects:
+  - kansanlaulut
+  - kansanmusiikki
+  - perinnemusiikki
+  - runolaulu
+  - kalevalamittaiset runot
+  - itkuvirret
+  - kehtolaulut
+  - pelimannimusiikki
+  - kansansoittimet
+  - kansansoittajat
+  - kantele
+  - viulu
+  - paimentorvet
+  - tuohitorvet
+  - karjankutsut
+  - merimieslaulut
+  - kansantanssit
+  - folkmusik
+  - folkvisor
+  - folkdans
+  - spelmansmusik
+  - kenttäkeruu
+  - melodiat
+
+# Subjects that mean speech, not music.
+spoken_subjects:
+  - uskomustarinat
+  - sadut
+  - kaskut ja anekdootit
+  - kertomukset
+  - muistelu
+  - podcastit
+  - haastattelut
+  - intervjuer
+  - dialekter
+  - murteet
+  - sägner
+
+# Subjects that need a human look (Sámi joik, charms).
+indigenous_subjects: [joiut, joiku, saamelaiset, saamelaismusiikki, saamelaiskielet, nenetsit, nenetsin kieli, hantit, mansit]
+ceremonial_subjects: [loitsut]

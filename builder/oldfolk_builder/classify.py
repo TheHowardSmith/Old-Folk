@@ -55,6 +55,7 @@ class Track:
     picture: str | int | None = None
     url: str | None = None      # full audio URL, for recordings not on the Internet Archive
     page: str | None = None     # the recording's web page, likewise
+    source: str | None = None   # holding institution shown in the app ("Library of Congress")
 
 
 @dataclass

@@ -23,6 +23,15 @@ class TrackTest {
     }
 
     @Test
+    fun creditedInstitutionIsShown() {
+        val t = Track.fromJson(JSONObject("""{"i":"finna:sks.1","f":"a.mp3","t":"Itkuvirsi","r":"Nordic","g":"european",
+            "u":"https://yksa.disec.fi/Yksa4/download/1/file/a","w":"https://www.finna.fi/Record/sks.1",
+            "s":"Finnish Literature Society"}"""))
+        assertEquals("Finnish Literature Society", t.sourceName)
+        assertEquals(t, Track.fromJson(t.toJson()))
+    }
+
+    @Test
     fun externalUrlsSurviveSavingAndLoading() {
         val t = Track.fromJson(JSONObject(locJson))
         val back = Track.fromJson(t.toJson())

@@ -793,10 +793,10 @@ fun AboutContent(
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Old Folk plays public-domain folk and field recordings from around the world, streamed straight from the Internet Archive and the Library of Congress.",
+        Text("Old Folk plays public-domain folk and field recordings from around the world, streamed straight from the archives that hold them: the Internet Archive, the Library of Congress, Finnish archives via Finna, and the Instituto Moreira Salles.",
             style = MaterialTheme.typography.bodyLarge)
         AboutCard("Rights") {
-            Text("The recordings are hosted by the Internet Archive and the Library of Congress and aren't covered by this app's license. " +
+            Text("The recordings are hosted by those archives and aren't covered by this app's license. " +
                 "To the best of our knowledge they are no longer protected by copyright: every track meets our selection " +
                 "criteria (recorded or released in 1970 or earlier, not claimed by a rights holder in the US Copyright " +
                 "Office's records, and no restrictions noted by the archive). " +

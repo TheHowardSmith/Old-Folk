@@ -74,11 +74,19 @@ def cmd_fetch(args, rules, store):
 
 
 def cmd_ext_fetch(args, rules, store):
-    from . import loc
-    cfg = loc.load_config()
-    if args.only:
-        cfg.collections = [c for c in cfg.collections if c["slug"] in args.only]
-    print(json.dumps(loc.harvest(store, cfg, details=not args.no_details, limit=args.limit)))
+    from . import finna, ims, loc
+    if args.source == "ims":      # slow (5 s per page): its own cache file and workflow
+        ims_store = Store(Path(args.ims_db))
+        print(json.dumps({"ims": ims.harvest(ims_store, ims.load_config(), minutes=args.minutes,
+                                             limit=args.limit)}))
+        return
+    if args.source in ("finna", "all"):
+        print(json.dumps({"finna": finna.harvest(store, finna.load_config())}))
+    if args.source in ("loc", "all"):
+        cfg = loc.load_config()
+        if args.only:
+            cfg.collections = [c for c in cfg.collections if c["slug"] in args.only]
+        print(json.dumps({"loc": loc.harvest(store, cfg, details=not args.no_details, limit=args.limit)}))
 
 
 def cmd_build(args, rules, store):
@@ -88,10 +96,16 @@ def cmd_build(args, rules, store):
     if not results:
         sys.exit("no fetched items - run `fetch` first")
     if not args.no_ext:
-        from . import loc
-        ext = loc.classify_all(store, rules)
-        log.info("loc.gov: %d items in the cache", len(ext))
-        results += ext
+        from . import finna, loc
+        for name, mod in (("loc.gov", loc), ("finna", finna)):
+            ext = mod.classify_all(store, rules)
+            log.info("%s: %d items in the cache", name, len(ext))
+            results += ext
+        from . import ims
+        if Path(args.ims_db).exists():
+            ext = ims.classify_all(Store(Path(args.ims_db)), rules)
+            log.info("discografia brasileira: %d items in the cache", len(ext))
+            results += ext
     summary = write_all(results, out, rules.genres, version=args.version,
                         shard_size=args.shard_size)
     print(json.dumps(summary, indent=1, ensure_ascii=False))
@@ -133,10 +147,15 @@ def main(argv=None):
     s.add_argument("--out", help="output directory")
     s.add_argument("--version", type=int, help="list version (default: UTC yyyymmddHHMM)")
     s.add_argument("--shard-size", type=int, default=SHARD_SIZE)
-    s.add_argument("--no-ext", action="store_true", help="leave out other archives (loc.gov)")
+    s.add_argument("--no-ext", action="store_true", help="leave out other archives (loc.gov, finna, IMS)")
+    s.add_argument("--ims-db", default=str(BUILDER_DIR / "cache-ims" / "ims.sqlite"))
 
-    s = sub.add_parser("ext-fetch", help="harvest loc.gov collections into the cache")
-    s.add_argument("--only", nargs="*", help="collection slugs to harvest")
+    s = sub.add_parser("ext-fetch", help="harvest other archives (loc.gov, finna.fi) into the cache")
+    s.add_argument("--source", choices=("all", "loc", "finna", "ims"), default="all",
+                   help="'all' = loc + finna; 'ims' (Discografia Brasileira) runs on its own, slowly")
+    s.add_argument("--minutes", type=float, help="ims: stop after this many minutes")
+    s.add_argument("--ims-db", default=str(BUILDER_DIR / "cache-ims" / "ims.sqlite"))
+    s.add_argument("--only", nargs="*", help="loc.gov collection slugs to harvest")
     s.add_argument("--no-details", action="store_true",
                    help="skip the per-item requests for items whose search record lacks the MP3")
     s.add_argument("--limit", type=int, help="at most N per-item requests (for testing)")

@@ -313,6 +313,7 @@ def classify_record(ident: str, coll_slug: str, record: dict, detail: dict | Non
         t.file = t.file.rsplit("/", 1)[-1]
         t.page = page_url(ident)
         t.picture = None
+        t.source = "Library of Congress"
     if res.status == INCLUDE or res.status == FLAG:
         rights = meta["rights"].lower()
         if not any(p in rights for p in cfg.rights_ok):
