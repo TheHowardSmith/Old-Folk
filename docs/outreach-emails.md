@@ -10,6 +10,15 @@ Fill in the bracketed parts before sending.
 | National Diet Library (Japan) | Out-of-copyright recordings are free to reuse, but NDL supplies no files and streams only through its own player | contact form: https://www.ndl.go.jp/form/jp/service/contact/index.html (Kansai-kan, Digital Library Division) |
 | Archive of Indian Music | All rights reserved; streaming only, on SoundCloud (which forbids ripping and genre-service embeds) | info@archiveofindianmusic.org |
 | Max Hunter Collection (Springfield-Greene County Library) | Use limited to "educational and research purposes" | library's local history department |
+| AfricaMuseum Tervuren (Belgium) | Online only as 30 s clips; grants CC BY where it holds the rights | repro@africamuseum.be |
+| Phonothèque Nationale de Tunisie (CMAM) | 1,469 full-access MP3s online, but copying needs explicit permission | info@cmam.tn (head of archives named in sweep2-mena-central-asia.md) |
+| SierraLeoneHeritage.org | 236 full recordings as direct MP3s, site says "Copyright ©" | info@sierraleoneheritage.org |
+| National Museum of Taiwan History | Taiwanese 78s streamed in its own player, all rights reserved | museum web forms |
+| Hawaiʻi State Archives (Rockwell 78s) | Partly online; ask before streaming | musicarchives@hawaii.gov |
+| Jewish Music Research Centre (Hebrew University) | Direct MP3s, no rights statement | jmrc@mail.huji.ac.il |
+| Kyoto University (KURRA) | 1940–43 Kinki folk-song field discs | see sweep2-asia-pacific.md |
+
+The base email works for most of these; the CREM draft (French) suits CMAM too.
 
 ## Base email (adapt per archive)
 

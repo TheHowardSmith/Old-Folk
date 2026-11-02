@@ -91,10 +91,21 @@ def cmd_ext_fetch(args, rules, store):
         print(json.dumps({"loc": loc.harvest(store, cfg, details=not args.no_details, limit=args.limit)}))
 
 
+def with_subjects(data: dict, subjects: list[str] | None) -> dict:
+    """Add a source's collection-level subjects (sources.yaml `add_subjects`)."""
+    if not subjects:
+        return data
+    meta = dict(data.get("metadata") or {})
+    have = meta.get("subject") or []
+    meta["subject"] = ([have] if isinstance(have, str) else list(have)) + subjects
+    return {**data, "metadata": meta}
+
+
 def cmd_build(args, rules, store):
     out = Path(args.out) if args.out else BUILDER_DIR / ("out-sample" if args.sample else "out")
-    results = [classify_item(i, kind, data, rules)
-               for i, _src, kind, data in store.fetched(sample_only=args.sample)]
+    extra = {s["name"]: list(s.get("add_subjects") or []) for s in rules.sources}
+    results = [classify_item(i, kind, with_subjects(data, extra.get(src)), rules)
+               for i, src, kind, data in store.fetched(sample_only=args.sample)]
     if not results:
         sys.exit("no fetched items - run `fetch` first")
     if not args.no_ext:

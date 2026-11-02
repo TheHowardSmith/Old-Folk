@@ -347,3 +347,11 @@ def test_russian_is_european_and_siberian_is_asian():
     assert (r.region, r.genre) == ("Central Asia", "asia")
     r = classify_item("x", "other", item({"subject": ["Folk"], "title": "Chukchi Songs", "date": "1960"}), RULES)
     assert r.status == FLAG
+
+
+def test_source_level_subjects_bring_in_bolivian_78s():
+    from oldfolk_builder.cli import with_subjects
+    data = item({"subject": ["78rpm", "bolivia"], "title": "Chayanteña", "date": "1917"})
+    assert classify_item("x", "78rpm", data, RULES).status == EXCLUDE
+    r = classify_item("x", "78rpm", with_subjects(data, ["folk music", "bolivian"]), RULES)
+    assert r.status == INCLUDE and r.genre == "latin" and r.region == "Latin America"

@@ -50,3 +50,12 @@ sources:
       OR ballads OR "sea shanties" OR "country blues")
       OR genre:(folk OR "folk songs" OR "folk music" OR traditional
       OR "field recordings" OR ethnic OR "Folk, World, & Country"))
+
+  # Bolivian 78s (1916-1950s: cuecas, huayños, bailecitos, estudiantinas) from the
+  # Ajayus de Antaño project, mostly CC BY-NC-ND. They're tagged only "78rpm" and
+  # "bolivia", so the folk tag is added here (add_subjects).
+  - name: 78rpm-bolivia
+    kind: 78rpm
+    query: collection:78rpm AND mediatype:audio AND subject:bolivia
+    add_subjects: [folk music, bolivian]
+
