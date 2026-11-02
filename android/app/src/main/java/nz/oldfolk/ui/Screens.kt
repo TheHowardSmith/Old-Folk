@@ -316,6 +316,11 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
                     Text(it, style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                 }
+                if (!track.onArchiveOrg) {
+                    Text("from the ${track.sourceName}", style = MaterialTheme.typography.bodySmall,
+                        fontStyle = FontStyle.Italic,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                }
             }
         }
 
@@ -788,10 +793,10 @@ fun AboutContent(
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Old Folk plays public-domain folk and field recordings from around the world, streamed straight from the Internet Archive.",
+        Text("Old Folk plays public-domain folk and field recordings from around the world, streamed straight from the Internet Archive and the Library of Congress.",
             style = MaterialTheme.typography.bodyLarge)
         AboutCard("Rights") {
-            Text("The recordings are hosted by the Internet Archive and aren't covered by this app's license. " +
+            Text("The recordings are hosted by the Internet Archive and the Library of Congress and aren't covered by this app's license. " +
                 "They were chosen because they're believed to be in the public domain in New Zealand " +
                 "(recorded or released in 1970 or earlier). Their status may differ in other countries. " +
                 "Rights holders can request removal at thehowardsmith@gmail.com.",

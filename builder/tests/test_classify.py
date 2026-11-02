@@ -250,3 +250,69 @@ def test_us_claimed_recordings_excluded_unless_us_public_domain():
     assert classify_item("s", "78rpm", item(dict(meta, date="1922")), rules).status == INCLUDE
     # same title, different performer: kept
     assert classify_item("t", "78rpm", item(dict(meta, creator="Other Fiddler")), rules).status == INCLUDE
+
+
+def lp(ident, title, genres, creator="Various", description="Tracklist: 1. A  2. B", date="1962"):
+    return classify_item(ident, "other",
+                         item({"identifier": ident, "title": title, "creator": creator,
+                               "genre": genres, "date": date, "description": description,
+                               "collection": ["album_recordings", "audio_music"]}), RULES)
+
+
+def test_non_western_classical_is_traditional():
+    r = lp("lp_raga-todi", "Raga Todi / Mishra Thumri",
+           ["Classical", "Folk, World, & Country", "Indian Classical"], creator="Bismillah Khan")
+    assert r.status == INCLUDE, r.reasons
+    r = lp("lp_hundred-feet", "Hundred Feet Above The Pole - Chinese Classical Music",
+           ["Classical", "Folk, World, & Country"])
+    assert r.status == INCLUDE, r.reasons
+    r = lp("lp_nagauta", "Nagauta Music And Arrangements From Older Classics",
+           ["Classical", "Folk, World, & Country"], creator="The Azuma Kabuki Musicians")
+    assert r.status == INCLUDE, r.reasons
+    r = lp("lp_dragon-robe", "Beating The Dragon Robe, A Traditional Peking Opera",
+           ["Folk, World, & Country", "Opera", "Chinese Classical"])
+    assert r.status == INCLUDE, r.reasons
+
+
+def test_western_forms_and_early_music_keep_classical_flag():
+    r = lp("lp_chinese-violin", "The Chinese Violin",
+           ["Classical", "Folk, World, & Country", "Chinese Classical"],
+           description="Tracklist: 1. Butterfly Lovers (A Violin Concerto): First Movement")
+    assert r.status == FLAG
+    r = lp("lp_andalusia", "Medieval Courtly Monody - Arabian Andalusia",
+           ["Classical", "Folk, World, & Country", "Medieval", "Andalusian Classical"])
+    assert r.status == FLAG and "medieval" in r.reasons[0]
+    r = lp("lp_bartok", "44 Violin Duets", ["Classical", "Folk, World, & Country", "Folk"])
+    assert r.status == FLAG
+
+
+def test_umbrella_genre_with_pop_tags_is_excluded():
+    r = lp("lp_holiday-in-japan", "Holiday In Japan",
+           ["Pop", "Folk, World, & Country", "Easy Listening"],
+           creator="Ricardo Santos And His Orchestra", date="1957")
+    assert r.status == EXCLUDE and "Folk, World, & Country" in r.reasons[0]
+    r = lp("lp_east-of-india", "East Of India: Exotic Melodies",
+           ["Folk, World, & Country", "Stage & Screen"], date="1959")
+    assert r.status == EXCLUDE
+    # a real folk tag alongside keeps it in review
+    r = lp("lp_mantovani", "Folk Songs Around The World",
+           ["Jazz", "Folk, World, & Country", "Folk", "Easy Listening"], date="1964")
+    assert r.status == FLAG
+
+
+def test_victor_ethnic_disc_popular_music_tag_ignored():
+    r = classify_item("loc-jukebox-20824-loussine-ga", "78rpm",
+                      item({"identifier": "loc-jukebox-20824-loussine-ga", "title": "Loussine ga",
+                            "date": "1916-12-08", "collection": ["78rpm", "audio_music"],
+                            "subject": ["ethnic music", "vocal", "victor", "armenian",
+                                        "popular music", "78rpm"]}), RULES)
+    assert r.status == INCLUDE, r.reasons
+    assert r.region == "Middle East & Caucasus"
+
+
+def test_vintagesense_series_excluded():
+    r = classify_item("www.VintageSense.com-Vintage-Indian-Music-80n", "78rpm",
+                      item({"identifier": "www.VintageSense.com-Vintage-Indian-Music-80n",
+                            "subject": "indian; folk; film; classical; hindi",
+                            "collection": ["78rpm", "audio_music"]}), RULES)
+    assert r.status == EXCLUDE and "VintageSense" in r.reasons[0]

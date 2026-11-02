@@ -1,6 +1,7 @@
 """Load the YAML rule files that drive searching and classification."""
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -49,6 +50,15 @@ class Rules:
     schedules_path: Path | None = None
     band_tags: frozenset[str] = frozenset()
     band_words: tuple[str, ...] = ()
+    exclude_id_patterns: tuple[tuple[re.Pattern, str], ...] = ()
+    traditional_art_tags: frozenset[str] = frozenset()
+    traditional_art_words: tuple[str, ...] = ()
+    traditional_art_regions: frozenset[str] = frozenset()
+    western_art_words: tuple[str, ...] = ()
+    ethnic_record_tags: frozenset[str] = frozenset()
+    ethnic_waivable_tags: frozenset[str] = frozenset()
+    weak_generic_tags: frozenset[str] = frozenset()
+    pop_tags: frozenset[str] = frozenset()
     overrides: dict = field(default_factory=dict)
 
     def load_schedules(self):
@@ -119,5 +129,15 @@ def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) 
         instruction_ensembles=tuple(str(p).lower() for p in cls.get("instruction_ensembles") or []),
         band_tags=_lower_set(cls.get("band_tags")),
         band_words=tuple(str(p).lower() for p in cls.get("band_words") or []),
+        exclude_id_patterns=tuple((re.compile(str(e["pattern"]), re.I), str(e["reason"]))
+                                  for e in cls.get("exclude_id_patterns") or []),
+        traditional_art_tags=_lower_set(cls.get("traditional_art_tags")),
+        traditional_art_words=tuple(str(p).lower() for p in cls.get("traditional_art_words") or []),
+        traditional_art_regions=frozenset(cls.get("traditional_art_regions") or []),
+        western_art_words=tuple(str(p).lower() for p in cls.get("western_art_words") or []),
+        ethnic_record_tags=_lower_set(cls.get("ethnic_record_tags")),
+        ethnic_waivable_tags=_lower_set(cls.get("ethnic_waivable_tags")),
+        weak_generic_tags=_lower_set(cls.get("weak_generic_tags")),
+        pop_tags=_lower_set(cls.get("pop_tags")),
         overrides=overrides,
     )

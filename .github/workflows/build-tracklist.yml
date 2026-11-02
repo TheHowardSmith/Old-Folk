@@ -69,13 +69,6 @@ jobs:
           timeout 300m oldfolk-build fetch --pause 0.25 || true
           oldfolk-build status
 
-      - name: Save metadata cache
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: builder/cache
-          key: tracklist-cache-${{ github.run_id }}
-
       - name: Is fetching complete?
         id: done
         run: |
@@ -85,6 +78,20 @@ jobs:
           else
             echo "complete=false" >> "$GITHUB_OUTPUT"
           fi
+
+      # Recordings from the Library of Congress (rules/loc.yaml): one request at a
+      # time, cached with the rest, so later runs only fetch what's new.
+      - name: Fetch loc.gov recordings (time-boxed)
+        if: steps.done.outputs.complete == 'true'
+        run: |
+          timeout 40m oldfolk-build ext-fetch || echo "::notice::loc.gov harvest not finished; continues next run"
+
+      - name: Save metadata cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: builder/cache
+          key: tracklist-cache-${{ github.run_id }}
 
       # US Pre-1972 Sound Recording Schedules (recordings claimed by labels),
       # used to exclude claimed recordings. Refreshed monthly; ~35 min to fetch.

@@ -53,6 +53,8 @@ class Track:
     genre: str
     seconds: float | None = None
     picture: str | int | None = None
+    url: str | None = None      # full audio URL, for recordings not on the Internet Archive
+    page: str | None = None     # the recording's web page, likewise
 
 
 @dataclass
@@ -236,6 +238,28 @@ def is_generic_folk(tags: set[str], rules: Rules) -> bool:
     return any(has_word(t, "folk") or has_word(t, "traditional") for t in tags)
 
 
+def traditional_art_waiver(tags: set[str], title: str, artist: str | None, desc: str,
+                           rules: Rules) -> set[str]:
+    """Exclude tags to ignore for non-Western classical and court traditions.
+
+    Discogs files raga, gagaku, Cantonese music, Peking opera and the like under
+    "Classical" (and "Opera"); the exclude list means Western art music. Returns
+    the tags to waive: classical and opera when a tradition is named in the tags,
+    title or performer; only classical when the item is merely from such a region.
+    Nothing is waived when the title or description names Western forms
+    (concerto, symphony...).
+    """
+    if find_words(f"{title} | {desc}".lower(), rules.western_art_words):
+        return set()
+    named = f"{title} | {artist or ''}".lower()
+    if tags & rules.traditional_art_tags or find_words(named, rules.traditional_art_words):
+        return {"classical", "opera"}
+    region = region_from_text(" | ".join(sorted(tags)) + " | " + title, rules)
+    if region in rules.traditional_art_regions:
+        return {"classical"}
+    return set()
+
+
 def looks_like_lp(meta: dict) -> bool:
     ident = str(meta.get("identifier", ""))
     colls = [c.lower() for c in as_list(meta.get("collection"))]
@@ -264,6 +288,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if ident in set(ov.get("exclude", []) or []):
         return exclude("excluded in overrides.yaml")
     force_include = ident in set(ov.get("include", []) or [])
+    for pattern, reason in rules.exclude_id_patterns:
+        if pattern.search(ident):
+            return exclude(reason)
 
     desc = strip_html(as_text(meta.get("description")))
     notes = strip_html(as_text(meta.get("notes")))
@@ -302,8 +329,15 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
         return exclude(f"folk-dance instruction record: {teaching[0]}")
     genre = specific_genre(tags, kind, rules)
     excluded = tags & rules.exclude_tags
+    excluded -= traditional_art_waiver(tags, title, artist, desc, rules)
+    if excluded and excluded <= rules.ethnic_waivable_tags and tags & rules.ethnic_record_tags:
+        excluded = set()    # LoC/Victor "ethnic music" discs: "popular music" just means secular
     generic = is_generic_folk(tags - excluded, rules)
     if excluded and not genre:
+        if generic and excluded & rules.pop_tags \
+                and not is_generic_folk(tags - excluded - rules.weak_generic_tags, rules):
+            return exclude(f"not folk: {', '.join(sorted(excluded))} "
+                           "(only the broad 'Folk, World, & Country' label)")
         if generic:
             flags.append(f"folk tag mixed with non-folk tags: {', '.join(sorted(excluded))}")
         else:

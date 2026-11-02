@@ -6,7 +6,7 @@ Open that link on your Android phone (Android 8 or newer), then open the downloa
 
 ---
 
-Old Folk plays a never-ending random stream of public-domain folk and field recordings from around the world, streamed directly from the [Internet Archive](https://archive.org). There is no streaming server: a vetted track list is published as small JSON files, and the app picks random tracks from it and plays them straight from archive.org.
+Old Folk plays a never-ending random stream of public-domain folk and field recordings from around the world, streamed directly from the [Internet Archive](https://archive.org) and the [Library of Congress](https://www.loc.gov/audio/). There is no streaming server: a vetted track list is published as small JSON files, and the app picks random tracks from it and plays them straight from the archive that holds them.
 
 <p>
 <img src="android/app/src/test/snapshots/images/nz.oldfolk.ui_ScreenshotTest_radioPlayingLight.png" width="200" alt="Radio screen, light">
@@ -25,12 +25,13 @@ Old Folk plays a never-ending random stream of public-domain folk and field reco
 - **Skips very noisy recordings:** the same read checks for heavy surface noise (hiss band vs music band, plus spectral flatness), and the radio skips tracks where the noise swamps the music, about 15% of 78s. It can be switched off under About; playlists always play everything.
 - **Smooth playback, even when skipping a lot:** 5 tracks are fetched ahead at first, then 20 ahead once you're streaming. Your last 20 tracks are kept too, so the previous button works instantly. Everything goes in a capped 600 MB cache, and tracks that won't play are skipped automatically. Fetching 20 ahead uses more mobile data.
 - **History tab:** scroll up through everything you've ever streamed on this phone, and down through the tracks coming next. Older tracks aren't stored on the phone; tapping one streams it again.
-- **Track details:** title, performer, year, region and genre, with a link to the recording's Internet Archive page.
+- **Track details:** title, performer, year, region and genre, with a link to the recording's page at the archive that holds it.
+- **Light on the archives:** each track is downloaded once and then played from the phone's cache. Recordings from smaller archives than archive.org are only fetched two tracks ahead, so skipping through the queue doesn't download files from them that nobody hears.
 - **Playlists:** save tracks you like; they're downloaded to your phone so they play offline (no storage cap).
 - **Report this track:** opens a pre-filled GitHub issue (rights concerns, wrong details, not folk...).
 - **Failure reports:** tracks that fail to play or download are logged with the reason and whether the phone was online. From the About screen you can send them to this repository as a pre-filled issue, so we can check whether the file is really gone or it was a connection or app problem.
 
-How it works: on first launch the app downloads `index.json` and one random part ("shard") of the track list, starts playing, and fetches the remaining shards in the background. Everything is cached; it only downloads again when the list version changes. Playback URLs are `https://archive.org/download/{item}/{file}`.
+How it works: on first launch the app downloads `index.json` and one random part ("shard") of the track list, starts playing, and fetches the remaining shards in the background. Everything is cached; it only downloads again when the list version changes. Playback URLs are `https://archive.org/download/{item}/{file}`, or the full URL given in the track for other archives.
 
 ## Repository layout
 
@@ -52,18 +53,20 @@ oldfolk-build search            # find candidate items (fast)
 oldfolk-build sample --n 200    # optional: pick a test sample
 oldfolk-build fetch --sample    # fetch metadata (drop --sample for the full run)
 oldfolk-build build --sample    # classify and write out-sample/ (or out/)
+oldfolk-build ext-fetch         # optional: harvest the Library of Congress collections in rules/loc.yaml
 ```
 
-Fetching is polite (at most 2 requests at a time, retries with backoff) and resumable: everything is cached in `builder/cache/oldfolk.sqlite`, so it can be stopped and restarted at any time. `build` works only from the cache, so rules can be tuned and re-run offline.
+Fetching is polite (at most 2 requests at a time for the Internet Archive, one at a time with a pause for loc.gov, retries with backoff) and resumable: everything is cached in `builder/cache/oldfolk.sqlite`, so it can be stopped and restarted at any time. `build` works only from the cache, so rules can be tuned and re-run offline.
 
 Output (not committed to git):
 
 - `index.json`: list version, genres and shard list
 - `s-<genre>-<n>.json`: the track list, about 5,000 tracks per shard
+- `x-<genre>-<n>.json`: tracks from other archives (Library of Congress), listed under `ext` in the index so older app versions skip them
 - `r-<genre>-<n>.json`: **review set**, flagged tracks that are kept out of the app until checked
 - `flagged.csv`, `writers.csv`, `excluded.csv`, `report.md`: for manual review
 
-Shard format (short keys): `{"v":1,"g":"oldtime","t":[{"i":"<item id>","f":"<file name>","t":"<title>","a":"<artist>","y":1928,"r":"<region>","g":"<genre>","p":1}]}`. `p` is the label/cover image: `1` means `<item id>_itemimage.jpg`, `2` means `<item id>_itemimage.png`, otherwise a file name; when absent the app uses the Archive thumbnail. Playback URL: `https://archive.org/download/{i}/{f}`.
+Shard format (short keys): `{"v":1,"g":"oldtime","t":[{"i":"<item id>","f":"<file name>","t":"<title>","a":"<artist>","y":1928,"r":"<region>","g":"<genre>","p":1}]}`. `p` is the label/cover image: `1` means `<item id>_itemimage.jpg`, `2` means `<item id>_itemimage.png`, otherwise a file name; when absent the app uses the Archive thumbnail. Playback URL: `https://archive.org/download/{i}/{f}`. Tracks from other archives add `u` (full audio URL) and `w` (web page), and their `i` is prefixed, e.g. `loc:flwpa000003`.
 
 ## Publishing
 
@@ -79,14 +82,16 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 - Items whose date looks unreliable (compilations, reissues, LPs dated before LPs existed, text mentioning later years, modern recordings of old songs) are **flagged for review**, not included.
 - Songs credited to a named (non-traditional) writer are currently **kept**; their writers are listed in `writers.csv` and `builder/scripts/writer_deaths.py` estimates how many would need removing if composition copyright is enforced.
 - Recordings whose descriptions say they are **restricted, sacred/secret or culturally sensitive are excluded**. Indigenous and ceremonial recordings are flagged for a human check.
+- Non-Western classical and court traditions (raga, gagaku, nagauta, Cantonese music, Peking opera...) count as traditional music; Indian film songs count as pop.
 - Jazz, pop (including Latin dance music such as tango and bolero), classical, opera, spoken word, and military/regimental bands are excluded, as are folk-dance instruction records (arranged studio versions made for dance classes, e.g. Folkraft or Michael Herman's Folk Orchestra).
 - 78s graded **poor** or **worn** by the digitiser are excluded as too noisy.
 - Recordings a rights owner claims in the US Copyright Office's **Pre-1972 Sound Recording Schedules** (matched by title and performer) are excluded, unless recorded in 1925 or earlier, when US protection has expired. The index is refreshed monthly by the track-list workflow.
+- **Library of Congress** recordings come only from the historical folk field-recording collections listed in `builder/rules/loc.yaml` (the National Jukebox, licensed from Sony, is not used). Each item's own rights statement must say there are no known restrictions; anything else goes to the review set. Spoken word and transfers the Library describes as barely audible are left out.
 - No audio is ever stored in this repository.
 
 ## Rights notice
 
-The recordings are hosted by the **Internet Archive**, not by this project, and are **not covered by this repository's licenses**. Tracks were selected because they are believed to be in the public domain in **New Zealand**. Their status may be different in other countries; check your local law before reusing them.
+The recordings are hosted by the **Internet Archive** and the **Library of Congress**, not by this project, and are **not covered by this repository's licenses**. Tracks were selected because they are believed to be in the public domain in **New Zealand**. Their status may be different in other countries; check your local law before reusing them.
 
 Rights holders who want a recording removed from the list can email **thehowardsmith@gmail.com**, or open an issue on this repository. Removed items are added to `builder/overrides.yaml` so they never return.
 

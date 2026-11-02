@@ -25,6 +25,10 @@ def track_json(t: Track) -> dict:
     d["g"] = t.genre
     if t.picture:
         d["p"] = t.picture   # 1 = "<id>_itemimage.jpg", 2 = "<id>_itemimage.png", else a file name
+    if t.url:
+        d["u"] = t.url       # not on the Internet Archive: full audio URL ...
+    if t.page:
+        d["w"] = t.page      # ... and web page
     return d
 
 
@@ -55,13 +59,16 @@ def write_shards(tracks: list[Track], out: Path, prefix: str, genres: dict[str, 
 def write_all(results: list[ItemResult], out: Path, genres: dict[str, str],
               version: int | None = None, shard_size: int = SHARD_SIZE) -> dict:
     out.mkdir(parents=True, exist_ok=True)
-    for old in list(out.glob("s-*.json")) + list(out.glob("r-*.json")):
+    for old in list(out.glob("s-*.json")) + list(out.glob("r-*.json")) + list(out.glob("x-*.json")):
         old.unlink()
     version = version or int(datetime.now(timezone.utc).strftime("%Y%m%d%H%M"))
 
     included = [t for r in results if r.status == INCLUDE for t in r.tracks]
     review = [t for r in results if r.status == FLAG for t in r.tracks]
-    main_entries = write_shards(included, out, "s", genres, shard_size)
+    # Recordings from other archives go in their own "x-" shards, listed under
+    # "ext": app versions that only know archive.org URLs never load them.
+    main_entries = write_shards([t for t in included if not t.url], out, "s", genres, shard_size)
+    ext_entries = write_shards([t for t in included if t.url], out, "x", genres, shard_size)
     review_entries = write_shards(review, out, "r", genres, shard_size)
 
     counts = collections.Counter(t.genre for t in included)
@@ -73,6 +80,7 @@ def write_all(results: list[ItemResult], out: Path, genres: dict[str, str],
         "genres": [{"k": g, "name": name, "n": counts.get(g, 0)} for g, name in genres.items()
                    if counts.get(g, 0)],
         "shards": main_entries,
+        "ext": ext_entries,
         "review": review_entries,
         "url": "https://archive.org/download/{i}/{f}",
     }
@@ -86,6 +94,12 @@ def write_all(results: list[ItemResult], out: Path, genres: dict[str, str],
     return summary
 
 
+def item_url(ident: str) -> str:
+    if ident.startswith("loc:"):
+        return f"https://www.loc.gov/item/{ident[4:]}/"
+    return f"https://archive.org/details/{ident}"
+
+
 def write_reports(results: list[ItemResult], out: Path) -> None:
     flagged = [r for r in results if r.status == FLAG]
     with open(out / "flagged.csv", "w", newline="", encoding="utf-8") as fh:
@@ -93,7 +107,7 @@ def write_reports(results: list[ItemResult], out: Path) -> None:
         w.writerow(["id", "url", "genre", "region", "year", "year_note", "tracks", "title",
                     "artist", "writers", "reasons", "decision (include/exclude)"])
         for r in sorted(flagged, key=lambda r: (r.reasons[0] if r.reasons else "", r.id)):
-            w.writerow([r.id, f"https://archive.org/details/{r.id}", r.genre, r.region,
+            w.writerow([r.id, item_url(r.id), r.genre, r.region,
                         r.year or "", r.year_note or "", len(r.tracks), r.title, r.artist or "",
                         "; ".join(r.writers), " || ".join(r.reasons), ""])
 
@@ -106,7 +120,7 @@ def write_reports(results: list[ItemResult], out: Path) -> None:
         w = csv.writer(fh)
         w.writerow(["writer", "flagged_items", "example_item", "died (fill in)", "approve? (y/n)"])
         for wname, ids in sorted(writer_items.items(), key=lambda kv: (-len(kv[1]), kv[0])):
-            w.writerow([wname, len(ids), f"https://archive.org/details/{ids[0]}", "", ""])
+            w.writerow([wname, len(ids), item_url(ids[0]), "", ""])
 
     with open(out / "excluded.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
@@ -126,9 +140,11 @@ def summarize(results: list[ItemResult]) -> dict:
     for r in results:
         tracks[r.status] += len(r.tracks)
     inc = [t for r in results if r.status == INCLUDE for t in r.tracks]
+    by_source = collections.Counter("loc" if t.url else "ia" for t in inc)
     return {
         "items": dict(status),
         "tracks": dict(tracks),
+        "included_by_source": dict(by_source),
         "included_by_genre": dict(collections.Counter(t.genre for t in inc).most_common()),
         "included_by_region": dict(collections.Counter(t.region for t in inc).most_common()),
         "included_undated": sum(1 for t in inc if not t.year),

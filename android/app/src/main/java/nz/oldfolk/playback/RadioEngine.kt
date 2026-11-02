@@ -344,7 +344,7 @@ class RadioEngine(
                     .setArtist(t.artist ?: "Unknown performer")
                     .setAlbumTitle("${t.yearLabel} · ${t.region}")
                     .setGenre(genreName)
-                    .setArtworkUri(Uri.parse(t.artUrl))
+                    .setArtworkUri(t.artUrl?.let { Uri.parse(it) })
                     .setIsPlayable(true)
                     .setIsBrowsable(false)
                     .build()
@@ -407,10 +407,16 @@ class RadioEngine(
         val urls = ArrayList<String>()
         // The player buffers the current item itself; prefetch the ones after it.
         // In queue order, so the next few are ready first and the rest follow.
+        // Smaller archives than archive.org only get their next EXT_AHEAD tracks
+        // fetched early; the rest are fetched when they come up, so skipping
+        // through the queue doesn't download files nobody hears from them.
         val start = player.currentMediaItemIndex + 1
+        var ext = 0
         for (i in start until minOf(player.mediaItemCount, start + STREAM_AHEAD)) {
             val uri = player.getMediaItemAt(i).localConfiguration?.uri ?: continue
-            if (uri.scheme == "https") urls += uri.toString()
+            if (uri.scheme != "https") continue
+            if (uri.host?.endsWith("archive.org") != true && ++ext > EXT_AHEAD) continue
+            urls += uri.toString()
         }
         val keys = HashMap<String, Long>()
         for (i in start until minOf(player.mediaItemCount, start + STREAM_AHEAD)) {
@@ -556,6 +562,8 @@ class RadioEngine(
     companion object {
         const val START_AHEAD = 5
         const val STREAM_AHEAD = 20
+        /** At most this many upcoming tracks from archives other than archive.org are prefetched. */
+        const val EXT_AHEAD = 2
         const val KEEP_BEHIND = 20
         const val MAX_CONSECUTIVE_ERRORS = 6
     }

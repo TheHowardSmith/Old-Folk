@@ -9,6 +9,8 @@ Typical use:
 
     oldfolk-build fetch                  # full run; safe to interrupt and re-run
     oldfolk-build build                  # writes out/
+
+    oldfolk-build ext-fetch              # harvest loc.gov (rules/loc.yaml); build includes it
 """
 from __future__ import annotations
 
@@ -71,12 +73,25 @@ def cmd_fetch(args, rules, store):
     log.info("cache: %s", store.stats())
 
 
+def cmd_ext_fetch(args, rules, store):
+    from . import loc
+    cfg = loc.load_config()
+    if args.only:
+        cfg.collections = [c for c in cfg.collections if c["slug"] in args.only]
+    print(json.dumps(loc.harvest(store, cfg, details=not args.no_details, limit=args.limit)))
+
+
 def cmd_build(args, rules, store):
     out = Path(args.out) if args.out else BUILDER_DIR / ("out-sample" if args.sample else "out")
     results = [classify_item(i, kind, data, rules)
                for i, _src, kind, data in store.fetched(sample_only=args.sample)]
     if not results:
         sys.exit("no fetched items - run `fetch` first")
+    if not args.no_ext:
+        from . import loc
+        ext = loc.classify_all(store, rules)
+        log.info("loc.gov: %d items in the cache", len(ext))
+        results += ext
     summary = write_all(results, out, rules.genres, version=args.version,
                         shard_size=args.shard_size)
     print(json.dumps(summary, indent=1, ensure_ascii=False))
@@ -118,6 +133,13 @@ def main(argv=None):
     s.add_argument("--out", help="output directory")
     s.add_argument("--version", type=int, help="list version (default: UTC yyyymmddHHMM)")
     s.add_argument("--shard-size", type=int, default=SHARD_SIZE)
+    s.add_argument("--no-ext", action="store_true", help="leave out other archives (loc.gov)")
+
+    s = sub.add_parser("ext-fetch", help="harvest loc.gov collections into the cache")
+    s.add_argument("--only", nargs="*", help="collection slugs to harvest")
+    s.add_argument("--no-details", action="store_true",
+                   help="skip the per-item requests for items whose search record lacks the MP3")
+    s.add_argument("--limit", type=int, help="at most N per-item requests (for testing)")
 
     s = sub.add_parser("status", help="show cache statistics")
     s.add_argument("--require-complete", action="store_true",
@@ -129,7 +151,7 @@ def main(argv=None):
     rules = load_rules()
     store = Store(Path(args.db))
     {"search": cmd_search, "sample": cmd_sample, "fetch": cmd_fetch,
-     "build": cmd_build, "status": cmd_status}[args.cmd](args, rules, store)
+     "build": cmd_build, "status": cmd_status, "ext-fetch": cmd_ext_fetch}[args.cmd](args, rules, store)
 
 
 if __name__ == "__main__":
