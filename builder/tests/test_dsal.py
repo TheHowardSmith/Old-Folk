@@ -5,6 +5,7 @@ from oldfolk_builder.output import track_json
 
 RULES = load_rules()
 RULES.schedules_path = None
+RULES.writer_deaths = {}
 CFG = dsal.load_config()
 
 

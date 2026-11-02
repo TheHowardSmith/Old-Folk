@@ -5,6 +5,7 @@ from oldfolk_builder.tracks import parse_length, pick_files
 
 RULES = load_rules()
 RULES.schedules_path = None   # tests never use the real US schedules index
+RULES.writer_deaths = {}      # ... nor real writer death lookups
 
 
 def mp3(name, original=None, fmt="VBR MP3", length="180.0", **extra):
@@ -101,15 +102,21 @@ def test_compilation_and_later_year_flagged():
     assert "1994" in joined and "compilation" in joined
 
 
-def test_writer_credit_flagged_and_approvable():
+def test_writer_credit_needs_confirmed_old_deaths():
     meta = {"genre": "Hillbilly", "description": "<p><b>Writer:</b> Rodgers; McMichen</p>"}
-    r = classify_item("w", "78rpm", item(meta), RULES)
-    assert r.status == INCLUDE and r.writers == ["Rodgers", "McMichen"]   # kept by default
     rules = load_rules()
-    rules.flag_named_writers = True
-    assert classify_item("w", "78rpm", item(meta), rules).status == FLAG
+    rules.schedules_path = None
+    rules.writer_deaths = {}                      # nothing looked up yet: out of the app for now
+    r = classify_item("w", "78rpm", item(meta), rules)
+    assert r.status == FLAG and r.writers == ["Rodgers", "McMichen"]
+    assert "not confirmed died by" in r.reasons[0]
+    rules.writer_deaths = {"Rodgers": {"status": "dead", "died": 1933}, "McMichen": {"status": "dead", "died": 1970}}
+    assert classify_item("w", "78rpm", item(meta), rules).status == FLAG      # one died too recently
+    rules.writer_deaths["McMichen"] = {"status": "dead", "died": 1950}
+    assert classify_item("w", "78rpm", item(meta), rules).status == INCLUDE   # both died 70+ years ago
+    rules.writer_deaths = {}
     rules.overrides = {"approved_writers": ["Rodgers", "mcmichen"]}
-    assert classify_item("w", "78rpm", item(meta), rules).status == INCLUDE
+    assert classify_item("w", "78rpm", item(meta), rules).status == INCLUDE   # approved by hand
 
 
 def test_traditional_writer_not_flagged():
@@ -388,3 +395,19 @@ def test_claimed_songs_on_an_album_are_dropped(tmp_path):
     only = classify_item("x", "other", item({"subject": ["folk"], "title": "An Album", "date": "1960",
                                              "creator": "Grateful Dead"}, files[:1]), rules)
     assert only.status == EXCLUDE
+
+
+def test_availability_matching_and_filter(tmp_path):
+    import json
+    from oldfolk_builder import availability as av
+    from oldfolk_builder.cli import apply_availability
+    hit = {"trackName": "Good Old Fashioned Love", "artistName": "Wynn Stewart"}
+    assert av.is_match("Good Old Fashioned Love", "Wynn Stewart", hit)
+    assert not av.is_match("Good Old Fashioned Love", "Various", hit)          # title alone is too weak
+    assert not av.is_match("Old Love", "Wynn Stewart", {"trackName": "Love Me Do", "artistName": "Wynn Stewart"})
+    files = [mp3("a.mp3", title="Good Old Fashioned Love"), mp3("b.mp3", title="Other")]
+    r = classify_item("x", "other", item({"subject": ["folk"], "date": "1960", "creator": "Wynn Stewart"}, files), RULES)
+    p = tmp_path / "availability.jsonl"
+    p.write_text(json.dumps({"k": "x/a.mp3", "found": True}) + "\n" + json.dumps({"k": "x/b.mp3", "found": False}) + "\n")
+    assert apply_availability([r], p) == 1
+    assert [t.file for t in r.tracks] == ["b.mp3"]

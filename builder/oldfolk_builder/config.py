@@ -60,6 +60,18 @@ class Rules:
     weak_generic_tags: frozenset[str] = frozenset()
     pop_tags: frozenset[str] = frozenset()
     overrides: dict = field(default_factory=dict)
+    # Credited writers: a track stays in the app only if every writer died at
+    # least `writer_life_plus` years ago (deaths looked up by `writer-deaths`).
+    writer_rule: bool = False
+    writer_life_plus: int = 70
+    writer_deaths: dict | None = None
+    writer_deaths_path: Path | None = None
+
+    def load_writer_deaths(self) -> dict:
+        if self.writer_deaths is None:
+            from .deaths import load
+            self.writer_deaths = load(self.writer_deaths_path)
+        return self.writer_deaths
 
     def load_schedules(self):
         """The US pre-1972 schedules index, loaded once on first use."""
@@ -140,4 +152,7 @@ def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) 
         weak_generic_tags=_lower_set(cls.get("weak_generic_tags")),
         pop_tags=_lower_set(cls.get("pop_tags")),
         overrides=overrides,
+        writer_rule=bool(cls.get("require_writers_died", False)),
+        writer_life_plus=int(cls.get("writer_life_plus", 70)),
+        writer_deaths_path=BUILDER_DIR / "cache-rights" / "writer_deaths.json",
     )

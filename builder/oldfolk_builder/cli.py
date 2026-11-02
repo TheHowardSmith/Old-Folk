@@ -101,6 +101,44 @@ def with_subjects(data: dict, subjects: list[str] | None) -> dict:
     return {**data, "metadata": meta}
 
 
+def apply_availability(results, path: Path) -> int:
+    """Drop tracks found on sale or streaming (rights-checks.yml); returns how many."""
+    from .availability import load
+    from .classify import EXCLUDE
+    found = {k for k, r in load(path).items() if r.get("found")}
+    if not found:
+        return 0
+    dropped = 0
+    for r in results:
+        if r.status == EXCLUDE or not r.tracks:
+            continue
+        keep = [t for t in r.tracks if f"{t.id}/{t.file}" not in found]
+        if len(keep) < len(r.tracks):
+            dropped += len(r.tracks) - len(keep)
+            if not keep:
+                r.status, r.reasons = EXCLUDE, ["on sale or streaming today (iTunes)"]
+            r.tracks = keep
+    return dropped
+
+
+def cmd_availability(args, rules, store):
+    from . import availability
+    print(json.dumps(availability.run(Path(args.tracklist), Path(args.out), args.shard, args.of,
+                                      Path(args.previous) if args.previous else None, args.minutes)))
+
+
+def cmd_availability_merge(args, rules, store):
+    from . import availability
+    print(json.dumps(availability.merge([Path(p) for p in args.parts], Path(args.out))))
+
+
+def cmd_writer_deaths(args, rules, store):
+    from . import deaths
+    names = deaths.collect(store, rules)
+    print(json.dumps(deaths.lookup_all(names, Path(args.previous) if args.previous else None,
+                                       Path(args.out), args.minutes)))
+
+
 def cmd_build(args, rules, store):
     out = Path(args.out) if args.out else BUILDER_DIR / ("out-sample" if args.sample else "out")
     extra = {s["name"]: list(s.get("add_subjects") or []) for s in rules.sources}
@@ -119,6 +157,9 @@ def cmd_build(args, rules, store):
             ext = ims.classify_all(Store(Path(args.ims_db)), rules)
             log.info("discografia brasileira: %d items in the cache", len(ext))
             results += ext
+    dropped = apply_availability(results, BUILDER_DIR / "cache-rights" / "availability.jsonl")
+    if dropped:
+        log.info("dropped %d tracks that are on sale or streaming today", dropped)
     summary = write_all(results, out, rules.genres, version=args.version,
                         shard_size=args.shard_size)
     print(json.dumps(summary, indent=1, ensure_ascii=False))
@@ -163,6 +204,23 @@ def main(argv=None):
     s.add_argument("--no-ext", action="store_true", help="leave out other archives (loc.gov, finna, IMS)")
     s.add_argument("--ims-db", default=str(BUILDER_DIR / "cache-ims" / "ims.sqlite"))
 
+    s = sub.add_parser("availability", help="check listed tracks against the iTunes catalogue")
+    s.add_argument("--tracklist", required=True, help="folder with a published index.json and s-*.json")
+    s.add_argument("--out", required=True)
+    s.add_argument("--previous", help="earlier results; tracks in it are skipped")
+    s.add_argument("--shard", type=int, default=0)
+    s.add_argument("--of", type=int, default=1)
+    s.add_argument("--minutes", type=float)
+
+    s = sub.add_parser("availability-merge", help="combine availability result files")
+    s.add_argument("--out", required=True)
+    s.add_argument("parts", nargs="+")
+
+    s = sub.add_parser("writer-deaths", help="look up death years of credited writers")
+    s.add_argument("--out", required=True)
+    s.add_argument("--previous")
+    s.add_argument("--minutes", type=float)
+
     s = sub.add_parser("ext-fetch", help="harvest other archives (loc.gov, finna.fi) into the cache")
     s.add_argument("--source", choices=("all", "loc", "finna", "dsal", "ims"), default="all",
                    help="'all' = loc + finna + dsal; 'ims' (Discografia Brasileira) runs on its own, slowly")
@@ -183,7 +241,9 @@ def main(argv=None):
     rules = load_rules()
     store = Store(Path(args.db))
     {"search": cmd_search, "sample": cmd_sample, "fetch": cmd_fetch,
-     "build": cmd_build, "status": cmd_status, "ext-fetch": cmd_ext_fetch}[args.cmd](args, rules, store)
+     "build": cmd_build, "status": cmd_status, "ext-fetch": cmd_ext_fetch,
+     "availability": cmd_availability, "availability-merge": cmd_availability_merge,
+     "writer-deaths": cmd_writer_deaths}[args.cmd](args, rules, store)
 
 
 if __name__ == "__main__":

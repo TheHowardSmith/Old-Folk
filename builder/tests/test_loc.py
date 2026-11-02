@@ -5,6 +5,7 @@ from oldfolk_builder.output import track_json
 
 RULES = load_rules()
 RULES.schedules_path = None
+RULES.writer_deaths = {}
 CFG = loc.load_config()
 COLL = "florida-folklife-from-the-works-progress-administration"
 MP3 = "https://tile.loc.gov/storage-services/media/ingested/api/loc.afc.afcflwpa.3135a1.mp3"

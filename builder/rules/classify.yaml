@@ -588,6 +588,13 @@ exclude_conditions:
 # false = keep them in the main list (the writer is still recorded in reports).
 flag_named_writers: false
 
+# Composed songs: a track whose credited writers (songwriter/composer) aren't
+# all known to have died at least `writer_life_plus` years ago goes to the
+# review set. Traditional and uncredited songs are unaffected. Death years come
+# from `oldfolk-build writer-deaths` (cache-rights/writer_deaths.json).
+require_writers_died: true
+writer_life_plus: 70
+
 # Recordings claimed by a rights owner in the US Copyright Office's Pre-1972
 # Sound Recording Schedules (title + performer match) are excluded, unless
 # recorded in or before `us_public_domain_year` (US protection has expired).

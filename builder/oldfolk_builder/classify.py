@@ -14,6 +14,7 @@ can be tuned and re-run without touching the network.
 from __future__ import annotations
 
 import html
+from datetime import date
 import re
 from dataclasses import dataclass, field
 
@@ -399,6 +400,16 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     res.writers = writers
     if unapproved and rules.flag_named_writers:
         flags.append(f"named writer (check composition rights): {'; '.join(unapproved[:4])}")
+    elif unapproved and rules.writer_rule:
+        # Composed songs stay out of the app until every writer is known to have
+        # died long enough ago (life + 70); traditional and uncredited songs pass.
+        cutoff = date.today().year - rules.writer_life_plus - 1
+        deaths = rules.load_writer_deaths()
+        unclear = [w for w in unapproved
+                   if not ((d := deaths.get(w)) and d.get("status") == "dead" and d.get("died")
+                           and d["died"] <= cutoff)]
+        if unclear:
+            flags.append(f"named writer not confirmed died by {cutoff}: {'; '.join(unclear[:4])}")
 
     region, region_src = guess_region(meta, tags, title, desc, genre, rules)
     genre_from_region = genre is None

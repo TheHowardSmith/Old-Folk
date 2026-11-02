@@ -188,7 +188,9 @@ def classify_record(ident: str, rec: dict, rules: Rules, cfg: ImsConfig,
             "identifier": ident, "title": title.title() if title.isupper() else title,
             "creator": performer, "date": year,
             "subject": [genre, "folk", "brazilian"],
-            "description": [f"Composer: {composer}"] if composer else [],
+            # The composer is already covered by IMS's public-domain year (author's death
+            # + 70), so it's kept out of the description the writer rule reads.
+            "description": [],
             "language": ["por"], "publisher": album.get("name") or rec.get("xProducer") or "",
         },
         "files": [{"name": audio.rsplit("/", 1)[-1], "format": "VBR MP3", "source": "original"}],

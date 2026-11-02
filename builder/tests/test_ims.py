@@ -7,6 +7,7 @@ from oldfolk_builder.output import track_json
 
 RULES = load_rules()
 RULES.schedules_path = None
+RULES.writer_deaths = {}
 CFG = ims.load_config()
 MP3 = "https://discografia-brasileira.s3.sa-east-1.amazonaws.com/466d4d240a8fbe0b33a1e1939348d047.mp3"
 

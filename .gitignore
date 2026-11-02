@@ -15,6 +15,7 @@
 builder/out*/
 builder/cache/
 builder/cache-ims/
+builder/cache-rights/
 *.sqlite
 *.sqlite3
 *.db

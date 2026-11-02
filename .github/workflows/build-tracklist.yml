@@ -123,6 +123,14 @@ jobs:
           path: builder/cache/pre1972_schedules.jsonl
           key: pre1972-schedules-${{ steps.done.outputs.month }}
 
+      - name: Download rights-check results
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p cache-rights
+          gh release download rights-data -p 'availability.jsonl' -p 'writer_deaths.json' -D cache-rights --clobber \
+            || echo "::notice::No rights-check data yet: composed songs stay in review, no streaming filter."
+
       - name: Build
         id: build
         run: |

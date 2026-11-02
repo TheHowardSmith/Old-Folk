@@ -85,7 +85,9 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 - Only recordings believed to have been **recorded or released in 1970 or earlier**.
 - Undated 78 rpm discs are treated as pre-1970, because the format was obsolete by the mid-1960s.
 - Items whose date looks unreliable (compilations, reissues, LPs dated before LPs existed, text mentioning later years, modern recordings of old songs) are **flagged for review**, not included.
-- Songs credited to a named (non-traditional) writer are currently **kept**; their writers are listed in `writers.csv` and `builder/scripts/writer_deaths.py` estimates how many would need removing if composition copyright is enforced.
+- Songs credited to a named (non-traditional) writer are kept **only when every writer is known to have died at least 70 years ago** (death years from the Library of Congress, the German National Library and Wikidata); the rest wait in the review set. Traditional and uncredited songs are included.
+- Recordings made after 1925 that are **on sale or streaming today** (checked weekly against Apple's iTunes catalogue by the *Rights checks* workflow) are left out. Earlier recordings are public domain in the US whoever reissues them.
+- Users' own vinyl or cassette rips, TV uploads, and anything tagged as rock or psychedelic are left out.
 - Recordings whose descriptions say they are **restricted, sacred/secret or culturally sensitive are excluded**. Indigenous and ceremonial recordings are flagged for a human check.
 - Non-Western classical and court traditions (raga, gagaku, nagauta, Cantonese music, Peking opera...) count as traditional music; Indian film songs count as pop.
 - Jazz, pop (including Latin dance music such as tango and bolero), classical, opera, spoken word, and military/regimental bands are excluded, as are folk-dance instruction records (arranged studio versions made for dance classes, e.g. Folkraft or Michael Herman's Folk Orchestra).
@@ -99,7 +101,7 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 
 ## Rights notice
 
-The recordings are hosted by the **Internet Archive**, the **Library of Congress**, the **National Library of Finland**, the **Finnish Literature Society**, the **Instituto Moreira Salles** and the **Digital South Asia Library**, not by this project, and are **not covered by this repository's licenses**. To the best of our knowledge they are no longer protected by copyright: every track meets the [selection rules](#selection-rules) above (recorded or released in 1970 or earlier, not claimed by a rights holder in the US Copyright Office's pre-1972 schedules, and no restrictions noted by the archive).
+The recordings are hosted by the **Internet Archive**, the **Library of Congress**, the **National Library of Finland**, the **Finnish Literature Society**, the **Instituto Moreira Salles** and the **Digital South Asia Library**, not by this project, and are **not covered by this repository's licenses**. Every track meets the [selection rules](#selection-rules) above: recorded or released in 1970 or earlier, not claimed in the US Copyright Office's pre-1972 schedules, not on sale or streaming in the stores we check (for recordings after 1925), and songs credited to a writer only when every writer died at least 70 years ago. Most of these recordings are old enough to be out of copyright, but some may still be protected in some countries, so the checks keep running and any recording is removed on request.
 
 Rights holders who want a recording removed from the list can email **thehowardsmith@gmail.com**, or open an issue on this repository. Removed items are added to `builder/overrides.yaml` so they never return.
 
