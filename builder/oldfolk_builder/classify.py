@@ -312,7 +312,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     colls = {c.lower() for c in as_list(meta.get("collection"))}
     bad_colls = colls & rules.exclude_collections
     if bad_colls:
-        return exclude(f"broadcast/spoken collection: {', '.join(sorted(bad_colls))}")
+        return exclude(f"excluded collection: {', '.join(sorted(bad_colls))}")
 
     # 2. Genre.
     synthetic = tags & rules.synthetic_tags
@@ -329,7 +329,8 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if teaching:
         return exclude(f"folk-dance instruction record: {teaching[0]}")
     genre = specific_genre(tags, kind, rules)
-    excluded = tags & rules.exclude_tags
+    # Any rock or psychedelic style ("psychedelic rock", "blues rock", "acid rock") is not folk.
+    excluded = (tags & rules.exclude_tags) | {t for t in tags if has_word(t, "rock") or has_word(t, "psychedelic")}
     excluded -= traditional_art_waiver(tags, title, artist, desc, rules)
     if excluded and excluded <= rules.ethnic_waivable_tags and tags & rules.ethnic_record_tags:
         excluded = set()    # LoC/Victor "ethnic music" discs: "popular music" just means secular
@@ -412,12 +413,20 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     picture = pick_image(ident, files)
     multi = len(choices) > 1
 
+    claimed_tracks = []
     for c in choices:
         if c.seconds is not None and c.seconds < rules.min_seconds:
             continue
         if c.seconds is not None and c.seconds > rules.max_seconds:
             continue
         t_title = clean_title(c.title or title)
+        # US claims are also checked per track: an album's own title rarely
+        # matches, but its songs do ("St. Stephen" by the Grateful Dead).
+        if index is not None and c.title and not (year and year <= rules.us_public_domain_year):
+            claimed, owner = index.match(t_title, c.artist or artist or "")
+            if claimed == "yes":
+                claimed_tracks.append(f"{t_title} ({owner})")
+                continue
         t_region, t_genre = region, genre
         if multi:
             # Compilations: a track title like "Music Of Panama" beats the item's region.
@@ -433,8 +442,13 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
             artist=(c.artist or artist),
             year=year, region=t_region, genre=t_genre, seconds=c.seconds, picture=picture,
         ))
+    if not res.tracks and claimed_tracks:
+        return exclude(f"recording claimed in the US (pre-1972 schedules): {claimed_tracks[0]}")
     if not res.tracks:
         return exclude("no MP3 of usable length")
+    if claimed_tracks:
+        # Some songs on the album are claimed: the label is active, so a person checks the rest.
+        flags.append(f"other tracks claimed in the US (pre-1972 schedules): {'; '.join(claimed_tracks[:3])}")
     if not indigenous and any(t.region == "Indigenous North America" for t in res.tracks):
         flags.append("Indigenous recording, check community protocols: region")
 

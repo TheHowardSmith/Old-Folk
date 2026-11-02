@@ -355,3 +355,36 @@ def test_source_level_subjects_bring_in_bolivian_78s():
     assert classify_item("x", "78rpm", data, RULES).status == EXCLUDE
     r = classify_item("x", "78rpm", with_subjects(data, ["folk music", "bolivian"]), RULES)
     assert r.status == INCLUDE and r.genre == "latin" and r.region == "Latin America"
+
+
+GD_TAGS = ["the grateful dead", "psychedelic rock", "acid rock", "folk", "blues rock", "blues", "usa",
+           "country", "country rock", "vinyl rip"]
+
+
+def test_rock_styles_are_not_folk():
+    r = classify_item("x", "other", item({"subject": GD_TAGS, "title": "Aoxomoxoa", "date": "1969"}), RULES)
+    assert r.status != INCLUDE
+
+
+def test_user_rip_collections_excluded():
+    r = classify_item("x", "other", item({"subject": ["folk"], "date": "1969",
+                                          "collection": ["hifidelity_potpourri", "hifidelity"]}), RULES)
+    assert r.status == EXCLUDE and "collection" in r.reasons[0]
+
+
+def test_claimed_songs_on_an_album_are_dropped(tmp_path):
+    import json
+    from dataclasses import replace
+    p = tmp_path / "sched.jsonl"
+    p.write_text(json.dumps({"title": ["St. Stephen"], "artist": ["Grateful Dead"],
+                             "rights_owner": ["Warner Records Inc."]}) + "\n")
+    rules = replace(RULES, schedules=None, schedules_path=p, exclude_us_claimed=True)
+    files = [mp3("a1.mp3", title="St. Stephen", creator="Grateful Dead"),
+             mp3("a2.mp3", title="Old Song", creator="Grateful Dead")]
+    r = classify_item("x", "other", item({"subject": ["folk"], "title": "An Album", "date": "1960",
+                                          "creator": "Grateful Dead"}, files), rules)
+    assert [t.title for t in r.tracks] == ["Old Song"]
+    assert r.status == FLAG and "claimed" in r.reasons[-1]
+    only = classify_item("x", "other", item({"subject": ["folk"], "title": "An Album", "date": "1960",
+                                             "creator": "Grateful Dead"}, files[:1]), rules)
+    assert only.status == EXCLUDE

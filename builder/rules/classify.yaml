@@ -438,6 +438,16 @@ exclude_collections:
   - radioprograms
   - radioshowarchive
   - auprofiles
+  # Users' own vinyl/cassette rips of commercial albums (no archive behind them;
+  # some with deliberately scrambled identifiers), and TV uploads.
+  - hifidelity
+  - hifidelity_potpourri
+  - phils-vinyl-addiction-albums
+  - cratediggers
+  - cassettetapes
+  - television
+  - classic_tv
+  - classic_tv_1960s
 
 # Indigenous / ceremonial restrictions. If any phrase appears in the
 # description, notes, rights or subjects, the item is EXCLUDED.
