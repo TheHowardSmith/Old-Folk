@@ -2,7 +2,9 @@
 
 ## [⬇ Download the Android app (old-folk-air.apk)](https://github.com/TheHowardSmith/Old-Folk/releases/latest/download/old-folk-air.apk)
 
-Open that link on your Android phone (Android 8 or newer), then open the downloaded file to install it. Android may ask you to allow installing apps from your browser. No account or sign-up is needed. All versions are on the [Releases page](https://github.com/TheHowardSmith/Old-Folk/releases).
+Website: [oldfolkair.com](https://oldfolkair.com) (being set up; until then [thehowardsmith.github.io/Old-Folk](https://thehowardsmith.github.io/Old-Folk/)).
+
+Open the download link on your Android phone (Android 8 or newer), then open the downloaded file to install it. Android may ask you to allow installing apps from your browser. No account or sign-up is needed. All versions are on the [Releases page](https://github.com/TheHowardSmith/Old-Folk/releases).
 
 ---
 
@@ -42,7 +44,8 @@ How it works: on first launch the app downloads `index.json` and one random part
 | `builder/rules/` | Editable search queries, genre/region keywords and exclusion rules |
 | `builder/overrides.yaml` | Manual review decisions (include/exclude items, approved writers) |
 | `android/` | The Android app (Kotlin, Jetpack Compose, Media3/ExoPlayer, MediaSessionService) |
-| `.github/workflows/` | CI, APK release, and track-list publishing |
+| `site/` | The website (GitHub Pages; setup steps in `site/README.md`) |
+| `.github/workflows/` | CI, APK release, track-list publishing, archive harvesting and the website |
 
 ## Building the track list
 

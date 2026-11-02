@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Old Folk Air: an endless radio of old folk recordings</title>
+<meta name="description" content="A free Android radio that plays an endless stream of public-domain folk, blues, field and traditional recordings from around the world, streamed from the archives that keep them. No ads, no accounts.">
+<meta property="og:title" content="Old Folk Air">
+<meta property="og:description" content="An endless radio of the world's old folk recordings, free and ad-free, streamed from the archives that keep them.">
+<meta property="og:image" content="img/radio-light.png">
+<meta name="theme-color" content="#6B3E1F">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #F4ECDC; --card: #F9F2E4; --ink: #2B1D12; --muted: #5A4733;
+    --brass: #7A5A1E; --walnut: #5A3A24; --on-walnut: #F3E6CB; --primary: #6B3E1F;
+    --on-primary: #FFF8EC; --line: #D8C9AB; --cloth: #E6D5B6; --needle: #FF7A4A; --glow: #C8892E;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1F160F; --card: #2E2117; --ink: #EDE0C8; --muted: #C9B79B;
+      --brass: #CDAE6E; --walnut: #3B281A; --on-walnut: #F0E2C8; --primary: #F0B565;
+      --on-primary: #3D2300; --line: #3E3125; --cloth: #33251A; --glow: #FFA53A;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  }
+  h1, h2, h3, .serif { font-family: Georgia, "Noto Serif", "Times New Roman", serif; font-weight: 500; }
+  a { color: var(--primary); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+  header { padding: 18px 0; }
+  header .wrap { display: flex; align-items: center; gap: 12px; }
+  header .name { font-family: Georgia, serif; font-size: 22px; }
+  header nav { margin-left: auto; display: flex; gap: 18px; font-size: 15px; }
+  header nav a { color: var(--muted); text-decoration: none; }
+  header nav a:hover { color: var(--ink); }
+
+  .hero { padding: 40px 0 56px; display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 40px; align-items: center; }
+  .plate {
+    display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--brass); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px;
+  }
+  .hero h1 { font-size: clamp(34px, 5.2vw, 54px); line-height: 1.12; margin: 18px 0 16px; }
+  .hero p.lede { font-size: 19px; color: var(--muted); margin: 0 0 28px; max-width: 34em; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 999px;
+    font-weight: 600; text-decoration: none; font-size: 16px;
+  }
+  .btn.primary { background: var(--primary); color: var(--on-primary); }
+  .btn.ghost { border: 1px solid var(--line); color: var(--ink); }
+  .btn:hover { filter: brightness(1.06); }
+  .small { font-size: 14px; color: var(--muted); }
+  .hero .small { margin-top: 14px; }
+
+  .phone { display: block; width: 100%; max-width: 280px; margin: 0 auto; border-radius: 28px;
+    border: 1px solid var(--line); box-shadow: 0 18px 40px rgba(43,29,18,.18); }
+
+  section { padding: 56px 0; }
+  section + section { border-top: 1px solid var(--line); }
+  h2 { font-size: clamp(26px, 3.4vw, 34px); margin: 0 0 14px; }
+  .intro { color: var(--muted); max-width: 40em; margin: 0 0 30px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px; }
+  .card h3 { font-size: 19px; margin: 0 0 6px; }
+  .card p { margin: 0; color: var(--muted); font-size: 16px; }
+
+  .shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .shots figure { margin: 0; }
+  .shots img { width: 100%; border-radius: 18px; border: 1px solid var(--line); display: block; }
+  .shots figcaption { font-size: 14px; color: var(--muted); text-align: center; margin-top: 8px; }
+
+  .sources { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 28px; padding: 0; list-style: none; margin: 0; }
+  .sources li { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .sources b { font-weight: 600; }
+  .sources span { display: block; color: var(--muted); font-size: 15px; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .note { background: var(--cloth); border-radius: 16px; padding: 22px 24px; }
+  .note h3 { margin: 0 0 8px; font-size: 20px; }
+  .note p { margin: 0 0 10px; }
+
+  footer { padding: 34px 0 48px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: space-between; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; padding-top: 20px; }
+    .grid { grid-template-columns: 1fr 1fr; }
+    .shots { grid-template-columns: 1fr 1fr; }
+    header nav { display: none; }
+  }
+  @media (max-width: 560px) {
+    .wrap { padding: 0 16px; }
+    .grid, .two, .sources { grid-template-columns: 1fr; }
+    .btn { width: 100%; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <img src="favicon.svg" width="34" height="34" alt="">
+    <span class="name">Old Folk Air</span>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#sources">Where the music comes from</a>
+      <a href="#archives">For archives</a>
+      <a href="#rights">Rights</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div>
+      <span class="plate">Free Android app · no ads · no accounts</span>
+      <h1>An endless radio of the world's old folk recordings</h1>
+      <p class="lede">Old-time fiddles, country blues, field recordings, polkas, calypso, Karelian laments and Bhojpuri songs: public-domain recordings from about 1900 to 1970, streamed straight from the archives that look after them.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/TheHowardSmith/Old-Folk/releases/latest/download/old-folk-air.apk">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3v11.2l3.6-3.6 1.4 1.4-6 6-6-6 1.4-1.4 3.6 3.6V3h2zM5 19h14v2H5z"/></svg>
+          Download for Android
+        </a>
+        <a class="btn ghost" href="https://github.com/TheHowardSmith/Old-Folk">Source code</a>
+      </div>
+      <p class="small">Android 8 or newer. Open this page on your phone, tap Download, then open the file. Android may ask you to allow installs from your browser.</p>
+    </div>
+    <div>
+      <img class="phone" src="img/radio-light.png" alt="The Old Folk Air radio screen playing a 1927 old-time recording" width="461" height="1000">
+    </div>
+  </div>
+</main>
+
+<section id="features">
+  <div class="wrap">
+    <h2>What it does</h2>
+    <p class="intro">Press play and it keeps going: a random stream that never repeats a track until you've heard everything in your selection.</p>
+    <div class="grid">
+      <div class="card"><h3>Endless radio</h3><p>Random tracks from tens of thousands of recordings. The tuning dial's needle points at the year each one was made.</p></div>
+      <div class="card"><h3>Pick your genres</h3><p>Old-time, blues, gospel, Celtic, European dance, polka, klezmer, calypso, Latin American, African, Indian, Asian, Hawaiian and field recordings.</p></div>
+      <div class="card"><h3>Easy listening</h3><p>Every track is levelled to the same loudness, sudden pops are smoothed, one-sided transfers play on both speakers, and very noisy discs are skipped.</p></div>
+      <div class="card"><h3>History and playlists</h3><p>Scroll back through everything you've heard, go back a track, or save favourites to playlists.</p></div>
+      <div class="card"><h3>Every track credited</h3><p>See who recorded it, when and where, with a link to the recording's page at the archive that holds it.</p></div>
+      <div class="card"><h3>Free and private</h3><p>No ads, no accounts, no tracking. Recordings stream from the archives and can't be copied off the phone.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="screens">
+  <div class="wrap">
+    <h2>A look inside</h2>
+    <p class="intro">Styled after a 1950s valve radio, in light and dark.</p>
+    <div class="shots">
+      <figure><img src="img/radio-light.png" alt="Radio screen, light theme" loading="lazy" width="461" height="1000"><figcaption>Radio</figcaption></figure>
+      <figure><img src="img/radio-dark.png" alt="Radio screen, dark theme" loading="lazy" width="461" height="1000"><figcaption>Radio, dark</figcaption></figure>
+      <figure><img src="img/history.png" alt="History screen" loading="lazy" width="461" height="1000"><figcaption>History</figcaption></figure>
+      <figure><img src="img/genres.png" alt="Genres screen" loading="lazy" width="461" height="1000"><figcaption>Genres</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="sources">
+  <div class="wrap">
+    <h2>Where the music comes from</h2>
+    <p class="intro">There's no streaming server: the app plays each recording straight from the archive that holds it, and credits that archive on every track.</p>
+    <ul class="sources">
+      <li><b><a href="https://archive.org/details/georgeblood">Internet Archive</a></b><span>The Great 78 Project's digitised 78 rpm discs, and folk LPs and field recordings</span></li>
+      <li><b><a href="https://www.loc.gov/audio/">Library of Congress</a></b><span>American Folklife Center field recordings from the 1930s and 40s</span></li>
+      <li><b><a href="https://www.finna.fi">National Library of Finland and the Finnish Literature Society</a></b><span>Finnish 78s and Karelian and Ingrian field recordings, through Finna</span></li>
+      <li><b><a href="https://discografiabrasileira.com.br">Instituto Moreira Salles</a></b><span>Brazilian regional 78s from the Discografia Brasileira</span></li>
+      <li><b><a href="https://dsal.uchicago.edu/LSI/">Digital South Asia Library</a></b><span>Linguistic Survey of India gramophone recordings, 1913–1929</span></li>
+    </ul>
+  </div>
+</section>
+
+<section id="archives">
+  <div class="wrap two">
+    <div class="note">
+      <h3>For archives and libraries</h3>
+      <p>Do you look after a collection of traditional or historical recordings? We'd love to help more people hear them. Old Folk Air streams straight from your own servers, credits your institution on every track with a link back to your catalogue, and never copies or re-hosts your files.</p>
+      <p>If you'd like your recordings included, or want to set conditions, please get in touch: <a href="mailto:thehowardsmith@gmail.com?subject=Old%20Folk%20Air%3A%20our%20recordings">thehowardsmith@gmail.com</a></p>
+    </div>
+    <div class="note" id="rights">
+      <h3>Rights and removals</h3>
+      <p>The recordings are hosted by the archives above and aren't covered by this project's licences. To the best of our knowledge they are no longer protected by copyright: every track meets our selection criteria (recorded or released in 1970 or earlier, not claimed by a rights holder in the US Copyright Office's records, and no restrictions noted by the archive). Restricted, sacred or culturally sensitive recordings are left out.</p>
+      <p>If you hold the rights to a recording and want it removed, email <a href="mailto:thehowardsmith@gmail.com?subject=Old%20Folk%20Air%3A%20removal%20request">thehowardsmith@gmail.com</a> or use “Report” in the app.</p>
+    </div>
+  </div>
+</section>
+
+<section id="privacy">
+  <div class="wrap">
+    <h2>Privacy</h2>
+    <p class="intro" style="margin-bottom:0">Old Folk Air has no accounts, no ads and no analytics. It downloads the track list from GitHub and the recordings from the archives, and keeps your listening history and playlists on your phone only. If a track fails to play, the app can open a pre-filled problem report, but only you can choose to send it.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Old Folk Air · made in Aotearoa New Zealand</span>
+    <span>Code: <a href="https://github.com/TheHowardSmith/Old-Folk/blob/main/LICENSE">Apache-2.0</a> · Track list: <a href="https://github.com/TheHowardSmith/Old-Folk/blob/main/LICENSE-DATA">CC0</a> · <a href="https://github.com/TheHowardSmith/Old-Folk">GitHub</a></span>
+  </div>
+</footer>
+</body>
+</html>

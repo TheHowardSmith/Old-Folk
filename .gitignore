@@ -49,3 +49,6 @@ android/.kotlin/
 .idea/
 *.iml
 .DS_Store
+
+# Website screenshots are copied in by the Website workflow
+site/img/
