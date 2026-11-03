@@ -143,7 +143,6 @@ h3 { font-size: 19px; margin: 20px 0 8px; }
   .genres { margin-bottom: 20px; max-height: 590px; overflow-y: auto; padding-right: 6px; gap: 6px; }
   .genres label { padding: 8px 14px; }
   #tab-history { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid var(--line); padding-bottom: 30px; }
-  .hist-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
   .tracks.scroll { max-height: 420px; overflow-y: auto; padding-right: 6px; }
 }
 
