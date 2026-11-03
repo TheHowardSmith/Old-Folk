@@ -185,14 +185,14 @@ a { color: var(--primary); }
               inset 0 0 7px 1px rgba(25, 14, 6, .45), inset 0 1px 0 rgba(255, 240, 215, .2);
   transition: transform .08s;
 }
-.knob svg { width: 28px; height: 28px; }
+.knob svg { width: 36px; height: 36px; }
 .knob.big {
   width: 96px; height: 96px; color: #3A2414;
   background: linear-gradient(180deg, #F5EDDC, #EADFC7 60%, #DDCDAC);
   box-shadow: 0 2px 6px rgba(0,0,0,.26), 0 0 0 1px rgba(25, 14, 6, .14),
               inset 0 0 6px 1px rgba(25, 14, 6, .3), inset 0 0 0 3px #B08A45, inset 0 0 8px 3px rgba(0,0,0,.12);
 }
-.knob.big svg { width: 40px; height: 40px; }
+.knob.big svg { width: 50px; height: 50px; }
 .knob:focus-visible, .chip:focus-visible, .tabs a:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
 .knob:active { transform: translateY(1px); }
 .actions { display: flex; gap: 26px; }
@@ -284,9 +284,9 @@ h3 { font-size: 19px; margin: 20px 0 8px; }
   .dial-cab { margin: 18px 0 14px; }
   .grille { gap: 30px; padding: 12px; }
   .knob { width: 80px; height: 80px; }
-  .knob svg { width: 32px; height: 32px; }
+  .knob svg { width: 42px; height: 42px; }
   .knob.big { width: 116px; height: 116px; }
-  .knob.big svg { width: 48px; height: 48px; }
+  .knob.big svg { width: 60px; height: 60px; }
 }
 @media (min-width: 1240px) {
   .wrap, .bar { max-width: 1400px; }

@@ -376,13 +376,13 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
             contentAlignment = Alignment.Center,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-                Knob(actions.onPrevious, "Previous track", 66.dp) { Icon(Icons.Filled.SkipPrevious, null, Modifier.size(30.dp)) }
+                Knob(actions.onPrevious, "Previous track", 66.dp) { Icon(Icons.Filled.SkipPrevious, null, Modifier.size(38.dp)) }
                 Knob(actions.onPlayPause, if (ui.isPlaying) "Pause" else "Play", 96.dp, primary = true) {
-                    if (ui.isBuffering) CircularProgressIndicator(Modifier.size(34.dp), strokeWidth = 3.dp,
+                    if (ui.isBuffering) CircularProgressIndicator(Modifier.size(40.dp), strokeWidth = 3.dp,
                         color = MaterialTheme.colorScheme.onPrimary)
-                    else Icon(if (ui.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, Modifier.size(44.dp))
+                    else Icon(if (ui.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, Modifier.size(54.dp))
                 }
-                Knob(actions.onNext, "Next track", 66.dp) { Icon(Icons.Filled.SkipNext, null, Modifier.size(30.dp)) }
+                Knob(actions.onNext, "Next track", 66.dp) { Icon(Icons.Filled.SkipNext, null, Modifier.size(38.dp)) }
             }
         }
         }
