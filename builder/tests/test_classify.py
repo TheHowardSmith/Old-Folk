@@ -224,7 +224,8 @@ def test_pick_image_prefers_label_scan():
              {"name": "x_itemimage.jpg", "format": "Item Image", "source": "original"}]
     assert pick_image("x", files) == 1
     assert pick_image("x", files[:4]) == "x.jpg"
-    assert pick_image("x", files[:3]) is None      # generic tile only: use the thumbnail service
+    assert pick_image("x", files[:3]) == "0"       # generic tile only (a waveform): no picture
+    assert pick_image("x", []) == "0"
 
 
 def test_polka_is_its_own_genre():

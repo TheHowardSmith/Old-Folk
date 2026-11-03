@@ -38,6 +38,22 @@ data class RadioColors(
     val walnut: Color,        // cabinet band (bottom bar)
     val onWalnut: Color,
     val card: Color,
+    val woodHi: Color,        // cabinet wood, top to bottom
+    val wood: Color,
+    val woodLo: Color,
+    val band: Color,          // header / bottom bar: oxblood bakelite
+    val bandLo: Color,
+    val onBand: Color,
+    val bandLine: Color,      // deco scallop lines
+    val bandAccent: Color,    // icons on the band
+    val bandEdge: Color,      // outline of the plain patches behind the logo and buttons
+    val voxBase: Color,       // grille cloth and its three thread colours
+    val voxGold: Color,
+    val voxTeal: Color,
+    val voxMaroon: Color,
+    val knobFluteHi: Color,   // caramel bakelite knobs: highlight, edge, body
+    val knobFluteLo: Color,
+    val knobCap: Color,
 )
 
 // Daylight: ivory bakelite, walnut and brass.
@@ -65,8 +81,8 @@ private val LightScheme = lightColorScheme(
     error = Color(0xFFA2382B),
 )
 private val LightRadio = RadioColors(
-    dialFace = Color(0xFF6A4529),          // walnut-brown dial
-    dialFaceBottom = Color(0xFF52331D),
+    dialFace = Color(0xFF2A1B10),          // smoked dial glass
+    dialFaceBottom = Color(0xFF170E07),
     dialInk = Color(0xFFF3E6CB),
     needle = Color(0xFFFF7A4A),
     glow = Color(0xFFC8892E),
@@ -76,11 +92,27 @@ private val LightRadio = RadioColors(
     cloth = Color(0xFFE6D5B6),
     grille = Color(0x99C2AB84),
     knob = Color(0xFF6B4A30),           // brown bakelite
-    knobIcon = Color(0xFFF6EBD5),
+    knobIcon = Color(0xFFFFF6E4),
     ivory = Color(0xFFF2E8D3),
     walnut = Color(0xFF5A3A24),
     onWalnut = Color(0xFFF3E6CB),
     card = Color(0xFFF9F2E4),
+    woodHi = Color(0xFF7C5434),
+    wood = Color(0xFF6A4529),
+    woodLo = Color(0xFF573722),
+    band = Color(0xFFEFE3CB),           // light: paper band, dark-walnut lettering and pattern
+    bandLo = Color(0xFFEFE3CB),
+    onBand = Color(0xFF3F2817),
+    bandLine = Color(0x0E3F2817),
+    bandAccent = Color(0xFF6A4529),
+    bandEdge = Color(0x4D3F2817),
+    voxBase = Color(0xFFDCCBAE),
+    voxGold = Color(0x3896703C),
+    voxTeal = Color(0x24508273),
+    voxMaroon = Color(0x2996463C),
+    knobFluteHi = Color(0xFF7A5536),
+    knobFluteLo = Color(0xFF5A3C25),
+    knobCap = Color(0xFF6B4A30),
 )
 
 // Evening: dark walnut with the valves glowing amber.
@@ -108,8 +140,8 @@ private val DarkScheme = darkColorScheme(
     error = Color(0xFFFFB4A6),
 )
 private val DarkRadio = RadioColors(
-    dialFace = Color(0xFF4A3220),
-    dialFaceBottom = Color(0xFF3A2616),
+    dialFace = Color(0xFF1C120A),
+    dialFaceBottom = Color(0xFF0E0804),
     dialInk = Color(0xFFF0DDB8),
     needle = Color(0xFFFF7A4A),
     glow = Color(0xFFFFA53A),
@@ -119,11 +151,27 @@ private val DarkRadio = RadioColors(
     cloth = Color(0xFF33251A),
     grille = Color(0x26E8C98A),
     knob = Color(0xFF4E3624),
-    knobIcon = Color(0xFFF0E2C8),
+    knobIcon = Color(0xFF3F2817),
     ivory = Color(0xFFE6DAC0),
     walnut = Color(0xFF3B281A),
     onWalnut = Color(0xFFF0E2C8),
     card = Color(0xFF2E2117),
+    woodHi = Color(0xFF5E3E26),
+    wood = Color(0xFF52361F),
+    woodLo = Color(0xFF452C19),
+    band = Color(0xFF3F2817),           // dark: dark-walnut band, paper lettering, brass pattern
+    bandLo = Color(0xFF3F2817),
+    onBand = Color(0xFFF4ECDC),
+    bandLine = Color(0x13B08A45),
+    bandAccent = Color(0xFFD4B67A),
+    bandEdge = Color(0x80B08A45),
+    voxBase = Color(0xFF33251A),
+    voxGold = Color(0x24D6B676),
+    voxTeal = Color(0x1A6EA896),
+    voxMaroon = Color(0x1FA84A46),
+    knobFluteHi = Color(0xFFDCCBAB),
+    knobFluteLo = Color(0xFFB8A27E),
+    knobCap = Color(0xFFCDB896),
 )
 
 val LocalRadioColors = staticCompositionLocalOf { LightRadio }

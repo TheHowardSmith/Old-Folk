@@ -47,6 +47,7 @@ data class Track(
     val artUrl: String?
         get() = if (url != null) picture?.takeIf { it.startsWith("https://") } else when (picture) {
             null -> "https://archive.org/services/img/" + Uri.encode(id)
+            "0" -> null      // no cover or label scan (the thumbnail would only be a waveform): the drawn 78
             "1" -> "https://archive.org/download/" + Uri.encode(id) + "/" + Uri.encode(id + "_itemimage.jpg")
             "2" -> "https://archive.org/download/" + Uri.encode(id) + "/" + Uri.encode(id + "_itemimage.png")
             else -> "https://archive.org/download/" + Uri.encode(id) + "/" +

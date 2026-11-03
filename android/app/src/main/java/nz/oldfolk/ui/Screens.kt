@@ -1,5 +1,12 @@
 package nz.oldfolk.ui
 
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import nz.oldfolk.R
 import android.net.Uri
 
 import android.text.format.Formatter
@@ -26,6 +33,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -161,23 +169,49 @@ fun AppFrame(
     content: @Composable () -> Unit,
 ) {
     val rc = LocalRadioColors.current
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     Scaffold(
+        modifier = Modifier.screenTexture(MaterialTheme.colorScheme.background, dark),
         topBar = {
-            TopAppBar(
-                title = { Text(title, style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    if (showBack) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
-                },
-                actions = {
-                    if (showAboutButton) IconButton(onClick = onAbout) { Icon(Icons.Filled.Info, "About", tint = rc.brass) }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-            )
+            Column(Modifier.decoBand(rc.band, rc.bandLo, rc.bandLine)) {
+                TopAppBar(
+                    title = {
+                        if (title == "Old Folk Air") {
+                            Row(verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "Old Folk Air" }
+                                    .background(Color(0xFF3A2C22), CircleShape).border(1.dp, Color(0xFFB08A45), CircleShape)
+                                    .padding(start = 3.dp, top = 3.dp, bottom = 3.dp, end = 14.dp)) {
+                                Image(painterResource(R.drawable.logo_roundel), null, Modifier.size(34.dp))
+                                Spacer(Modifier.width(10.dp))
+                                Icon(painterResource(R.drawable.logo_wordmark), null, Modifier.height(22.dp), tint = Color(0xFFF4ECDC))
+                            }
+                        } else {
+                            Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.background(rc.band, RoundedCornerShape(12.dp)).border(1.dp, rc.bandEdge, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 10.dp, vertical = 2.dp))
+                        }
+                    },
+                    navigationIcon = {
+                        if (showBack) IconButton(onClick = onBack, modifier = Modifier.background(rc.band, CircleShape).border(1.dp, rc.bandEdge, CircleShape)) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                    },
+                    actions = {
+                        if (showAboutButton) IconButton(onClick = onAbout, modifier = Modifier.padding(end = 4.dp).background(rc.band, CircleShape).border(1.dp, rc.bandEdge, CircleShape)) {
+                            Icon(Icons.Filled.Info, "About", tint = rc.bandAccent)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent, titleContentColor = rc.onBand,
+                        navigationIconContentColor = rc.onBand, actionIconContentColor = rc.onBand,
+                    ),
+                )
+                HorizontalDivider(thickness = 2.dp, color = Color(0xFFB08D4A))   // brass rule
+            }
         },
         bottomBar = {
             Column {
                 HorizontalDivider(thickness = 2.dp, color = Color(0xFFB08D4A))   // brass trim rail
-                NavigationBar(containerColor = rc.walnut, tonalElevation = 0.dp) {
+                NavigationBar(containerColor = Color.Transparent, tonalElevation = 0.dp,
+                    modifier = Modifier.background(Brush.verticalGradient(listOf(rc.woodHi, rc.wood)))) {
                     Tab.entries.forEach { t ->
                         NavigationBarItem(
                             selected = tab == t,
@@ -188,15 +222,16 @@ fun AppFrame(
                                 indicatorColor = rc.onWalnut.copy(alpha = 0.16f),
                                 selectedIconColor = rc.onWalnut,
                                 selectedTextColor = rc.onWalnut,
-                                unselectedIconColor = rc.onWalnut.copy(alpha = 0.62f),
-                                unselectedTextColor = rc.onWalnut.copy(alpha = 0.62f),
+                                unselectedIconColor = rc.onWalnut.copy(alpha = 0.72f),
+                                unselectedTextColor = rc.onWalnut.copy(alpha = 0.72f),
                             ),
                         )
                     }
                 }
             }
         },
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,   // the paper / wood texture shows through
+        contentColor = MaterialTheme.colorScheme.onBackground,
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) { content() }
     }
@@ -279,9 +314,9 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         TuningDial(year = track?.year, station = ui.station, playing = ui.isPlaying)
-        Spacer(Modifier.height(20.dp))
-        AlbumArt(track?.artUrl, Modifier.size(232.dp))
         Spacer(Modifier.height(16.dp))
+        AlbumArt(track?.artUrl, Modifier.size(268.dp))
+        Spacer(Modifier.height(12.dp))
 
         // Now playing.
         Column(Modifier.fillMaxWidth().heightIn(min = 112.dp), horizontalAlignment = Alignment.CenterHorizontally,
@@ -332,23 +367,24 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
 
         // Controls on a faint speaker grille.
         Spacer(Modifier.height(12.dp))
+        WoodCabinet(Modifier.fillMaxWidth(), frame = 5.dp) {
         Box(
-            Modifier.fillMaxWidth().height(132.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(rc.cloth)
-                .grille(rc.grille)
-                .border(1.dp, rc.brass.copy(alpha = 0.35f), RoundedCornerShape(20.dp)),
+            Modifier.fillMaxWidth().height(124.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .voxCloth(rc.voxBase, rc.voxGold, rc.voxTeal, rc.voxMaroon)
+                .border(1.dp, Color(0x40000000), RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-                Knob(actions.onPrevious, "Previous track", 56.dp) { Icon(Icons.Filled.SkipPrevious, null, Modifier.size(30.dp)) }
-                Knob(actions.onPlayPause, if (ui.isPlaying) "Pause" else "Play", 84.dp, primary = true) {
-                    if (ui.isBuffering) CircularProgressIndicator(Modifier.size(34.dp), strokeWidth = 3.dp,
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
+                Knob(actions.onPrevious, "Previous track", 66.dp) { Icon(Icons.Filled.SkipPrevious, null, Modifier.size(38.dp)) }
+                Knob(actions.onPlayPause, if (ui.isPlaying) "Pause" else "Play", 96.dp, primary = true) {
+                    if (ui.isBuffering) CircularProgressIndicator(Modifier.size(40.dp), strokeWidth = 3.dp,
                         color = MaterialTheme.colorScheme.onPrimary)
-                    else Icon(if (ui.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, Modifier.size(44.dp))
+                    else Icon(if (ui.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, Modifier.size(54.dp))
                 }
-                Knob(actions.onNext, "Next track", 56.dp) { Icon(Icons.Filled.SkipNext, null, Modifier.size(30.dp)) }
+                Knob(actions.onNext, "Next track", 66.dp) { Icon(Icons.Filled.SkipNext, null, Modifier.size(38.dp)) }
             }
+        }
         }
 
         if (track != null) {
@@ -541,7 +577,7 @@ fun PlaylistDetailContent(
                 leadingContent = { Text("${index + 1}", style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 trailingContent = { IconButton(onClick = { onRemove(t) }) { Icon(Icons.Filled.Delete, "Remove") } },
-                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 modifier = Modifier.clickable { onPlay(index) },
             )
         }
@@ -667,7 +703,7 @@ private fun HistoryItem(t: Track, label: String?, saved: Boolean, kind: Int, onC
     val fade = if (kind == 0) 0.68f else 1f
     Row(
         Modifier.fillMaxWidth()
-            .background(if (current) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.background)
+            .background(if (current) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
             .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
     ) {

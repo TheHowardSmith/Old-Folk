@@ -41,6 +41,7 @@
   function artUrl(t) {
     const p = t.p == null ? null : String(t.p);
     if (t.u) return p && p.startsWith("https://") ? p : null;
+    if (p === "0") return null;               // no cover or label scan: the drawn 78
     const id = encodeURIComponent(t.i);
     if (!p) return `https://archive.org/services/img/${id}`;
     if (p === "1") return `https://archive.org/download/${id}/${encodeURIComponent(t.i + "_itemimage.jpg")}`;
@@ -313,6 +314,7 @@
 
   function setPlaying(on) {
     $("eye").classList.toggle("on", on);
+    $("dial").classList.toggle("lit", on);
     $("art").classList.toggle("spin", on && $("art-img").hidden);
     $("play").setAttribute("aria-label", on ? "Pause" : "Play");
     $("play-icon").innerHTML = on
@@ -325,12 +327,13 @@
   function renderDial(t) {
     const scale = $("scale");
     if (!scale.dataset.ready) {
-      for (let y = 1900; y <= 1970; y += 5) {
+      for (let y = 1898; y <= 1972; y += 1) {
         const i = document.createElement("i");
         i.style.left = pos(y) + "%";
-        i.style.height = y % 10 === 0 ? "14px" : "7px";
+        i.style.height = y % 10 === 0 ? "15px" : y % 5 === 0 ? "9px" : "4px";
+        if (y % 10 === 0) i.className = "m";
         scale.appendChild(i);
-        if (y % 20 === 0) {
+        if (y % 10 === 0 && y >= 1900 && y <= 1970) {
           const s = document.createElement("span");
           s.style.left = pos(y) + "%"; s.textContent = y;
           scale.appendChild(s);
@@ -356,9 +359,12 @@
     $("source").textContent = t && t.u ? `from the ${sourceName(t)}` : "";
     const img = $("art-img");
     const art = t && artUrl(t);
+    const box = $("art");
+    box.classList.add("bare");                 // the drawn 78 until a picture loads
     if (art) {
       img.hidden = true;
-      img.onload = () => { img.hidden = false; $("art").classList.remove("spin"); };
+      img.dataset.want = art;
+      img.onload = () => { if (img.dataset.want !== art) return; img.hidden = false; box.classList.remove("spin", "bare"); };
       img.onerror = () => { img.hidden = true; };
       img.src = art;
       img.alt = `Label or cover of “${t.t}”`;
