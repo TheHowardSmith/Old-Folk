@@ -38,6 +38,9 @@ data class RadioColors(
     val walnut: Color,        // cabinet band (bottom bar)
     val onWalnut: Color,
     val card: Color,
+    val woodHi: Color,        // cabinet wood, top to bottom
+    val wood: Color,
+    val woodLo: Color,
 )
 
 // Daylight: ivory bakelite, walnut and brass.
@@ -65,8 +68,8 @@ private val LightScheme = lightColorScheme(
     error = Color(0xFFA2382B),
 )
 private val LightRadio = RadioColors(
-    dialFace = Color(0xFF6A4529),          // walnut-brown dial
-    dialFaceBottom = Color(0xFF52331D),
+    dialFace = Color(0xFF2A1B10),          // smoked dial glass
+    dialFaceBottom = Color(0xFF170E07),
     dialInk = Color(0xFFF3E6CB),
     needle = Color(0xFFFF7A4A),
     glow = Color(0xFFC8892E),
@@ -81,6 +84,9 @@ private val LightRadio = RadioColors(
     walnut = Color(0xFF5A3A24),
     onWalnut = Color(0xFFF3E6CB),
     card = Color(0xFFF9F2E4),
+    woodHi = Color(0xFF8A5A33),
+    wood = Color(0xFF6E4426),
+    woodLo = Color(0xFF4E2E17),
 )
 
 // Evening: dark walnut with the valves glowing amber.
@@ -108,8 +114,8 @@ private val DarkScheme = darkColorScheme(
     error = Color(0xFFFFB4A6),
 )
 private val DarkRadio = RadioColors(
-    dialFace = Color(0xFF4A3220),
-    dialFaceBottom = Color(0xFF3A2616),
+    dialFace = Color(0xFF1C120A),
+    dialFaceBottom = Color(0xFF0E0804),
     dialInk = Color(0xFFF0DDB8),
     needle = Color(0xFFFF7A4A),
     glow = Color(0xFFFFA53A),
@@ -124,6 +130,9 @@ private val DarkRadio = RadioColors(
     walnut = Color(0xFF3B281A),
     onWalnut = Color(0xFFF0E2C8),
     card = Color(0xFF2E2117),
+    woodHi = Color(0xFF6A4428),
+    wood = Color(0xFF52331C),
+    woodLo = Color(0xFF3A2312),
 )
 
 val LocalRadioColors = staticCompositionLocalOf { LightRadio }

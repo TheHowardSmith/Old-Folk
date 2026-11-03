@@ -279,9 +279,9 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         TuningDial(year = track?.year, station = ui.station, playing = ui.isPlaying)
-        Spacer(Modifier.height(20.dp))
-        AlbumArt(track?.artUrl, Modifier.size(232.dp))
         Spacer(Modifier.height(16.dp))
+        AlbumArt(track?.artUrl, Modifier.size(224.dp))
+        Spacer(Modifier.height(12.dp))
 
         // Now playing.
         Column(Modifier.fillMaxWidth().heightIn(min = 112.dp), horizontalAlignment = Alignment.CenterHorizontally,
@@ -332,12 +332,14 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
 
         // Controls on a faint speaker grille.
         Spacer(Modifier.height(12.dp))
+        WoodCabinet(Modifier.fillMaxWidth()) {
         Box(
-            Modifier.fillMaxWidth().height(132.dp)
-                .clip(RoundedCornerShape(20.dp))
+            Modifier.fillMaxWidth().height(116.dp)
+                .clip(RoundedCornerShape(8.dp))
                 .background(rc.cloth)
                 .grille(rc.grille)
-                .border(1.dp, rc.brass.copy(alpha = 0.35f), RoundedCornerShape(20.dp)),
+                .clothSetIn()
+                .border(1.dp, Color(0x66000000), RoundedCornerShape(8.dp)),
             contentAlignment = Alignment.Center,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(28.dp)) {
@@ -349,6 +351,7 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
                 }
                 Knob(actions.onNext, "Next track", 56.dp) { Icon(Icons.Filled.SkipNext, null, Modifier.size(30.dp)) }
             }
+        }
         }
 
         if (track != null) {

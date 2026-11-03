@@ -32,6 +32,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -44,6 +49,9 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.PI
+import kotlin.math.sin
+import kotlin.random.Random
 
 private const val DIAL_START = 1895f
 private const val DIAL_SPAN = 80f   // 1895..1975
@@ -62,12 +70,14 @@ fun TuningDial(year: Int?, station: String, playing: Boolean, modifier: Modifier
     val labelStyle = TextStyle(fontSize = 12.sp, color = rc.dialInk, fontFeatureSettings = "tnum")
     val yearStyle = TextStyle(fontSize = 13.sp, color = rc.needle, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
         fontFeatureSettings = "tnum")
-    val shape = RoundedCornerShape(14.dp)
+    val shape = RoundedCornerShape(8.dp)
+    WoodCabinet(modifier.fillMaxWidth()) {
     Column(
-        modifier
+        Modifier
             .fillMaxWidth()
             .clip(shape)
             .background(Brush.verticalGradient(listOf(rc.dialFace, rc.dialFaceBottom)))
+            .glassSetIn()
             .border(1.5.dp, Brush.horizontalGradient(listOf(Color(0xFF8C6B33), Color(0xFFD9B872), Color(0xFF8C6B33))), shape)
             .padding(horizontal = 16.dp, vertical = 10.dp)
             .semantics { contentDescription = (year?.let { "Recorded around $it" } ?: "78 rpm era, date unknown") + ". $station" },
@@ -127,6 +137,7 @@ fun TuningDial(year: Int?, station: String, playing: Boolean, modifier: Modifier
             }
         }
     }
+    }
 }
 
 /**
@@ -155,6 +166,87 @@ fun ValveLamp(on: Boolean, modifier: Modifier = Modifier) {
             drawCircle(Color(0xFF1F2A1A), radius = r * 0.22f)
         },
     )
+}
+
+/**
+ * A walnut radio cabinet: grained wood with a bevelled edge, holding the dial
+ * glass or the grille cloth set into it.
+ */
+@Composable
+fun WoodCabinet(modifier: Modifier = Modifier, frame: Dp = 11.dp, content: @Composable () -> Unit) {
+    val rc = LocalRadioColors.current
+    val shape = RoundedCornerShape(20.dp)
+    Box(
+        modifier
+            .shadow(6.dp, shape, ambientColor = Color(0xFF3C200A), spotColor = Color(0xFF3C200A))
+            .clip(shape)
+            .woodGrain(rc.woodHi, rc.wood, rc.woodLo)
+            .padding(frame),
+    ) { content() }
+}
+
+private class Grain(val path: Path, val color: Color, val width: Float)
+
+/** Procedural wood grain: long wavy streaks, mostly dark with a few pale ones, on a lit-from-above gradient. */
+fun Modifier.woodGrain(hi: Color, mid: Color, lo: Color): Modifier = drawWithCache {
+    val w = size.width
+    val h = size.height
+    val rnd = Random(7)
+    val step = 10.dp.toPx()
+    val streaks = (h / 2.2.dp.toPx()).toInt().coerceIn(24, 160)
+    val grain = List(streaks) {
+        val y0 = rnd.nextFloat() * h
+        val amp = (0.4f + rnd.nextFloat() * 2.4f).dp.toPx()
+        val freq = (2 * PI / (150 + rnd.nextFloat() * 300).dp.toPx()).toFloat()
+        val phase = rnd.nextFloat() * 6.28f
+        val drift = (rnd.nextFloat() - 0.5f) * h * 0.08f
+        val path = Path()
+        path.moveTo(0f, y0 + amp * sin(phase))
+        var x = 0f
+        while (x < w) {
+            x += step
+            path.lineTo(x, y0 + amp * sin(x * freq + phase) + drift * x / w)
+        }
+        val dark = rnd.nextFloat() < 0.8f
+        Grain(
+            path,
+            if (dark) Color(0xFF1E0E04).copy(alpha = 0.08f + rnd.nextFloat() * 0.22f)
+            else Color(0xFFF2C68E).copy(alpha = 0.05f + rnd.nextFloat() * 0.09f),
+            (0.5f + rnd.nextFloat() * 1.7f).dp.toPx(),
+        )
+    }
+    val base = Brush.verticalGradient(listOf(hi, mid, lo))
+    val sheen = Brush.linearGradient(
+        listOf(Color.Transparent, Color(0x1AFFDCAA), Color.Transparent),
+        start = Offset(w * 0.2f, 0f), end = Offset(w * 0.75f, h),
+    )
+    onDrawBehind {
+        drawRect(base)
+        for (g in grain) drawPath(g.path, g.color, style = Stroke(g.width))
+        drawRect(sheen)
+        // Bevel: light along the top edge, shadow along the bottom.
+        drawLine(Color(0x47FFE2B4), Offset(0f, 0.75.dp.toPx()), Offset(w, 0.75.dp.toPx()), 1.5.dp.toPx())
+        drawLine(Color(0x59000000), Offset(0f, h - 1.dp.toPx()), Offset(w, h - 1.dp.toPx()), 2.dp.toPx())
+    }
+}
+
+/** Dial glass set into the cabinet: shaded at the top edge, with a faint reflection over it. */
+fun Modifier.glassSetIn(): Modifier = drawWithContent {
+    drawContent()
+    val edge = 7.dp.toPx()
+    drawRect(Brush.verticalGradient(listOf(Color(0x8C000000), Color.Transparent), endY = edge),
+        size = androidx.compose.ui.geometry.Size(size.width, edge))
+    drawRect(Brush.linearGradient(
+        0f to Color(0x1AFFFFFF), 0.38f to Color(0x05FFFFFF), 0.4f to Color.Transparent,
+        start = Offset(0f, 0f), end = Offset(size.width * 0.25f, size.height * 1.2f),
+    ))
+}
+
+/** The grille cloth set into the cabinet: shaded where it meets the wood (drawn under the knobs). */
+fun Modifier.clothSetIn(): Modifier = drawBehind {
+    val edge = 7.dp.toPx()
+    drawRect(Brush.verticalGradient(listOf(Color(0x66000000), Color.Transparent), endY = edge),
+        size = androidx.compose.ui.geometry.Size(size.width, edge))
 }
 
 /** Woven cloth grille: a fine diamond lattice behind content. */

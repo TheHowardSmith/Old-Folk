@@ -3,6 +3,8 @@
   --brass: #7A5A1E; --primary: #6B3E1F; --on-primary: #FFF8EC; --cloth: #E6D5B6;
   --grille: rgba(194, 171, 132, 0.6); --walnut: #6A4529; --walnut-2: #52331D; --dial-ink: #F3E6CB;
   --needle: #FF7A4A; --eye: #8FDB5E; --knob: #6B4A30; --knob-ink: #F6EBD5; --ivory: #F2E8D3;
+  --wood-hi: #8A5A33; --wood: #6E4426; --wood-lo: #4E2E17; --glass: #2A1B10; --glass-lo: #170E07;
+  --cab-shadow: rgba(60, 32, 10, 0.45);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -10,6 +12,8 @@
     --brass: #CDAE6E; --primary: #F0B565; --on-primary: #3D2300; --cloth: #33251A;
     --grille: rgba(232, 201, 138, 0.15); --walnut: #4A3220; --walnut-2: #3A2616; --dial-ink: #F0DDB8;
     --knob: #4E3624; --knob-ink: #F0E2C8; --ivory: #E6DAC0;
+    --wood-hi: #6A4428; --wood: #52331C; --wood-lo: #3A2312; --glass: #1C120A; --glass-lo: #0E0804;
+    --cab-shadow: rgba(0, 0, 0, 0.6);
   }
 }
 * { box-sizing: border-box; }
@@ -35,10 +39,34 @@ a { color: var(--primary); }
   border: 1px solid var(--line); color: var(--ink); text-decoration: none; font-size: 14px; white-space: nowrap;
 }
 
-/* Dial */
+/* Wooden cabinet: grained walnut with a bevelled edge, holding the dial glass or the grille cloth */
+.cabinet {
+  border-radius: 20px; padding: 15px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='240' preserveAspectRatio='none'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035 0.11' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.05 0 0 0 0 0.01 2.8 0 0 0 -1.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 100% 100%,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='240' preserveAspectRatio='none'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.07' numOctaves='4' seed='19'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.72 0 0 0 0 0.45 1.3 0 0 0 -0.8'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 100% 100%,
+    linear-gradient(100deg, rgba(255,220,170,.0) 20%, rgba(255,220,170,.10) 45%, rgba(255,220,170,0) 70%),
+    linear-gradient(180deg, var(--wood-hi), var(--wood) 45%, var(--wood-lo));
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 226, 180, .28),
+    inset 0 -2px 0 rgba(0, 0, 0, .35),
+    inset 2px 0 0 rgba(255, 226, 180, .08),
+    inset -2px 0 0 rgba(0, 0, 0, .18),
+    0 10px 20px -10px var(--cab-shadow);
+}
+.dial-cab { margin: 22px 0 18px; }
+
+/* Dial glass, set into the cabinet behind a brass bezel */
 .dial {
-  margin: 22px 0 18px; background: linear-gradient(var(--walnut), var(--walnut-2)); color: var(--dial-ink);
-  border-radius: 20px; padding: 14px 20px 30px; border: 1px solid rgba(0,0,0,.15);
+  position: relative; overflow: hidden;
+  background: radial-gradient(120% 140% at 50% 0%, var(--glass), var(--glass-lo)); color: var(--dial-ink);
+  border-radius: 8px; padding: 12px 18px 28px;
+  border: 1.5px solid #B08A45;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.45), inset 0 3px 8px rgba(0,0,0,.7), inset 0 0 22px rgba(255,150,60,.08);
+}
+.dial::after {           /* a faint reflection on the glass */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(168deg, rgba(255,255,255,.10), rgba(255,255,255,.02) 38%, transparent 40%);
 }
 .dial-label { font-size: 12px; letter-spacing: 2px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .eye { width: 10px; height: 10px; border-radius: 50%; background: #3F5A33; transition: background .4s, box-shadow .4s; }
@@ -70,12 +98,14 @@ a { color: var(--primary); }
 .source { margin: 4px 0 0; font-style: italic; color: var(--muted); font-size: 14px; }
 .status { margin: 8px 0 0; font-size: 14px; color: var(--muted); font-style: italic; min-height: 1.4em; }
 
+.grille-cab { width: 100%; max-width: 520px; }
 .grille {
-  width: 100%; max-width: 520px; display: flex; justify-content: center; align-items: center; gap: 28px;
-  padding: 22px; border-radius: 20px; border: 1px solid var(--line);
+  display: flex; justify-content: center; align-items: center; gap: 28px;
+  padding: 18px; border-radius: 8px;
   background-color: var(--cloth);
   background-image: repeating-linear-gradient(45deg, var(--grille) 0 1px, transparent 1px 9px),
                     repeating-linear-gradient(-45deg, var(--grille) 0 1px, transparent 1px 9px);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.4), inset 0 3px 7px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,255,255,.12);
 }
 .knob {
   width: 58px; height: 58px; border-radius: 50%; border: none; cursor: pointer; display: grid; place-items: center;
@@ -152,5 +182,6 @@ h3 { font-size: 19px; margin: 20px 0 8px; }
   .tabs { order: 3; width: 100%; margin: 0; justify-content: space-between; }
   .tabs a { flex: 1; text-align: center; padding: 7px 4px; }
   .get-app { margin-left: auto; }
-  .grille { gap: 22px; padding: 18px 10px; }
+  .grille { gap: 22px; padding: 16px 8px; }
+  .cabinet { padding: 11px; border-radius: 17px; }
 }
