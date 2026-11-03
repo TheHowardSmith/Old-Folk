@@ -151,7 +151,7 @@ private val DarkRadio = RadioColors(
     cloth = Color(0xFF33251A),
     grille = Color(0x26E8C98A),
     knob = Color(0xFF4E3624),
-    knobIcon = Color(0xFFFFF4DE),
+    knobIcon = Color(0xFF3F2817),
     ivory = Color(0xFFE6DAC0),
     walnut = Color(0xFF3B281A),
     onWalnut = Color(0xFFF0E2C8),
@@ -169,9 +169,9 @@ private val DarkRadio = RadioColors(
     voxGold = Color(0x3DD6B676),
     voxTeal = Color(0x2B6EA896),
     voxMaroon = Color(0x38A84A46),
-    knobFluteHi = Color(0xFFAD845E),
-    knobFluteLo = Color(0xFF8A6242),
-    knobCap = Color(0xFF9C7450),
+    knobFluteHi = Color(0xFFDCCBAB),
+    knobFluteLo = Color(0xFFB8A27E),
+    knobCap = Color(0xFFCDB896),
 )
 
 val LocalRadioColors = staticCompositionLocalOf { LightRadio }
