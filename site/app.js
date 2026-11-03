@@ -41,6 +41,7 @@
   function artUrl(t) {
     const p = t.p == null ? null : String(t.p);
     if (t.u) return p && p.startsWith("https://") ? p : null;
+    if (p === "0") return null;               // no cover or label scan: the drawn 78
     const id = encodeURIComponent(t.i);
     if (!p) return `https://archive.org/services/img/${id}`;
     if (p === "1") return `https://archive.org/download/${id}/${encodeURIComponent(t.i + "_itemimage.jpg")}`;

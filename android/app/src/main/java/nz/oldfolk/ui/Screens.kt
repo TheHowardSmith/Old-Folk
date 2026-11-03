@@ -357,21 +357,21 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
         Spacer(Modifier.height(12.dp))
         WoodCabinet(Modifier.fillMaxWidth()) {
         Box(
-            Modifier.fillMaxWidth().height(116.dp)
+            Modifier.fillMaxWidth().height(112.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .voxCloth(rc.voxBase, rc.voxFawn, rc.voxMid, rc.voxHi)
                 .clothSetIn()
                 .border(1.dp, Color(0x66000000), RoundedCornerShape(8.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-                Knob(actions.onPrevious, "Previous track", 56.dp) { Icon(Icons.Filled.SkipPrevious, null, Modifier.size(30.dp)) }
-                Knob(actions.onPlayPause, if (ui.isPlaying) "Pause" else "Play", 84.dp, primary = true) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
+                Knob(actions.onPrevious, "Previous track", 66.dp) { Icon(Icons.Filled.SkipPrevious, null, Modifier.size(30.dp)) }
+                Knob(actions.onPlayPause, if (ui.isPlaying) "Pause" else "Play", 96.dp, primary = true) {
                     if (ui.isBuffering) CircularProgressIndicator(Modifier.size(34.dp), strokeWidth = 3.dp,
                         color = MaterialTheme.colorScheme.onPrimary)
                     else Icon(if (ui.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, Modifier.size(44.dp))
                 }
-                Knob(actions.onNext, "Next track", 56.dp) { Icon(Icons.Filled.SkipNext, null, Modifier.size(30.dp)) }
+                Knob(actions.onNext, "Next track", 66.dp) { Icon(Icons.Filled.SkipNext, null, Modifier.size(30.dp)) }
             }
         }
         }

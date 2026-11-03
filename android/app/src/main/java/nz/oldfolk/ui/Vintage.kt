@@ -110,28 +110,28 @@ fun Modifier.voxCloth(base: Color, fawn: Color, mid: Color, hi: Color, tile: Dp 
     }
 }
 
-/** Fluted bakelite knob face: ridged rim, domed cap, soft highlight; ivory with a brass ring for the main knob. */
+/** Bakelite knob face: a finely ribbed edge and a domed cap; ivory with a brass ring for the main knob. */
 fun DrawScope.flutedKnob(primary: Boolean, rc: RadioColors) {
     val r = size.minDimension / 2
     val c = center
-    val flutes = 44
-    val (lo, hi) = if (primary) Color(0xFFD6C5A3) to Color(0xFFEFE4CC) else rc.knobFluteLo to rc.knobFluteHi
+    val flutes = 48
+    val (lo, hi) = if (primary) Color(0xFFE2D6BC) to Color(0xFFEBE2CE) else rc.knobFluteLo to rc.knobFluteHi
     for (i in 0 until flutes) {
         drawArc(if (i % 2 == 0) lo else hi, i * 360f / flutes, 360f / flutes, true)
     }
-    drawCircle(Color.Black.copy(alpha = 0.5f), r, c, style = Stroke(1.5.dp.toPx()))
+    drawCircle(Color.Black.copy(alpha = 0.4f), r, c, style = Stroke(1.dp.toPx()))
     if (primary) {
-        drawCircle(Color.Black.copy(alpha = 0.4f), r * 0.63f, c)
-        drawCircle(Color(0xFFB08A45), r * 0.61f, c)
-        drawCircle(Color(0xFFF4EBD8), r * 0.56f, c)
+        drawCircle(Color.Black.copy(alpha = 0.2f), r * 0.8f, c)
+        drawCircle(Color(0xFFB08A45), r * 0.78f, c)
+        drawCircle(Color(0xFFF2E8D3), r * 0.74f, c)
     } else {
-        drawCircle(Color.Black.copy(alpha = 0.55f), r * 0.63f, c)
-        drawCircle(rc.knobCap, r * 0.6f, c)
+        drawCircle(Color.Black.copy(alpha = 0.3f), r * 0.8f, c)
+        drawCircle(rc.knobCap, r * 0.78f, c)
     }
     drawCircle(
         Brush.radialGradient(
-            listOf(Color.White.copy(alpha = if (primary) 0.55f else 0.3f), Color.Transparent),
-            center = Offset(c.x - r * 0.16f, c.y - r * 0.4f), radius = r * 0.84f,
+            listOf(Color.White.copy(alpha = if (primary) 0.35f else 0.16f), Color.Transparent),
+            center = Offset(c.x - r * 0.1f, c.y - r * 0.36f), radius = r,
         ),
         r, c,
     )

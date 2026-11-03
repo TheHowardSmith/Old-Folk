@@ -24,7 +24,7 @@ def track_json(t: Track) -> dict:
     d["r"] = t.region
     d["g"] = t.genre
     if t.picture:
-        d["p"] = t.picture   # 1 = "<id>_itemimage.jpg", 2 = "<id>_itemimage.png", else a file name
+        d["p"] = t.picture   # 1 = "<id>_itemimage.jpg", 2 = "<id>_itemimage.png", "0" = none, else a file name
     if t.url:
         d["u"] = t.url       # not on the Internet Archive: full audio URL ...
     if t.page:

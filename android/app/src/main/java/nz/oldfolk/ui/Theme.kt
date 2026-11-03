@@ -106,8 +106,8 @@ private val LightRadio = RadioColors(
     voxFawn = Color(0xFFD3B07C),
     voxMid = Color(0xFF7B5735),
     voxHi = Color(0xFF9C774C),
-    knobFluteHi = Color(0xFF7A5536),
-    knobFluteLo = Color(0xFF3E2615),
+    knobFluteHi = Color(0xFF6E4C31),
+    knobFluteLo = Color(0xFF523520),
     knobCap = Color(0xFF5E3E25),
 )
 
@@ -163,8 +163,8 @@ private val DarkRadio = RadioColors(
     voxFawn = Color(0xFFA98A5C),
     voxMid = Color(0xFF5A3F25),
     voxHi = Color(0xFF6F5333),
-    knobFluteHi = Color(0xFF644530),
-    knobFluteLo = Color(0xFF2C1A0D),
+    knobFluteHi = Color(0xFF5A3E2A),
+    knobFluteLo = Color(0xFF3E2817),
     knobCap = Color(0xFF4A301C),
 )
 

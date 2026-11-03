@@ -8,7 +8,7 @@
   --band: #5C1E16; --band-2: #48160F; --on-band: #F6E7C8; --band-line: rgba(227, 194, 122, 0.20); --band-rule: #B08A45;
   --vox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Crect width='28' height='28' fill='%235A3D25'/%3E%3Cpath d='M14 0L28 14L14 28L0 14Z' fill='%237B5735'/%3E%3Cpath d='M14 7L21 14L14 21L7 14Z' fill='%239C774C'/%3E%3Cpath d='M14 0L28 14L14 28L0 14Z' fill='none' stroke='%23D3B07C' stroke-width='2.4'/%3E%3Cpath d='M14 11L17 14L14 17L11 14Z' fill='%235A3D25'/%3E%3Cpath d='M0 0.5H28M0 2.5H28M0 4.5H28M0 6.5H28M0 8.5H28M0 10.5H28M0 12.5H28M0 14.5H28M0 16.5H28M0 18.5H28M0 20.5H28M0 22.5H28M0 24.5H28M0 26.5H28M1.5 0V28M3.5 0V28M5.5 0V28M7.5 0V28M9.5 0V28M11.5 0V28M13.5 0V28M15.5 0V28M17.5 0V28M19.5 0V28M21.5 0V28M23.5 0V28M25.5 0V28M27.5 0V28' stroke='rgba(0,0,0,.16)' stroke-width='.8' fill='none'/%3E%3C/svg%3E");
   --slot: #3A2516; --fader: #E9DCC2; --fader-lo: #BCA57E;
-  --knob-hi: #7A5536; --knob-lo: #3E2615; --knob-cap: #5E3E25; --knob-ink: #F4E6CC;
+  --knob-hi: #6E4C31; --knob-lo: #523520; --knob-cap: #5E3E25; --knob-ink: #F4E6CC;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -20,7 +20,7 @@
     --band: #3C130E; --band-2: #2C0D09; --band-line: rgba(227, 194, 122, 0.14);
     --vox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Crect width='28' height='28' fill='%233A2716'/%3E%3Cpath d='M14 0L28 14L14 28L0 14Z' fill='%235A3F25'/%3E%3Cpath d='M14 7L21 14L14 21L7 14Z' fill='%236F5333'/%3E%3Cpath d='M14 0L28 14L14 28L0 14Z' fill='none' stroke='%23A98A5C' stroke-width='2.4'/%3E%3Cpath d='M14 11L17 14L14 17L11 14Z' fill='%233A2716'/%3E%3Cpath d='M0 0.5H28M0 2.5H28M0 4.5H28M0 6.5H28M0 8.5H28M0 10.5H28M0 12.5H28M0 14.5H28M0 16.5H28M0 18.5H28M0 20.5H28M0 22.5H28M0 24.5H28M0 26.5H28M1.5 0V28M3.5 0V28M5.5 0V28M7.5 0V28M9.5 0V28M11.5 0V28M13.5 0V28M15.5 0V28M17.5 0V28M19.5 0V28M21.5 0V28M23.5 0V28M25.5 0V28M27.5 0V28' stroke='rgba(0,0,0,.22)' stroke-width='.8' fill='none'/%3E%3C/svg%3E");
     --slot: #120B06; --fader: #D9CBB0; --fader-lo: #A08A64;
-    --knob-hi: #644530; --knob-lo: #2C1A0D; --knob-cap: #4A301C;
+    --knob-hi: #5A3E2A; --knob-lo: #3E2817; --knob-cap: #4A301C;
   }
 }
 * { box-sizing: border-box; }
@@ -30,7 +30,7 @@ body {
   font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
   min-height: 100vh; display: flex; flex-direction: column;
 }
-main { flex: 1; width: 100%; }
+main { flex: 1; width: 100%; overflow-x: clip; }   /* the spinning record's corners mustn't widen the page */
 h1, h2, h3, .brand span, .foot-brand { font-family: Georgia, "Noto Serif", "Times New Roman", serif; font-weight: 500; }
 a { color: var(--primary); }
 [hidden] { display: none !important; }
@@ -159,36 +159,36 @@ a { color: var(--primary); }
 .status { margin: 8px 0 0; font-size: 14px; color: var(--muted); font-style: italic; min-height: 1.4em; }
 
 /* Grille: Vox-style diamond cloth set into the cabinet */
-.grille-cab { width: 100%; max-width: 520px; }
+.grille-cab { width: 100%; max-width: 420px; }
 .grille {
-  display: flex; justify-content: center; align-items: center; gap: 30px;
-  padding: 20px; border-radius: 8px;
+  display: flex; justify-content: center; align-items: center; gap: 24px;
+  padding: 12px; border-radius: 8px;
   background: var(--vox) 0 0 / 28px 28px, #5A3D25;
   box-shadow: 0 0 0 1px rgba(0,0,0,.5), inset 0 4px 9px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.10);
 }
 
-/* Knobs: fluted bakelite with a domed cap; the play knob in ivory with a brass ring */
+/* Knobs: bakelite with a finely ribbed edge and a domed cap; the play knob in ivory with a brass ring */
 .knob {
-  position: relative; width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer;
+  position: relative; width: 66px; height: 66px; border-radius: 50%; border: none; cursor: pointer;
   display: grid; place-items: center; color: var(--knob-ink); padding: 0;
   background:
-    radial-gradient(circle at 42% 30%, rgba(255, 236, 205, .32), transparent 42%),
-    radial-gradient(circle, var(--knob-cap) 0 60%, rgba(0,0,0,.55) 61% 63%, transparent 64%),
-    repeating-conic-gradient(var(--knob-lo) 0 6deg, var(--knob-hi) 6deg 12deg);
-  box-shadow: 0 3px 0 #1E1209, 0 7px 12px rgba(0,0,0,.45), inset 0 0 0 1.5px rgba(0,0,0,.5);
+    radial-gradient(circle at 45% 32%, rgba(255, 236, 205, .16), transparent 50%),
+    radial-gradient(circle, var(--knob-cap) 0 72%, rgba(0,0,0,.35) 73% 74%, transparent 75%),
+    repeating-conic-gradient(var(--knob-lo) 0 3.75deg, var(--knob-hi) 3.75deg 7.5deg);
+  box-shadow: 0 2px 0 rgba(20, 10, 4, .7), 0 4px 8px rgba(0,0,0,.3), inset 0 0 0 1px rgba(0,0,0,.4);
   transition: transform .08s, box-shadow .08s;
 }
-.knob svg { width: 26px; height: 26px; filter: drop-shadow(0 -1px 0 rgba(0,0,0,.55)) drop-shadow(0 1px 0 rgba(255,230,190,.18)); }
+.knob svg { width: 28px; height: 28px; }
 .knob.big {
-  width: 88px; height: 88px; color: #3A2414;
+  width: 96px; height: 96px; color: #3A2414;
   background:
-    radial-gradient(circle at 42% 30%, rgba(255, 255, 255, .55), transparent 40%),
-    radial-gradient(circle, #F4EBD8 0 56%, #B08A45 57% 61%, rgba(0,0,0,.4) 62% 63%, transparent 64%),
-    repeating-conic-gradient(#C9B591 0 6deg, #EFE4CC 6deg 12deg);
+    radial-gradient(circle at 45% 32%, rgba(255, 255, 255, .35), transparent 50%),
+    radial-gradient(circle, #F2E8D3 0 68%, #B08A45 69% 72%, rgba(0,0,0,.25) 73% 74%, transparent 75%),
+    repeating-conic-gradient(#DCCDAF 0 3.75deg, #EAE0CA 3.75deg 7.5deg);
 }
-.knob.big svg { width: 38px; height: 38px; filter: drop-shadow(0 1px 0 rgba(255,255,255,.6)); }
+.knob.big svg { width: 40px; height: 40px; }
 .knob:focus-visible, .chip:focus-visible, .tabs a:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
-.knob:active { transform: translateY(2px); box-shadow: 0 1px 0 #1E1209, 0 3px 6px rgba(0,0,0,.45), inset 0 0 0 1.5px rgba(0,0,0,.5); }
+.knob:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(20, 10, 4, .7), 0 2px 4px rgba(0,0,0,.3), inset 0 0 0 1px rgba(0,0,0,.4); }
 .actions { display: flex; gap: 26px; }
 .actions a { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); text-decoration: none; font-size: 15px; }
 .actions svg { width: 18px; height: 18px; }
@@ -258,19 +258,38 @@ h3 { font-size: 19px; margin: 20px 0 8px; }
 .sources { padding-left: 18px; }
 .sources li { margin: 6px 0; }
 
-/* Desktop: player, genres on the right, history below both */
+/* Desktop: the player with genres beside it; on wide screens history on the left, otherwise below */
 @media (min-width: 1000px) {
   .wrap, .bar { max-width: 1180px; }
   .tabs a[data-tab="genres"], .tabs a[data-tab="history"] { display: none; }
-  .deck { display: grid; grid-template-columns: minmax(0, 1fr) 340px; column-gap: 36px; align-items: start; }
+  .deck { display: grid; grid-template-columns: minmax(0, 1fr) 320px; column-gap: 36px; align-items: start; }
   #tab-radio { grid-column: 1; grid-row: 1; }
   #tab-genres { grid-column: 2; grid-row: 1; margin-top: 22px; }
-  #tab-genres h2 { margin-top: 0; font-size: 24px; }
-  #tab-genres .intro { font-size: 14px; }
+  #tab-genres h2, #tab-history h2 { margin-top: 0; font-size: 24px; }
+  #tab-genres .intro, #tab-history .intro { font-size: 14px; }
   .genres { margin-bottom: 20px; max-height: 700px; overflow-y: auto; padding-right: 4px; gap: 6px; }
   .genres label { padding: 8px 14px; }
-  #tab-history { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid var(--line); padding-bottom: 10px; }
+  #tab-history { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid var(--line); padding-top: 4px; padding-bottom: 10px; }
   .tracks.scroll { max-height: 420px; overflow-y: auto; padding-right: 4px; }
+  .grille-cab { max-width: 460px; }
+  .art { width: clamp(260px, calc(100vh - 640px), 420px); }
+  .now { min-height: 110px; }
+  .dial-cab { margin: 18px 0 14px; }
+  .grille { gap: 30px; padding: 12px; }
+  .knob { width: 80px; height: 80px; }
+  .knob svg { width: 32px; height: 32px; }
+  .knob.big { width: 116px; height: 116px; }
+  .knob.big svg { width: 48px; height: 48px; }
+}
+@media (min-width: 1240px) {
+  .wrap, .bar { max-width: 1400px; }
+  .deck { grid-template-columns: 300px minmax(0, 1fr) 320px; }
+  #tab-history { grid-column: 1; grid-row: 1; margin-top: 22px; border-top: none; padding-top: 0; }
+  #tab-radio { grid-column: 2; }
+  #tab-genres { grid-column: 3; }
+  .tracks.scroll { max-height: 700px; }
+  .tracks .t { font-size: 16px; }
+  .foot-in { max-width: 1400px; }
 }
 
 @media (max-width: 640px) {
@@ -279,7 +298,9 @@ h3 { font-size: 19px; margin: 20px 0 8px; }
   .tabs { order: 3; width: 100%; margin: 0; justify-content: space-between; }
   .tabs a { flex: 1; text-align: center; padding: 7px 4px; }
   .get-app { margin-left: auto; }
-  .grille { gap: 22px; padding: 16px 8px; }
+  .grille { gap: 20px; padding: 10px 8px; }
+  .knob { width: 64px; height: 64px; }
+  .knob.big { width: 92px; height: 92px; }
   .cabinet { padding: 11px; border-radius: 17px; }
   .dial { padding: 10px 14px 28px; }
   .scale span { font-size: 10.5px; }
