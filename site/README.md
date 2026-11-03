@@ -1,8 +1,19 @@
 # Website (oldfolkair.com)
 
-A single static page, published to GitHub Pages by `.github/workflows/pages.yml`
-whenever `site/` (or the app screenshots) change on `main`. The screenshots in
-`img/` are copied from the app's Paparazzi snapshots at build time.
+Live at https://oldfolkair.com (GitHub Pages, DNS at Cloudflare with the proxy off, HTTPS by GitHub).
+
+The site is the web version of the radio: a single static page (`index.html`,
+`style.css`, `app.js`, no build step and no external libraries) with the player,
+Genres, History and About. It loads the track list from `data/`, which the
+*Website* workflow (`.github/workflows/pages.yml`) copies in from the `tracklist`
+release at deploy time (browsers can't read release downloads directly); the
+track-list build starts that workflow after each publish. Each recording plays
+straight from the archive that holds it, and only the next track is fetched
+ahead. Genre choice, the no-repeat list and history are kept in the browser's
+localStorage.
+
+To try it locally: copy a published `index.json` and its `s-*.json`/`x-*.json`
+shards into `site/data/` and run `python3 -m http.server --directory site`.
 
 ## One-time setup
 

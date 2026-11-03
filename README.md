@@ -2,7 +2,7 @@
 
 ## [⬇ Download the Android app (old-folk-air.apk)](https://github.com/TheHowardSmith/Old-Folk/releases/latest/download/old-folk-air.apk)
 
-Website: [oldfolkair.com](https://oldfolkair.com) (being set up; until then [thehowardsmith.github.io/Old-Folk](https://thehowardsmith.github.io/Old-Folk/)).
+Website: **[oldfolkair.com](https://oldfolkair.com)**
 
 Open the download link on your Android phone (Android 8 or newer), then open the downloaded file to install it. Android may ask you to allow installing apps from your browser. No account or sign-up is needed. All versions are on the [Releases page](https://github.com/TheHowardSmith/Old-Folk/releases).
 
