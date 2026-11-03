@@ -110,9 +110,9 @@ private val LightRadio = RadioColors(
     voxGold = Color(0x61ECD6A0),
     voxTeal = Color(0x4296C4B4),
     voxMaroon = Color(0x4DB0605A),
-    knobFluteHi = Color(0xFFC09670),
-    knobFluteLo = Color(0xFF9E7350),
-    knobCap = Color(0xFFB0845C),
+    knobFluteHi = Color(0xFF7A5536),
+    knobFluteLo = Color(0xFF5A3C25),
+    knobCap = Color(0xFF6B4A30),
 )
 
 // Evening: dark walnut with the valves glowing amber.
