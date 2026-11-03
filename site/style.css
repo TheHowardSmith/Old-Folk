@@ -131,6 +131,22 @@ h3 { font-size: 19px; margin: 20px 0 8px; }
 .sources li { margin: 6px 0; }
 .foot { margin: 24px 0 40px; }
 
+/* Desktop: player, genres on the right, history below both */
+@media (min-width: 1000px) {
+  .wrap, .bar { max-width: 1180px; }
+  .tabs a[data-tab="genres"], .tabs a[data-tab="history"] { display: none; }
+  .deck { display: grid; grid-template-columns: minmax(0, 1fr) 340px; column-gap: 36px; align-items: start; }
+  #tab-radio { grid-column: 1; grid-row: 1; }
+  #tab-genres { grid-column: 2; grid-row: 1; margin-top: 22px; }
+  #tab-genres h2 { margin-top: 0; font-size: 24px; }
+  #tab-genres .intro { font-size: 14px; }
+  .genres { margin-bottom: 20px; max-height: 590px; overflow-y: auto; padding-right: 6px; gap: 6px; }
+  .genres label { padding: 8px 14px; }
+  #tab-history { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid var(--line); padding-bottom: 30px; }
+  .hist-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+  .tracks.scroll { max-height: 420px; overflow-y: auto; padding-right: 6px; }
+}
+
 @media (max-width: 640px) {
   .bar { height: auto; flex-wrap: wrap; padding-top: 10px; padding-bottom: 8px; gap: 8px; }
   .brand { font-size: 18px; }

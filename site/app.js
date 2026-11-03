@@ -456,15 +456,22 @@
 
   // ------------------------------------------------------------------ tabs
   const TABS = ["radio", "genres", "history", "about"];
+  // On a wide screen the radio, genres and history share one page.
+  const wide = window.matchMedia("(min-width: 1000px)");
+  let tab = "radio";
   function showTab(name) {
     if (!TABS.includes(name)) name = "radio";
-    for (const t of TABS) $("tab-" + t).hidden = t !== name;
+    if (wide.matches && name !== "about") name = "radio";
+    tab = name;
+    const shown = wide.matches && name === "radio" ? ["radio", "genres", "history"] : [name];
+    for (const t of TABS) $("tab-" + t).hidden = !shown.includes(t);
     document.querySelectorAll(".tabs a").forEach((a) => {
       if (a.dataset.tab === name) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    if (name === "history") renderHistory();
+    if (shown.includes("history")) renderHistory();
     if (location.hash.slice(1) !== name) history_replace(name);
   }
+  wide.addEventListener("change", () => showTab(tab));
   const history_replace = (name) => window.history.replaceState(null, "", name === "radio" ? location.pathname : "#" + name);
   window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
   document.querySelectorAll("[data-tab]").forEach((a) => a.addEventListener("click", (e) => {

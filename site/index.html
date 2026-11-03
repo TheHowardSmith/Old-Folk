@@ -29,6 +29,7 @@
 </header>
 
 <main class="wrap">
+  <div class="deck">
   <!-- Radio -->
   <section id="tab-radio" class="tab" aria-label="Radio">
     <div class="dial" aria-hidden="true">
@@ -95,12 +96,19 @@
   <section id="tab-history" class="tab" aria-label="History" hidden>
     <h2>History</h2>
     <p class="intro">Everything you've heard in this browser, newest first, and what's coming up. Tap a track to play it.</p>
-    <h3>Up next</h3>
-    <ol class="tracks" id="upnext"></ol>
-    <h3>Played</h3>
-    <ol class="tracks" id="played"></ol>
-    <button class="chip" id="history-clear">Clear history</button>
+    <div class="hist-cols">
+      <div>
+        <h3>Up next</h3>
+        <ol class="tracks scroll" id="upnext"></ol>
+      </div>
+      <div>
+        <h3>Played</h3>
+        <ol class="tracks scroll" id="played"></ol>
+        <button class="chip" id="history-clear">Clear history</button>
+      </div>
+    </div>
   </section>
+  </div>
 
   <!-- About -->
   <section id="tab-about" class="tab about" aria-label="About" hidden>
