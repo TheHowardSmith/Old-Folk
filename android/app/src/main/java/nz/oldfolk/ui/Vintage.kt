@@ -95,26 +95,22 @@ fun Modifier.voxCloth(base: Color, gold: Color, teal: Color, maroon: Color, tile
     }
 }
 
-/** Smooth domed bakelite knob face (caramel); the main knob in ivory with a brass ring. */
+/** Flat-faced bakelite knob with a slight bevel (caramel); the main knob in ivory with a brass ring. */
 fun DrawScope.flutedKnob(primary: Boolean, rc: RadioColors) {
     val r = size.minDimension / 2
     val c = center
-    val (hi, mid, lo) = if (primary) Triple(Color(0xFFFBF4E4), Color(0xFFEDE1C8), Color(0xFFD6C4A0))
+    val (hi, mid, lo) = if (primary) Triple(Color(0xFFF5EDDC), Color(0xFFEADFC7), Color(0xFFDDCDAC))
         else Triple(rc.knobFluteHi, rc.knobCap, rc.knobFluteLo)
-    drawCircle(Brush.radialGradient(0f to hi, 0.62f to mid, 1f to lo, center = Offset(c.x, c.y - r * 0.2f), radius = r * 1.1f), r, c)
-    // a little shade at the lower edge, like a dome
-    drawCircle(Brush.verticalGradient(0.6f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.18f),
-        startY = c.y - r, endY = c.y + r), r, c)
+    drawCircle(Brush.verticalGradient(0f to hi, 0.55f to mid, 1f to lo, startY = c.y - r, endY = c.y + r), r, c)
     if (primary) {
         drawCircle(Color(0xFFB08A45), r - 1.5.dp.toPx(), c, style = Stroke(3.dp.toPx()))
-        drawCircle(Color.Black.copy(alpha = 0.2f), r - 3.5.dp.toPx(), c, style = Stroke(1.dp.toPx()))
+        drawCircle(Color.Black.copy(alpha = 0.15f), r - 3.5.dp.toPx(), c, style = Stroke(1.dp.toPx()))
+    } else {
+        // thin light edge along the top, like a bevel
+        drawArc(Color(0x40FFF0D7), 200f, 140f, false, topLeft = c - Offset(r - 1.dp.toPx(), r - 1.dp.toPx()),
+            size = Size(2 * r - 2.dp.toPx(), 2 * r - 2.dp.toPx()), style = Stroke(1.dp.toPx()))
     }
-    drawCircle(Color.Black.copy(alpha = 0.3f), r - 0.5.dp.toPx(), c, style = Stroke(1.dp.toPx()))
-    drawCircle(
-        Brush.radialGradient(listOf(Color.White.copy(alpha = if (primary) 0.6f else 0.38f), Color.Transparent),
-            center = Offset(c.x - r * 0.16f, c.y - r * 0.4f), radius = r * 0.92f),
-        r, c,
-    )
+    drawCircle(Color.Black.copy(alpha = 0.28f), r - 0.5.dp.toPx(), c, style = Stroke(1.dp.toPx()))
 }
 
 /**

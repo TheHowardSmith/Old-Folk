@@ -178,11 +178,11 @@ fun AppFrame(
                         if (title == "Old Folk Air") {
                             Row(verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "Old Folk Air" }
-                                    .background(rc.band, CircleShape).border(1.dp, rc.bandEdge, CircleShape)
+                                    .background(Color(0xFF6A4529), CircleShape).border(1.dp, Color(0x80E3C27A), CircleShape)
                                     .padding(start = 3.dp, top = 3.dp, bottom = 3.dp, end = 14.dp)) {
                                 Image(painterResource(R.drawable.logo_roundel), null, Modifier.size(34.dp))
                                 Spacer(Modifier.width(10.dp))
-                                Icon(painterResource(R.drawable.logo_wordmark), null, Modifier.height(22.dp), tint = rc.onBand)
+                                Icon(painterResource(R.drawable.logo_wordmark), null, Modifier.height(22.dp), tint = Color(0xFFF6E7C8))
                             }
                         } else {
                             Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold,

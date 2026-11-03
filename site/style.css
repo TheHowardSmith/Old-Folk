@@ -8,9 +8,9 @@
   /* light: cream bands with oxblood lettering and pattern; dark: oxblood bands with cream lettering */
   --band: #EFE0C3; --band-2: #EFE0C3; --on-band: #5C1E16; --band-line: rgba(92, 30, 22, 0.16); --band-rule: #B08A45;
   --band-soft: rgba(92, 30, 22, .78); --band-tint: rgba(92, 30, 22, .08); --band-edge: rgba(92, 30, 22, .35);
-  --vox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='36'%3E%3Crect width='44' height='36' fill='%2356382B'/%3E%3Cpath d='M0 0.5H44M0 2.5H44M0 4.5H44M0 6.5H44M0 8.5H44M0 10.5H44M0 12.5H44M0 14.5H44M0 16.5H44M0 18.5H44M0 20.5H44M0 22.5H44M0 24.5H44M0 26.5H44M0 28.5H44M0 30.5H44M0 32.5H44M0 34.5H44M1.5 0V36M3.5 0V36M5.5 0V36M7.5 0V36M9.5 0V36M11.5 0V36M13.5 0V36M15.5 0V36M17.5 0V36M19.5 0V36M21.5 0V36M23.5 0V36M25.5 0V36M27.5 0V36M29.5 0V36M31.5 0V36M33.5 0V36M35.5 0V36M37.5 0V36M39.5 0V36M41.5 0V36M43.5 0V36' stroke='rgba(0,0,0,.10)' stroke-width='.7' fill='none'/%3E%3Cpath d='M-44 16.60L88 124.60M-44 -19.40L88 -127.40M-44 -19.40L88 88.60M-44 16.60L88 -91.40M-44 -55.40L88 52.60M-44 52.60L88 -55.40M-44 -91.40L88 16.60M-44 88.60L88 -19.40M-44 -127.40L88 -19.40M-44 124.60L88 16.60' stroke='rgba(214,182,118,.55)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 18.00L88 126.00M-44 -18.00L88 -126.00M-44 -18.00L88 90.00M-44 18.00L88 -90.00M-44 -54.00L88 54.00M-44 54.00L88 -54.00M-44 -90.00L88 18.00M-44 90.00L88 -18.00M-44 -126.00L88 -18.00M-44 126.00L88 18.00' stroke='rgba(110,168,150,.42)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 19.40L88 127.40M-44 -16.60L88 -124.60M-44 -16.60L88 91.40M-44 19.40L88 -88.60M-44 -52.60L88 55.40M-44 55.40L88 -52.60M-44 -88.60L88 19.40M-44 91.40L88 -16.60M-44 -124.60L88 -16.60M-44 127.40L88 19.40' stroke='rgba(168,74,70,.5)' stroke-width='.8' fill='none'/%3E%3C/svg%3E");
+  --vox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='36'%3E%3Crect width='44' height='36' fill='%238E715C'/%3E%3Cpath d='M0 0.5H44M0 2.5H44M0 4.5H44M0 6.5H44M0 8.5H44M0 10.5H44M0 12.5H44M0 14.5H44M0 16.5H44M0 18.5H44M0 20.5H44M0 22.5H44M0 24.5H44M0 26.5H44M0 28.5H44M0 30.5H44M0 32.5H44M0 34.5H44M1.5 0V36M3.5 0V36M5.5 0V36M7.5 0V36M9.5 0V36M11.5 0V36M13.5 0V36M15.5 0V36M17.5 0V36M19.5 0V36M21.5 0V36M23.5 0V36M25.5 0V36M27.5 0V36M29.5 0V36M31.5 0V36M33.5 0V36M35.5 0V36M37.5 0V36M39.5 0V36M41.5 0V36M43.5 0V36' stroke='rgba(0,0,0,.05)' stroke-width='.7' fill='none'/%3E%3Cpath d='M-44 16.60L88 124.60M-44 -19.40L88 -127.40M-44 -19.40L88 88.60M-44 16.60L88 -91.40M-44 -55.40L88 52.60M-44 52.60L88 -55.40M-44 -91.40L88 16.60M-44 88.60L88 -19.40M-44 -127.40L88 -19.40M-44 124.60L88 16.60' stroke='rgba(236,214,160,.38)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 18.00L88 126.00M-44 -18.00L88 -126.00M-44 -18.00L88 90.00M-44 18.00L88 -90.00M-44 -54.00L88 54.00M-44 54.00L88 -54.00M-44 -90.00L88 18.00M-44 90.00L88 -18.00M-44 -126.00L88 -18.00M-44 126.00L88 18.00' stroke='rgba(150,196,180,.26)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 19.40L88 127.40M-44 -16.60L88 -124.60M-44 -16.60L88 91.40M-44 19.40L88 -88.60M-44 -52.60L88 55.40M-44 55.40L88 -52.60M-44 -88.60L88 19.40M-44 91.40L88 -16.60M-44 -124.60L88 -16.60M-44 127.40L88 19.40' stroke='rgba(176,96,90,.30)' stroke-width='.8' fill='none'/%3E%3C/svg%3E");
   --slot: #3A2516; --fader: #E9DCC2; --fader-lo: #BCA57E;
-  --knob-hi: #C39466; --knob-lo: #7E5634; --knob-cap: #A47750; --knob-ink: #FFF6E4;
+  --knob-hi: #B48a60; --knob-lo: #946A45; --knob-cap: #A47750; --knob-ink: #FFF6E4;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -19,11 +19,11 @@
     --walnut: #4A3220; --walnut-2: #3A2616; --dial-ink: #F0DDB8; --ivory: #E6DAC0;
     --wood-hi: #6A4428; --wood: #52331C; --wood-lo: #3A2312; --glass: #1C120A; --glass-lo: #0E0804;
     --cab-shadow: rgba(0, 0, 0, 0.6);
-    --band: #36110C; --band-2: #36110C; --on-band: #F6E7C8; --band-line: rgba(227, 194, 122, 0.14);
+    --band: #4E3428; --band-2: #4E3428; --on-band: #F6E7C8; --band-line: rgba(227, 194, 122, 0.14);
     --band-soft: rgba(246, 231, 200, .78); --band-tint: rgba(246, 231, 200, .14); --band-edge: rgba(227, 194, 122, .45);
-    --vox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='36'%3E%3Crect width='44' height='36' fill='%233A251C'/%3E%3Cpath d='M0 0.5H44M0 2.5H44M0 4.5H44M0 6.5H44M0 8.5H44M0 10.5H44M0 12.5H44M0 14.5H44M0 16.5H44M0 18.5H44M0 20.5H44M0 22.5H44M0 24.5H44M0 26.5H44M0 28.5H44M0 30.5H44M0 32.5H44M0 34.5H44M1.5 0V36M3.5 0V36M5.5 0V36M7.5 0V36M9.5 0V36M11.5 0V36M13.5 0V36M15.5 0V36M17.5 0V36M19.5 0V36M21.5 0V36M23.5 0V36M25.5 0V36M27.5 0V36M29.5 0V36M31.5 0V36M33.5 0V36M35.5 0V36M37.5 0V36M39.5 0V36M41.5 0V36M43.5 0V36' stroke='rgba(0,0,0,.14)' stroke-width='.7' fill='none'/%3E%3Cpath d='M-44 16.60L88 124.60M-44 -19.40L88 -127.40M-44 -19.40L88 88.60M-44 16.60L88 -91.40M-44 -55.40L88 52.60M-44 52.60L88 -55.40M-44 -91.40L88 16.60M-44 88.60L88 -19.40M-44 -127.40L88 -19.40M-44 124.60L88 16.60' stroke='rgba(214,182,118,.40)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 18.00L88 126.00M-44 -18.00L88 -126.00M-44 -18.00L88 90.00M-44 18.00L88 -90.00M-44 -54.00L88 54.00M-44 54.00L88 -54.00M-44 -90.00L88 18.00M-44 90.00L88 -18.00M-44 -126.00L88 -18.00M-44 126.00L88 18.00' stroke='rgba(110,168,150,.30)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 19.40L88 127.40M-44 -16.60L88 -124.60M-44 -16.60L88 91.40M-44 19.40L88 -88.60M-44 -52.60L88 55.40M-44 55.40L88 -52.60M-44 -88.60L88 19.40M-44 91.40L88 -16.60M-44 -124.60L88 -16.60M-44 127.40L88 19.40' stroke='rgba(168,74,70,.38)' stroke-width='.8' fill='none'/%3E%3C/svg%3E");
+    --vox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='36'%3E%3Crect width='44' height='36' fill='%2347302A'/%3E%3Cpath d='M0 0.5H44M0 2.5H44M0 4.5H44M0 6.5H44M0 8.5H44M0 10.5H44M0 12.5H44M0 14.5H44M0 16.5H44M0 18.5H44M0 20.5H44M0 22.5H44M0 24.5H44M0 26.5H44M0 28.5H44M0 30.5H44M0 32.5H44M0 34.5H44M1.5 0V36M3.5 0V36M5.5 0V36M7.5 0V36M9.5 0V36M11.5 0V36M13.5 0V36M15.5 0V36M17.5 0V36M19.5 0V36M21.5 0V36M23.5 0V36M25.5 0V36M27.5 0V36M29.5 0V36M31.5 0V36M33.5 0V36M35.5 0V36M37.5 0V36M39.5 0V36M41.5 0V36M43.5 0V36' stroke='rgba(0,0,0,.08)' stroke-width='.7' fill='none'/%3E%3Cpath d='M-44 16.60L88 124.60M-44 -19.40L88 -127.40M-44 -19.40L88 88.60M-44 16.60L88 -91.40M-44 -55.40L88 52.60M-44 52.60L88 -55.40M-44 -91.40L88 16.60M-44 88.60L88 -19.40M-44 -127.40L88 -19.40M-44 124.60L88 16.60' stroke='rgba(214,182,118,.24)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 18.00L88 126.00M-44 -18.00L88 -126.00M-44 -18.00L88 90.00M-44 18.00L88 -90.00M-44 -54.00L88 54.00M-44 54.00L88 -54.00M-44 -90.00L88 18.00M-44 90.00L88 -18.00M-44 -126.00L88 -18.00M-44 126.00L88 18.00' stroke='rgba(110,168,150,.17)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 19.40L88 127.40M-44 -16.60L88 -124.60M-44 -16.60L88 91.40M-44 19.40L88 -88.60M-44 -52.60L88 55.40M-44 55.40L88 -52.60M-44 -88.60L88 19.40M-44 91.40L88 -16.60M-44 -124.60L88 -16.60M-44 127.40L88 19.40' stroke='rgba(168,74,70,.22)' stroke-width='.8' fill='none'/%3E%3C/svg%3E");
     --slot: #120B06; --fader: #D9CBB0; --fader-lo: #A08A64;
-    --knob-hi: #A87E56; --knob-lo: #64442A; --knob-cap: #8A6242;
+    --knob-hi: #977050; --knob-lo: #7A5638; --knob-cap: #8A6242;
   }
 }
 * { box-sizing: border-box; }
@@ -52,8 +52,9 @@ a { color: var(--primary); }
 .band a { color: var(--on-band); }
 .top { position: sticky; top: 0; z-index: 5; border-bottom: 2px solid var(--band-rule); box-shadow: 0 2px 8px rgba(40,20,5,.14); }
 .bar { display: flex; align-items: center; gap: 14px; height: 60px; max-width: 980px; }
-.brand { display: flex; align-items: center; gap: 9px; color: var(--on-band); text-decoration: none; font-size: 21px;
-  background: var(--band); padding: 3px 14px 3px 3px; border-radius: 999px; border: 1px solid var(--band-edge); }
+.band .brand { display: flex; align-items: center; gap: 9px; color: #F6E7C8; text-decoration: none; font-size: 21px;
+  background: #6A4529; padding: 3px 14px 3px 3px; border-radius: 999px; border: 1px solid rgba(227, 194, 122, .5);
+  box-shadow: inset 0 1px 0 rgba(255, 230, 190, .15); }
 .tabs { display: flex; gap: 4px; margin-left: auto; background: var(--band); padding: 3px; border-radius: 999px; border: 1px solid var(--band-edge); }
 .tabs a { color: var(--band-soft); text-decoration: none; padding: 7px 12px; border-radius: 999px; font-size: 15px; }
 .tabs a:hover { color: var(--on-band); }
@@ -168,31 +169,27 @@ a { color: var(--primary); }
 .grille {
   display: flex; justify-content: center; align-items: center; gap: 24px;
   padding: 12px; border-radius: 8px;
-  background: var(--vox) center / 44px 36px, #56382B;
-  box-shadow: 0 0 0 1px rgba(0,0,0,.5), inset 0 4px 9px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.10);
+  background: var(--vox) center / 44px 36px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.4), inset 0 3px 7px rgba(0,0,0,.32), inset 0 -1px 0 rgba(255,255,255,.10);
 }
 
-/* Knobs: smooth domed bakelite, caramel for previous/next; the play knob in ivory with a brass ring */
+/* Knobs: flat-faced caramel bakelite with a slight bevel; the play knob in ivory with a brass ring */
 .knob {
   position: relative; width: 66px; height: 66px; border-radius: 50%; border: none; cursor: pointer;
   display: grid; place-items: center; color: var(--knob-ink); padding: 0;
-  background:
-    radial-gradient(circle at 42% 30%, rgba(255, 240, 215, .38), transparent 46%),
-    radial-gradient(circle at 50% 40%, var(--knob-hi), var(--knob-cap) 62%, var(--knob-lo));
-  box-shadow: 0 2px 0 rgba(20, 10, 4, .55), 0 5px 10px rgba(0,0,0,.28),
-              inset 0 -3px 6px rgba(0,0,0,.22), inset 0 0 0 1px rgba(0,0,0,.3);
-  transition: transform .08s, box-shadow .08s;
+  background: linear-gradient(180deg, var(--knob-hi), var(--knob-cap) 55%, var(--knob-lo));
+  box-shadow: 0 1px 0 rgba(20, 10, 4, .45), 0 3px 6px rgba(0,0,0,.2),
+              inset 0 1px 0 rgba(255, 240, 215, .25), inset 0 0 0 1px rgba(0,0,0,.28);
+  transition: transform .08s;
 }
-.knob svg { width: 28px; height: 28px; filter: drop-shadow(0 1px 0 rgba(0,0,0,.25)); }
+.knob svg { width: 28px; height: 28px; }
 .knob.big {
   width: 96px; height: 96px; color: #3A2414;
-  background:
-    radial-gradient(circle at 42% 30%, rgba(255, 255, 255, .6), transparent 46%),
-    radial-gradient(circle at 50% 40%, #FBF4E4, #EDE1C8 62%, #D6C4A0);
-  box-shadow: 0 2px 0 rgba(20, 10, 4, .5), 0 5px 10px rgba(0,0,0,.28),
-              inset 0 0 0 3px #B08A45, inset 0 0 0 4px rgba(0,0,0,.2), inset 0 -3px 6px rgba(0,0,0,.12);
+  background: linear-gradient(180deg, #F5EDDC, #EADFC7 60%, #DDCDAC);
+  box-shadow: 0 1px 0 rgba(20, 10, 4, .4), 0 3px 6px rgba(0,0,0,.2),
+              inset 0 0 0 3px #B08A45, inset 0 0 0 4px rgba(0,0,0,.15);
 }
-.knob.big svg { width: 40px; height: 40px; filter: none; }
+.knob.big svg { width: 40px; height: 40px; }
 .knob:focus-visible, .chip:focus-visible, .tabs a:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
 .knob:active { transform: translateY(1px); }
 .actions { display: flex; gap: 26px; }
