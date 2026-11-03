@@ -171,7 +171,6 @@
         fillQueue();
       }
     });
-    renderUpNext();
   }
 
   // ------------------------------------------------------------------ sound
@@ -389,19 +388,7 @@
     return li;
   }
 
-  function renderUpNext() {
-    const ol = $("upnext");
-    ol.replaceChildren(...queue.map((t, n) => trackRow(t, `${t.a || "Unknown"} · ${yearLabel(t)}`, () => {
-      if (current) back.push(current);
-      queue.splice(n, 1);
-      playTrack(t, { fromRadio: false });
-      showTab("radio");
-    })));
-    if (!queue.length) ol.innerHTML = '<li class="empty">Nothing queued yet.</li>';
-  }
-
   function renderHistory() {
-    renderUpNext();
     const ol = $("played");
     const fmt = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     const rows = history.slice(-300).reverse().map(({ t, at }, n) =>
