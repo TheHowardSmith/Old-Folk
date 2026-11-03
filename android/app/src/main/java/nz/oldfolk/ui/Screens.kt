@@ -178,7 +178,7 @@ fun AppFrame(
                         if (title == "Old Folk Air") {
                             Row(verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "Old Folk Air" }
-                                    .background(Color(0xFF6A4529), CircleShape).border(1.dp, Color(0xFFB08A45), CircleShape)
+                                    .background(Color(0xFF16100C), CircleShape).border(1.dp, Color(0xFFB08A45), CircleShape)
                                     .padding(start = 3.dp, top = 3.dp, bottom = 3.dp, end = 14.dp)) {
                                 Image(painterResource(R.drawable.logo_roundel), null, Modifier.size(34.dp))
                                 Spacer(Modifier.width(10.dp))

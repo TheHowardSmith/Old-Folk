@@ -297,7 +297,7 @@ fun Knob(
         shape = CircleShape,
         color = Color.Transparent,
         contentColor = if (primary) Color(0xFF3A2414) else rc.knobIcon,
-        shadowElevation = 2.dp,
+        shadowElevation = 5.dp,
         modifier = Modifier.size(size).semantics { this.contentDescription = contentDescription },
     ) {
         Box(

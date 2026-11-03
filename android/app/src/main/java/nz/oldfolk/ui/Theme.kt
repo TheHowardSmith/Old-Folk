@@ -110,9 +110,9 @@ private val LightRadio = RadioColors(
     voxGold = Color(0x61ECD6A0),
     voxTeal = Color(0x4296C4B4),
     voxMaroon = Color(0x4DB0605A),
-    knobFluteHi = Color(0xFFB48A60),
-    knobFluteLo = Color(0xFF946A45),
-    knobCap = Color(0xFFA47750),
+    knobFluteHi = Color(0xFFC09670),
+    knobFluteLo = Color(0xFF9E7350),
+    knobCap = Color(0xFFB0845C),
 )
 
 // Evening: dark walnut with the valves glowing amber.
@@ -169,9 +169,9 @@ private val DarkRadio = RadioColors(
     voxGold = Color(0x3DD6B676),
     voxTeal = Color(0x2B6EA896),
     voxMaroon = Color(0x38A84A46),
-    knobFluteHi = Color(0xFF977050),
-    knobFluteLo = Color(0xFF7A5638),
-    knobCap = Color(0xFF8A6242),
+    knobFluteHi = Color(0xFFAD845E),
+    knobFluteLo = Color(0xFF8A6242),
+    knobCap = Color(0xFF9C7450),
 )
 
 val LocalRadioColors = staticCompositionLocalOf { LightRadio }
