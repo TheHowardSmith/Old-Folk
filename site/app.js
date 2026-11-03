@@ -407,32 +407,43 @@
     if (!rows.length) ol.innerHTML = '<li class="empty">Nothing played yet.</li>';
   }
 
+  function genreRow(name, count, checked, onChange, cls) {
+    const li = document.createElement("li");
+    if (cls) li.className = cls;
+    const label = document.createElement("label");
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = checked;
+    box.addEventListener("change", () => onChange(box.checked));
+    const nm = document.createElement("span"); nm.textContent = name;
+    const n = document.createElement("span"); n.className = "n"; n.textContent = (count || 0).toLocaleString();
+    label.append(box, nm, n);
+    li.appendChild(label);
+    return li;
+  }
+
+  // "All genres" is ticked when nothing in particular is chosen; ticking a genre
+  // unticks it, and unticking the last genre ticks it again.
   function renderGenres() {
     const list = $("genre-list");
     const genres = [...(index?.genres || [])].sort((a, b) => a.name.localeCompare(b.name));
-    list.replaceChildren(...genres.map((g) => {
-      const li = document.createElement("li");
-      const label = document.createElement("label");
-      const box = document.createElement("input");
-      box.type = "checkbox";
-      box.checked = selected.size === 0 || selected.has(g.k);
-      box.addEventListener("change", () => toggleGenre(g.k, box.checked));
-      const name = document.createElement("span"); name.textContent = g.name;
-      const n = document.createElement("span"); n.className = "n"; n.textContent = (g.n || 0).toLocaleString();
-      label.append(box, name, n);
-      li.appendChild(label);
-      return li;
-    }));
-    const total = genres.reduce((s, g) => s + (selected.size === 0 || selected.has(g.k) ? g.n || 0 : 0), 0);
+    const everything = genres.reduce((s, g) => s + (g.n || 0), 0);
+    const all = genreRow("All genres", everything, selected.size === 0, (on) => {
+      if (on) setSelection(new Set()); else renderGenres();      // something must stay ticked
+    }, "all");
+    list.replaceChildren(all, ...genres.map((g) => genreRow(g.name, g.n, selected.has(g.k), (on) => toggleGenre(g.k, on))));
+    const total = selected.size === 0 ? everything : genres.reduce((s, g) => s + (selected.has(g.k) ? g.n || 0 : 0), 0);
     $("genres-count").textContent = `${total.toLocaleString()} tracks selected`;
   }
 
   function toggleGenre(k, on) {
-    const all = (index?.genres || []).map((g) => g.k);
-    const sel = selected.size === 0 ? new Set(all) : new Set(selected);
+    const sel = new Set(selected);
     if (on) sel.add(k); else sel.delete(k);
-    if (sel.size === 0) { renderGenres(); return; }      // keep at least one
-    selected = sel.size === all.length ? new Set() : sel;
+    setSelection(sel);                                      // none left = all genres
+  }
+
+  function setSelection(sel) {
+    selected = sel;
     store.set("genres", [...selected]);
     renderGenres();
     renderDial(current);
@@ -475,9 +486,6 @@
   $("play").addEventListener("click", togglePlay);
   $("next").addEventListener("click", next);
   $("prev").addEventListener("click", prev);
-  $("genres-all").addEventListener("click", () => {
-    selected = new Set(); store.set("genres", []); renderGenres(); renderDial(current); fillQueue();
-  });
   $("history-clear").addEventListener("click", () => {
     if (!confirm("Clear your listening history? Tracks you've heard can then come up again.")) return;
     history = []; played.clear(); store.set("history", []); store.set("played", []);
