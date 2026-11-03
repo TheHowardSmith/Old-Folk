@@ -1,8 +1,12 @@
 name: Build track list
 
-# Builds the track list with the Python builder and publishes it to the
-# fixed release tag `tracklist` (a pre-release, so it never becomes the
-# "latest" release that the APK download link points to).
+# Builds the track list with the Python builder. With publish=review (the
+# default) the new list goes to the `tracklist-candidate` pre-release together
+# with review.md / removed.csv (what would be removed from the live list and
+# why); nothing changes for listeners until the Promote track list workflow
+# copies it to `tracklist`. With publish=live it goes straight to `tracklist`
+# (a pre-release, so it never becomes the "latest" release that the APK
+# download link points to) and the website copy is refreshed.
 #
 # mode=sample : quick test list from a random sample of items (~10 min)
 # mode=full   : everything. Metadata fetching is slow and polite, so a run
@@ -22,6 +26,12 @@ on:
         description: "items in the sample (mode=sample)"
         required: false
         default: "200"
+      publish:
+        description: "review: publish as a candidate with a removal report; live: replace the live list"
+        required: false
+        default: review
+        type: choice
+        options: [review, live]
 
 permissions:
   contents: write
@@ -148,32 +158,50 @@ jobs:
         if: steps.build.outputs.continue == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run build-tracklist.yml --ref "$GITHUB_REF_NAME" -f mode=full
+        run: gh workflow run build-tracklist.yml --ref "$GITHUB_REF_NAME" -f mode=full -f publish="${{ inputs.publish || 'review' }}"
 
-      - name: Publish to the tracklist release
+      - name: Compare with the live list
+        if: steps.build.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p ../live
+          if gh release download tracklist -p 'index.json' -p 's-*.json' -p 'x-*.json' -D ../live --clobber; then
+            python scripts/compare_lists.py ../live ../dist --availability cache-rights/availability.jsonl
+          else
+            echo "# Track list review" > ../dist/review.md
+            echo "No live list to compare with." >> ../dist/review.md
+            : > ../dist/removed.csv
+          fi
+
+      - name: Publish
         if: steps.build.outputs.skip != 'true'
         working-directory: dist
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ (inputs.publish || 'review') == 'live' && 'tracklist' || 'tracklist-candidate' }}
         run: |
-          if ! gh release view tracklist >/dev/null 2>&1; then
-            gh release create tracklist --prerelease --title "Track list" \
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --prerelease --title "$([ "$TAG" = tracklist ] && echo 'Track list' || echo 'Track list (candidate, for review)')" \
               --notes "Track list data for the Old Folk Air app (CC0). Updated by the Build track list workflow."
           fi
           # Shards first, index last, then remove assets that are no longer listed.
-          gh release upload tracklist s-*.json r-*.json flagged.csv writers.csv excluded.csv report.md summary.json --clobber
-          gh release upload tracklist index.json --clobber
-          for a in $(gh release view tracklist --json assets -q '.assets[].name'); do
-            [ -e "$a" ] || gh release delete-asset tracklist "$a" -y
+          gh release upload "$TAG" s-*.json r-*.json $(ls x-*.json 2>/dev/null) flagged.csv writers.csv excluded.csv report.md summary.json review.md removed.csv --clobber
+          gh release upload "$TAG" index.json --clobber
+          for a in $(gh release view "$TAG" --json assets -q '.assets[].name'); do
+            [ -e "$a" ] || gh release delete-asset "$TAG" "$a" -y
           done
-          gh release edit tracklist --notes "Track list data for the Old Folk Air app (CC0). Version $(jq .v index.json), $(jq .n index.json) tracks, mode: ${{ inputs.mode }}."
+          gh release edit "$TAG" --notes "Track list data for the Old Folk Air app (CC0). Version $(jq .v index.json), $(jq .n index.json) tracks, mode: ${{ inputs.mode }}.$([ "$TAG" = tracklist ] || echo ' Candidate: see review.md; run Promote track list to make it live.')"
 
       - name: Refresh the website's copy of the list
-        if: steps.build.outputs.skip != 'true'
+        if: steps.build.outputs.skip != 'true' && inputs.publish == 'live'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run pages.yml --ref main || echo "::notice::Website refresh not started"
 
       - name: Summary
         if: steps.build.outputs.skip != 'true'
-        run: cat ../dist/report.md | head -80 >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          cat ../dist/review.md >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          head -80 ../dist/report.md >> "$GITHUB_STEP_SUMMARY"
