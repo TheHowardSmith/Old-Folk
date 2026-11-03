@@ -45,6 +45,7 @@ data class RadioColors(
     val bandLo: Color,
     val onBand: Color,
     val bandLine: Color,      // deco scallop lines
+    val bandAccent: Color,    // icons on the band
     val voxBase: Color,       // grille cloth
     val voxFawn: Color,
     val voxMid: Color,
@@ -98,10 +99,11 @@ private val LightRadio = RadioColors(
     woodHi = Color(0xFF8A5A33),
     wood = Color(0xFF6E4426),
     woodLo = Color(0xFF4E2E17),
-    band = Color(0xFF5C1E16),
-    bandLo = Color(0xFF48160F),
-    onBand = Color(0xFFF6E7C8),
-    bandLine = Color(0x33E3C27A),
+    band = Color(0xFFF1E3C8),           // light: cream band, oxblood lettering and pattern
+    bandLo = Color(0xFFEAD9B9),
+    onBand = Color(0xFF5C1E16),
+    bandLine = Color(0x295C1E16),
+    bandAccent = Color(0xFF7A5A1E),
     voxBase = Color(0xFF5A3D25),
     voxFawn = Color(0xFFD3B07C),
     voxMid = Color(0xFF7B5735),
@@ -159,6 +161,7 @@ private val DarkRadio = RadioColors(
     bandLo = Color(0xFF2C0D09),
     onBand = Color(0xFFF6E7C8),
     bandLine = Color(0x24E3C27A),
+    bandAccent = Color(0xFFE3C27A),
     voxBase = Color(0xFF3A2716),
     voxFawn = Color(0xFFA98A5C),
     voxMid = Color(0xFF5A3F25),

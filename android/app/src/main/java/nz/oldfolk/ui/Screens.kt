@@ -179,14 +179,14 @@ fun AppFrame(
                                 Icon(painterResource(R.drawable.logo_wordmark), null, Modifier.height(22.dp), tint = rc.onBand)
                             }
                         } else {
-                            Text(title, style = MaterialTheme.typography.titleLarge)
+                            Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
                         }
                     },
                     navigationIcon = {
                         if (showBack) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
                     },
                     actions = {
-                        if (showAboutButton) IconButton(onClick = onAbout) { Icon(Icons.Filled.Info, "About", tint = Color(0xFFE3C27A)) }
+                        if (showAboutButton) IconButton(onClick = onAbout) { Icon(Icons.Filled.Info, "About", tint = rc.bandAccent) }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent, titleContentColor = rc.onBand,
