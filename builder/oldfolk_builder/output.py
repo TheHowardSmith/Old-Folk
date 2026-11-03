@@ -128,6 +128,15 @@ def write_reports(results: list[ItemResult], out: Path) -> None:
         for wname, ids in sorted(writer_items.items(), key=lambda kv: (-len(kv[1]), kv[0])):
             w.writerow([wname, len(ids), item_url(ids[0]), "", ""])
 
+    # Playable items with open questions, for the slow careful checks: confirmed
+    # problems are then excluded in overrides.yaml, cleared ones approved.
+    with open(out / "checks.csv", "w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["id", "url", "checks", "tracks", "year", "genre", "title", "artist", "writers"])
+        for r in sorted((r for r in results if r.status == INCLUDE and r.checks), key=lambda r: (r.checks[0], r.id)):
+            w.writerow([r.id, item_url(r.id), " || ".join(r.checks), len(r.tracks), r.year or "",
+                        r.genre, r.title, r.artist or "", "; ".join(r.writers)])
+
     with open(out / "excluded.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(["id", "reason", "title", "artist"])
@@ -158,6 +167,9 @@ def summarize(results: list[ItemResult]) -> dict:
             _reason_key(x) for r in results if r.status == FLAG for x in r.reasons).most_common()),
         "exclude_reasons": dict(collections.Counter(
             _reason_key(r.reasons[0]) for r in results if r.status == EXCLUDE).most_common()),
+        "check_reasons": dict(collections.Counter(
+            _reason_key(x) for r in results if r.status == INCLUDE for x in r.checks).most_common()),
+        "tracks_to_check": sum(len(r.tracks) for r in results if r.status == INCLUDE and r.checks),
     }
 
 

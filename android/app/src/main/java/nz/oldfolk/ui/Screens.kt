@@ -814,8 +814,8 @@ fun AboutContent(
             Text("The recordings are hosted by those archives and aren't covered by this app's license. " +
                 "Every track was recorded or released in 1970 or earlier, isn't claimed by a rights holder in the " +
                 "US Copyright Office's records, and, if made after 1925, isn't on sale or streaming in the music " +
-                "stores we check. Songs credited to a writer are included only when every writer is known to have " +
-                "died at least 70 years ago; traditional and uncredited songs are included. " +
+                "stores we check. Songs by a credited writer known to have died less than 70 years ago are " +
+                "left out, and we're still checking writers we couldn't trace. " +
                 "Most of these recordings are old enough to be out of copyright, but some may still be protected " +
                 "in some countries, so we keep checking and remove any recording on request: " +
                 "email $CONTACT_EMAIL or use Report.",

@@ -186,7 +186,7 @@ jobs:
               --notes "Track list data for the Old Folk Air app (CC0). Updated by the Build track list workflow."
           fi
           # Shards first, index last, then remove assets that are no longer listed.
-          gh release upload "$TAG" s-*.json r-*.json $(ls x-*.json 2>/dev/null) flagged.csv writers.csv excluded.csv report.md summary.json review.md removed.csv --clobber
+          gh release upload "$TAG" s-*.json r-*.json $(ls x-*.json 2>/dev/null) flagged.csv writers.csv excluded.csv checks.csv report.md summary.json review.md removed.csv --clobber
           gh release upload "$TAG" index.json --clobber
           for a in $(gh release view "$TAG" --json assets -q '.assets[].name'); do
             [ -e "$a" ] || gh release delete-asset "$TAG" "$a" -y

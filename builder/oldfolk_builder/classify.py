@@ -72,6 +72,9 @@ class ItemResult:
     tracks: list[Track] = field(default_factory=list)
     title: str = ""
     artist: str | None = None
+    # Open questions that don't keep the item out (unconfirmed writers, user
+    # uploads...): the list for the slower, careful checks (checks.csv).
+    checks: list[str] = field(default_factory=list)
 
 
 # --------------------------------------------------------------------------- helpers
@@ -246,6 +249,13 @@ def is_jewish(text: str, performer: str = "") -> bool:
     return bool(JEWISH_TEXT.search(text or "") or JEWISH_PERFORMER.search(performer or ""))
 
 
+def is_full_name(name: str) -> bool:
+    """A forename and a surname ("Ray Henry"), not just initials or a surname
+    ("F. Wojnarowski", "Smith"): only then is a matched death year trusted."""
+    words = [w for w in re.split(r"[\s]+", name.strip()) if w]
+    return len(words) >= 2 and len(words[0].rstrip(".")) > 1 and not words[0].endswith(".")
+
+
 def specific_genre(tags: set[str], kind: str, rules: Rules) -> str | None:
     for genre, genre_tags in rules.genre_tags.items():
         for tag in tags & genre_tags:
@@ -413,12 +423,12 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
 
     # Anyone can upload to these collections, and some uploads are rips of
     # commercial albums (a 1970 Japanese pop-folk LP of Bacharach and Beatles
-    # covers). Unless the recording is old enough to be out of US copyright,
-    # a person checks it first.
+    # covers). They stay in but go on the check list, unless the recording is
+    # old enough to be out of US copyright; confirmed ones go in overrides.yaml.
     community = colls & rules.review_collections
     approved = set((rules.overrides or {}).get("approved_uploads") or [])
     if community and ident not in approved and not (year and year <= rules.us_public_domain_year):
-        flags.append(f"user upload, may be a commercial release: {', '.join(sorted(community))}")
+        res.checks.append(f"user upload, may be a commercial release: {', '.join(sorted(community))}")
 
     # 5. Tracks.
     choices = pick_files(files)
@@ -431,15 +441,25 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if unapproved and rules.flag_named_writers:
         flags.append(f"named writer (check composition rights): {'; '.join(unapproved[:4])}")
     elif unapproved and rules.writer_rule:
-        # Composed songs stay out of the app until every writer is known to have
-        # died long enough ago (life + 70); traditional and uncredited songs pass.
+        # Keep unless shown otherwise: a composed song is left out only when a
+        # credited writer is confirmed to have died less than 70 years ago (a full
+        # name matched to a death year). Writers we couldn't trace, or only know by
+        # an initial or surname, stay in and go on the check list.
         cutoff = date.today().year - rules.writer_life_plus - 1
         deaths = rules.load_writer_deaths()
-        unclear = [w for w in unapproved
-                   if not ((d := deaths.get(w)) and d.get("status") == "dead" and d.get("died")
-                           and d["died"] <= cutoff)]
+        late, unclear = [], []
+        for w in unapproved:
+            d = deaths.get(w) or {}
+            if d.get("status") == "dead" and d.get("died") and d["died"] <= cutoff:
+                continue
+            if d.get("status") == "dead" and d.get("died") and is_full_name(w):
+                late.append(f"{w} (d. {d['died']})")
+            else:
+                unclear.append(w)
+        if late:
+            return exclude(f"writer died less than 70 years ago: {'; '.join(late[:3])}")
         if unclear:
-            flags.append(f"named writer not confirmed died by {cutoff}: {'; '.join(unclear[:4])}")
+            res.checks.append(f"writer not confirmed died by {cutoff}: {'; '.join(unclear[:4])}")
 
     region, region_src = guess_region(meta, tags, title, desc, genre, rules)
     genre_from_region = genre is None
