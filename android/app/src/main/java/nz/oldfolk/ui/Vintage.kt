@@ -110,8 +110,8 @@ fun DrawScope.flutedKnob(primary: Boolean, rc: RadioColors) {
         drawArc(Color(0x40FFF0D7), 200f, 140f, false, topLeft = c - Offset(r - 1.dp.toPx(), r - 1.dp.toPx()),
             size = Size(2 * r - 2.dp.toPx(), 2 * r - 2.dp.toPx()), style = Stroke(1.dp.toPx()))
     }
-    // dark outer edge so the knob stands clear of the cloth
-    drawCircle(Color(0x99190E06), r - 0.75.dp.toPx(), c, style = Stroke(1.5.dp.toPx()))
+    // the edge shades softly into the face, so the knob stands clear of the cloth without a hard line
+    drawCircle(Brush.radialGradient(0.8f to Color.Transparent, 1f to Color(0x80190E06), center = c, radius = r), r, c)
 }
 
 /**
