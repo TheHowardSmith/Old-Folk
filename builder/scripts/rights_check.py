@@ -53,7 +53,7 @@ EU_CUTOFF = THIS_YEAR - 71            # life + 70: died 1955 or earlier
 US_COMP_CUTOFF = THIS_YEAR - 96       # published 1930 or earlier (95 years)
 US_REC_CUTOFF = THIS_YEAR - 101       # pre-1947 recordings: 100 years -> 1925 or earlier
 
-UA = "OldFolkRightsCheck/0.1 (https://github.com/TheHowardSmith/Old-Folk; thehowardsmith@gmail.com)"
+UA = "OldFolkRightsCheck/0.1 (https://github.com/TheHowardSmith/Old-Folk; info@oldfolkair.com)"
 CPRS = "https://api.publicrecords.copyright.gov/search_service_external/simple_search_dsl"
 LOC = "https://id.loc.gov/authorities/names/suggest2"
 GND = "https://lobid.org/gnd/search"

@@ -38,7 +38,7 @@ from oldfolk_builder.config import load_rules  # noqa: E402
 
 CUTOFF = 1975
 API = "https://www.wikidata.org/w/api.php"
-UA = "OldFolkWriterCheck/1.0 (https://github.com/TheHowardSmith/Old-Folk; thehowardsmith@gmail.com)"
+UA = "OldFolkWriterCheck/1.0 (https://github.com/TheHowardSmith/Old-Folk; info@oldfolkair.com)"
 MUSIC_OCCUPATIONS = {
     "Q36834", "Q753110", "Q822146", "Q639669", "Q177220", "Q855091", "Q486748", "Q806349",
     "Q488205", "Q158852", "Q1259917", "Q1643514", "Q183945", "Q49757", "Q16145150",

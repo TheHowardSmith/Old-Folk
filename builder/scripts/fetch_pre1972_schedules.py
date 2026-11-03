@@ -15,7 +15,7 @@ from pathlib import Path
 import requests
 
 PROXY = "https://copyright.gov/music-modernization/pre1972-soundrecordings/proxy.php"
-UA = "OldFolkRightsCheck/0.1 (https://github.com/TheHowardSmith/Old-Folk; thehowardsmith@gmail.com)"
+UA = "OldFolkRightsCheck/0.1 (https://github.com/TheHowardSmith/Old-Folk; info@oldfolkair.com)"
 FIELDS = "id,title,alt_title,artist,alt_artist,rights_owner,label,album,pub_date_str,isrc"
 ROWS = 1000
 
