@@ -43,8 +43,7 @@ import nz.oldfolk.data.isOnline
  * and prefetches all of them into the disk cache in order (so skipping
  * through tracks quickly stays smooth). The last [KEEP_BEHIND] played tracks
  * stay in the queue (and cache) so "previous" works. A track that fails is
- * logged, skipped and replaced. Playlist mode plays a saved playlist (from
- * local downloads where available) on repeat.
+ * logged, skipped and replaced. Playlist mode streams a saved playlist on repeat.
  *
  * All methods must be called on the main thread.
  */
@@ -75,7 +74,7 @@ class RadioEngine(
         val playedCount: Int = 0,
     )
 
-    /** Audio chain: the spike limiter runs on every track before output. */
+    /** Audio chain: one-sided transfers go to both speakers, then the spike limiter, on every track. */
     private val renderers = object : androidx.media3.exoplayer.DefaultRenderersFactory(context) {
         override fun buildAudioSink(
             context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean,
@@ -83,7 +82,7 @@ class RadioEngine(
             androidx.media3.exoplayer.audio.DefaultAudioSink.Builder(context)
                 .setEnableFloatOutput(enableFloatOutput)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-                .setAudioProcessors(arrayOf(SpikeLimiter()))
+                .setAudioProcessors(arrayOf(ChannelFixer(), SpikeLimiter()))
                 .build()
     }
 
@@ -231,14 +230,10 @@ class RadioEngine(
         enhancer = null
     }
 
-    /** Measure a track that is already on the phone (cached or downloaded) but has no reading yet. */
+    /** Measure a track that is already in the playback cache but has no reading yet. */
     private fun measureInBackground(t: Track) {
-        val local = playlists.localFile(t)
         scope.launch(Dispatchers.IO) {
-            when {
-                local.exists() -> levels.analyzeFile(t.key, local)
-                mediaCache.isFullyCached(t.streamUrl) -> levels.analyzeCached(t.key, mediaCache.cache, t.streamUrl)
-            }
+            if (mediaCache.isFullyCached(t.streamUrl)) levels.analyzeCached(t.key, mediaCache, t.streamUrl)
         }
     }
 
@@ -292,8 +287,7 @@ class RadioEngine(
                 playQueued(i); return
             }
         }
-        val local = playlists.localFile(t).takeIf { it.exists() }
-        val item = mediaItem(t, local?.let { Uri.fromFile(it) })
+        val item = mediaItem(t)
         if (player.mediaItemCount == 0) {
             player.setMediaItem(item)
         } else {
@@ -319,10 +313,7 @@ class RadioEngine(
         mode = Mode.PLAYLIST
         playlistName = p.name
         queued.clear()
-        val items = p.tracks.map { t ->
-            val local = playlists.localFile(t).takeIf { it.exists() }
-            mediaItem(t, local?.let { Uri.fromFile(it) })
-        }
+        val items = p.tracks.map { mediaItem(it) }
         player.setMediaItems(items, startIndex.coerceIn(0, items.size - 1), 0L)
         player.repeatMode = Player.REPEAT_MODE_ALL
         player.shuffleModeEnabled = shuffle
@@ -332,19 +323,19 @@ class RadioEngine(
 
     // ------------------------------------------------------------------ queue
 
-    private fun mediaItem(t: Track, localUri: Uri? = null): MediaItem {
+    private fun mediaItem(t: Track): MediaItem {
         queued[t.key.toString()] = t
         val genreName = repo.state.value.index?.genreName(t.genre) ?: t.genre
         return MediaItem.Builder()
             .setMediaId(t.key.toString())
-            .setUri(localUri ?: Uri.parse(t.streamUrl))
+            .setUri(Uri.parse(t.streamUrl))
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setTitle(t.title)
                     .setArtist(t.artist ?: "Unknown performer")
                     .setAlbumTitle("${t.yearLabel} · ${t.region}")
                     .setGenre(genreName)
-                    .setArtworkUri(Uri.parse(t.artUrl))
+                    .setArtworkUri(t.artUrl?.let { Uri.parse(it) })
                     .setIsPlayable(true)
                     .setIsBrowsable(false)
                     .build()
@@ -407,10 +398,16 @@ class RadioEngine(
         val urls = ArrayList<String>()
         // The player buffers the current item itself; prefetch the ones after it.
         // In queue order, so the next few are ready first and the rest follow.
+        // Smaller archives than archive.org only get their next EXT_AHEAD tracks
+        // fetched early; the rest are fetched when they come up, so skipping
+        // through the queue doesn't download files nobody hears from them.
         val start = player.currentMediaItemIndex + 1
+        var ext = 0
         for (i in start until minOf(player.mediaItemCount, start + STREAM_AHEAD)) {
             val uri = player.getMediaItemAt(i).localConfiguration?.uri ?: continue
-            if (uri.scheme == "https") urls += uri.toString()
+            if (uri.scheme != "https") continue
+            if (uri.host?.endsWith("archive.org") != true && ++ext > EXT_AHEAD) continue
+            urls += uri.toString()
         }
         val keys = HashMap<String, Long>()
         for (i in start until minOf(player.mediaItemCount, start + STREAM_AHEAD)) {
@@ -419,7 +416,7 @@ class RadioEngine(
             item.mediaId.toLongOrNull()?.let { keys[uri.toString()] = it }
         }
         mediaCache.prefetch(scope, urls) { url ->
-            keys[url]?.let { key -> levels.analyzeCached(key, mediaCache.cache, url) }
+            keys[url]?.let { key -> levels.analyzeCached(key, mediaCache, url) }
         }
     }
 
@@ -556,6 +553,8 @@ class RadioEngine(
     companion object {
         const val START_AHEAD = 5
         const val STREAM_AHEAD = 20
+        /** At most this many upcoming tracks from archives other than archive.org are prefetched. */
+        const val EXT_AHEAD = 2
         const val KEEP_BEHIND = 20
         const val MAX_CONSECUTIVE_ERRORS = 6
     }

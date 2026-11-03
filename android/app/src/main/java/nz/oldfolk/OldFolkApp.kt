@@ -34,7 +34,7 @@ class AppGraph(app: Application) {
     val history = PlayHistory(File(app.filesDir, "played.bin"))
     val trackList = TrackListRepository(app, scope)
     val levels = Levels(File(app.filesDir, "levels.json"))
-    val playlists = Playlists(app, scope, failures, levels)
+    val playlists = Playlists(app)
     val mediaCache = MediaCache(app)
     val streamHistory = StreamHistory(File(app.filesDir, "stream_history.jsonl"))
     val engine = RadioEngine(app, scope, trackList, history, settings, playlists, failures, mediaCache, streamHistory, levels)

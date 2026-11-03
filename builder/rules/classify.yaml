@@ -21,6 +21,7 @@ genres:
   latin:        "Latin American Folk"
   african:      "African"
   asia:         "Asian & Middle Eastern"
+  southasia:    "Indian & South Asian"
   pacific:      "Hawaiian & Pacific"
   field:        "Field Recordings & Work Songs"
   world:        "Other Traditional"
@@ -133,6 +134,18 @@ genre_tags:
     - chacarera
     - cueca
     - joropo
+  southasia:
+    - indian
+    - hindustani
+    - carnatic
+    - raga
+    - qawwali
+    - sitar
+    - shehnai
+    - sarangi
+    - bengali
+    - punjabi
+    - tamil
   asia:
     - japanese
     - minyo
@@ -143,7 +156,6 @@ genre_tags:
     - turkish
     - armenian
     - persian
-    - indian
     - java
     - gamelan
     - chinese
@@ -207,7 +219,8 @@ region_genre:
   "Central & Eastern Europe": european
   "Southern Europe": european
   "Middle East & Caucasus": asia
-  "South Asia": asia
+  "South Asia": southasia
+  "Central Asia": asia
   "East Asia": asia
   "Southeast Asia": asia
   "Africa": african
@@ -218,6 +231,11 @@ region_genre:
 # Any of these tags excludes the item outright (not folk under our rules),
 # unless it also carries a specific folk genre tag above.
 exclude_tags:
+  - medieval
+  - renaissance
+  - baroque
+  - early music
+  - stage & screen
   - jazz
   - swing
   - western swing
@@ -420,6 +438,16 @@ exclude_collections:
   - radioprograms
   - radioshowarchive
   - auprofiles
+  # Users' own vinyl/cassette rips of commercial albums (no archive behind them;
+  # some with deliberately scrambled identifiers), and TV uploads.
+  - hifidelity
+  - hifidelity_potpourri
+  - phils-vinyl-addiction-albums
+  - cratediggers
+  - cassettetapes
+  - television
+  - classic_tv
+  - classic_tv_1960s
 
 # Indigenous / ceremonial restrictions. If any phrase appears in the
 # description, notes, rights or subjects, the item is EXCLUDED.
@@ -463,6 +491,7 @@ ceremonial_words:
   - funeral song
   - mourning song
   - burial
+  - cremation
   - shaman
   - shamanic
   - peyote
@@ -485,6 +514,17 @@ indigenous_words:
   - ainu
   - pygmy
   - pygmies
+  # Small Indigenous peoples of Siberia and the Russian North
+  - chukchi
+  - evenki
+  - nenets
+  - khanty
+  - mansi
+  - nivkh
+  - koryak
+  - yukaghir
+  - nganasan
+  - selkup
 
 # Words in title/description/subjects that suggest a later release, a
 # compilation, or a modern recording of an old song. FLAGGED for review
@@ -548,6 +588,13 @@ exclude_conditions:
 # false = keep them in the main list (the writer is still recorded in reports).
 flag_named_writers: false
 
+# Composed songs: a track whose credited writers (songwriter/composer) aren't
+# all known to have died at least `writer_life_plus` years ago goes to the
+# review set. Traditional and uncredited songs are unaffected. Death years come
+# from `oldfolk-build writer-deaths` (cache-rights/writer_deaths.json).
+require_writers_died: true
+writer_life_plus: 70
+
 # Recordings claimed by a rights owner in the US Copyright Office's Pre-1972
 # Sound Recording Schedules (title + performer match) are excluded, unless
 # recorded in or before `us_public_domain_year` (US protection has expired).
@@ -559,3 +606,118 @@ us_public_domain_year: 1925
 # Track length limits in seconds.
 min_seconds: 30
 max_seconds: 2400
+
+# --- Items excluded by identifier pattern (whole uploader series reviewed by hand).
+exclude_id_patterns:
+  - pattern: vintagesense
+    reason: "Indian film-song compilation (VintageSense): mostly 1930s-60s film songs, undated, includes post-1960 and Pakistani recordings"
+
+# --- Non-Western classical / court traditions count as traditional music.
+# Discogs puts raga, gagaku, Cantonese music, Peking opera etc. under "Classical"
+# (and "Opera"). When one of these tags, or a word below in the title or performer,
+# is present, "classical" and "opera" are not treated as non-folk tags. Items whose
+# title/tags place them in one of the regions below only get "classical" waived.
+traditional_art_tags:
+  - hindustani
+  - carnatic
+  - indian classical
+  - chinese classical
+  - cantonese opera
+  - peking opera
+  - beijing opera
+  - chinese opera
+  - kunqu
+  - gagaku
+  - nagauta
+  - kabuki
+  - noh
+  - hogaku
+  - japanese classical
+  - korean classical
+  - korean court music
+  - philippine classical
+  - andalusian classical
+  - arabic classical
+  - persian classical
+  - ottoman classical
+  - turkish classical
+  - thai classical
+  - gamelan
+  - raga
+  - maqam
+traditional_art_words:
+  - raga
+  - kabuki
+  - nagauta
+  - gagaku
+  - kagura
+  - noh
+  - koto
+  - shakuhachi
+  - shamisen
+  - gamelan
+  - peking opera
+  - cantonese opera
+  - chinese opera
+  - cantonese music
+  - kunqu
+  - sitar
+  - sarod
+  - shehnai
+  - sarangi
+  - pipa
+  - erhu
+  - guqin
+  - maqam
+  - taqsim
+  - dastgah
+traditional_art_regions:
+  - South Asia
+  - Central Asia
+  - East Asia
+  - Southeast Asia
+  - Middle East & Caucasus
+  - Africa
+# Western art-music forms in the title or description cancel the waiver.
+western_art_words:
+  - concerto
+  - symphony
+  - symphonic
+  - philharmonic
+  - sonata
+  - string quartet
+
+# --- LoC National Jukebox / Victor "ethnic music" discs are also tagged "popular
+# music", which there just means secular. Ignored when it is the only non-folk tag.
+ethnic_record_tags:
+  - ethnic music
+ethnic_waivable_tags:
+  - popular music
+  - popular
+
+# --- When the only folk evidence is Discogs' umbrella genre "Folk, World, & Country"
+# and the item is also tagged with one of these, it is excluded instead of flagged
+# (mood-music orchestras, pop singers, novelty records).
+weak_generic_tags:
+  - folk, world, & country
+pop_tags:
+  - pop
+  - popular music
+  - popular
+  - easy listening
+  - jazz
+  - latin jazz
+  - big band
+  - swing
+  - rock
+  - folk rock
+  - rock and roll
+  - schlager
+  - novelty
+  - stage & screen
+  - soundtrack
+  - film
+  - musical
+  - broadway
+  - psychedelic
+  - cocktail

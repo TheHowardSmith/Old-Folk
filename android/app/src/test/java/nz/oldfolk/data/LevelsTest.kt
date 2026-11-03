@@ -26,4 +26,12 @@ class LevelsTest {
         assertEquals(0.5f, Levels.dbToLinear(-6.0206f), 0.001f)
         assertEquals(1f, Levels.dbToLinear(0f), 0.0001f)
     }
+
+    @Test
+    fun oneSidedTransfersAreDetected() {
+        assertEquals(2, nz.oldfolk.playback.Levels.oneSided(0.0, 5.0))
+        assertEquals(1, nz.oldfolk.playback.Levels.oneSided(5.0, 0.001))
+        assertEquals(0, nz.oldfolk.playback.Levels.oneSided(5.0, 0.5))    // just a quieter channel
+        assertEquals(0, nz.oldfolk.playback.Levels.oneSided(0.0, 0.0))
+    }
 }

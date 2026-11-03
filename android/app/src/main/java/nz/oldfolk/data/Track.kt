@@ -6,7 +6,7 @@ import org.json.JSONObject
 
 /** One playable recording, as listed in a track-list shard. */
 data class Track(
-    val id: String,          // Internet Archive item identifier
+    val id: String,          // Internet Archive item identifier (or "loc:<id>" etc. for other archives)
     val file: String,        // file name inside the item
     val title: String,
     val artist: String?,
@@ -15,19 +15,37 @@ data class Track(
     val genre: String,
     /** Label/cover image: "1" = <id>_itemimage.jpg, "2" = <id>_itemimage.png, else a file name, null = none. */
     val picture: String? = null,
+    /** Full audio URL, for recordings hosted outside the Internet Archive. */
+    val url: String? = null,
+    /** The recording's web page, likewise. */
+    val page: String? = null,
+    /** Holding institution to credit, for recordings outside the Internet Archive. */
+    val source: String? = null,
 ) {
     /** Stable identity across list versions: used for "never repeat" and downloads. */
     val key: Long = keyOf(id, file)
 
     val streamUrl: String
-        get() = "https://archive.org/download/" + Uri.encode(id) + "/" +
-            file.split('/').joinToString("/") { Uri.encode(it) }
+        get() = url ?: ("https://archive.org/download/" + Uri.encode(id) + "/" +
+            file.split('/').joinToString("/") { Uri.encode(it) })
 
-    val detailsUrl: String get() = "https://archive.org/details/" + Uri.encode(id)
+    val detailsUrl: String get() = page ?: ("https://archive.org/details/" + Uri.encode(id))
 
-    /** Disc label / album cover (falls back to the Archive's item thumbnail). */
-    val artUrl: String
-        get() = when (picture) {
+    /** True for recordings on the Internet Archive; others come from smaller archives. */
+    val onArchiveOrg: Boolean get() = url == null
+
+    /** Where the recording is hosted, for display. */
+    val sourceName: String
+        get() = when {
+            url == null -> "Internet Archive"
+            source != null -> source
+            url.contains("loc.gov") -> "Library of Congress"
+            else -> Uri.parse(url).host ?: "web"
+        }
+
+    /** Disc label / album cover (falls back to the Archive's item thumbnail); null if none. */
+    val artUrl: String?
+        get() = if (url != null) picture?.takeIf { it.startsWith("https://") } else when (picture) {
             null -> "https://archive.org/services/img/" + Uri.encode(id)
             "1" -> "https://archive.org/download/" + Uri.encode(id) + "/" + Uri.encode(id + "_itemimage.jpg")
             "2" -> "https://archive.org/download/" + Uri.encode(id) + "/" + Uri.encode(id + "_itemimage.png")
@@ -44,6 +62,9 @@ data class Track(
         year?.let { put("y", it) }
         put("r", region); put("g", genre)
         picture?.let { put("p", it.toIntOrNull() ?: it) }
+        url?.let { put("u", it) }
+        page?.let { put("w", it) }
+        source?.let { put("s", it) }
     }
 
     companion object {
@@ -66,6 +87,9 @@ data class Track(
             region = o.optString("r").ifBlank { "Unknown" },
             genre = o.optString("g").ifBlank { "world" },
             picture = o.opt("p")?.toString()?.ifBlank { null },
+            url = o.optString("u").ifBlank { null },
+            page = o.optString("w").ifBlank { null },
+            source = o.optString("s").ifBlank { null },
         )
 
         fun parseShard(json: String): List<Track> {
@@ -90,17 +114,18 @@ data class TrackIndex(
         fun parse(json: String): TrackIndex {
             val o = JSONObject(json)
             val g = o.getJSONArray("genres")
+            // "ext" lists shards of recordings hosted outside the Internet Archive
+            // (kept separate so older app versions, which can't play them, skip them).
             val s = o.getJSONArray("shards")
+            val ext = o.optJSONArray("ext") ?: JSONArray()
             return TrackIndex(
                 version = o.getLong("v"),
                 genres = List(g.length()) {
                     val x = g.getJSONObject(it)
                     Genre(x.getString("k"), x.getString("name"), x.optInt("n"))
                 },
-                shards = List(s.length()) {
-                    val x = s.getJSONObject(it)
-                    ShardInfo(x.getString("f"), x.getString("g"), x.optInt("n"), x.getString("sha256"))
-                },
+                shards = (List(s.length()) { s.getJSONObject(it) } + List(ext.length()) { ext.getJSONObject(it) })
+                    .map { x -> ShardInfo(x.getString("f"), x.getString("g"), x.optInt("n"), x.getString("sha256")) },
             )
         }
     }

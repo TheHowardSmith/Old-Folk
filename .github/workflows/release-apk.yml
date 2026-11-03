@@ -1,8 +1,9 @@
 name: Release APK
 
 # Every push to main that touches the app builds a signed release APK and
-# publishes it as the latest GitHub release (asset name: old-folk.apk), so
-# https://github.com/<repo>/releases/latest/download/old-folk.apk always works.
+# publishes it as the latest GitHub release (asset name: old-folk-air.apk, plus a
+# copy named old-folk.apk for older links), so
+# https://github.com/<repo>/releases/latest/download/old-folk-air.apk always works.
 
 on:
   push:
@@ -45,9 +46,10 @@ jobs:
         id: sig
         run: |
           APK=android/app/build/outputs/apk/release/app-release.apk
-          cp "$APK" old-folk.apk
+          cp "$APK" old-folk-air.apk
+          cp "$APK" old-folk.apk   # old download links keep working
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          "$BT/apksigner" verify --print-certs old-folk.apk | tee cert.txt
+          "$BT/apksigner" verify --print-certs old-folk-air.apk | tee cert.txt
           if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
             echo "note=Signed with the project release key." >> "$GITHUB_OUTPUT"
           else
@@ -61,13 +63,13 @@ jobs:
         run: |
           TAG="app-v${VERSION_NAME}"
           cat > notes.md <<NOTES
-          Old Folk ${VERSION_NAME}
+          Old Folk Air ${VERSION_NAME}
 
-          **Install:** download \`old-folk.apk\` below on your Android phone (Android 8 or newer) and open it. You may need to allow installing apps from your browser.
+          **Install:** download \`old-folk-air.apk\` below on your Android phone (Android 8 or newer) and open it. You may need to allow installing apps from your browser.
 
           ${{ steps.sig.outputs.note }}
 
           Built from ${GITHUB_SHA::7}.
           NOTES
-          gh release create "$TAG" old-folk.apk --title "Old Folk ${VERSION_NAME}" \
+          gh release create "$TAG" old-folk-air.apk old-folk.apk --title "Old Folk Air ${VERSION_NAME}" \
             --notes-file notes.md --target "$GITHUB_SHA" --latest

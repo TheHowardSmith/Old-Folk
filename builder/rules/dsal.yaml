@@ -1,0 +1,17 @@
+# Linguistic Survey of India gramophone recordings (1913-1929), served by the
+# Digital South Asia Library (University of Chicago) with the British Library.
+# 242 recordings in about 97 languages; the songs among them are used. All are
+# over 95 years old. Direct MP3/MP4 files, open JSON search API (no key).
+
+user_agent: "OldFolkAirListBuilder/1.0 (+https://github.com/thehowardsmith/old-folk)"
+pause: 1.0
+api: https://dsal.uchicago.edu/LSI/api/search
+audio_base: https://dsal.uchicago.edu/images/reference/lsi/audio/
+page: https://dsal.uchicago.edu/LSI/
+credit: Digital South Asia Library (University of Chicago)
+
+# Search terms; results are capped at 100 per search, so keep them specific.
+queries: [song, songs]
+
+# A recording is kept if its title matches this (case-insensitive).
+song_pattern: '\b(songs?|gīt|git|geet)\b'

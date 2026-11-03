@@ -53,6 +53,14 @@ jobs:
           key: tracklist-cache-${{ github.run_id }}
           restore-keys: tracklist-cache-
 
+      # Discografia Brasileira pages, harvested by harvest-ims.yml.
+      - name: Restore Discografia Brasileira cache
+        uses: actions/cache/restore@v4
+        with:
+          path: builder/cache-ims
+          key: ims-cache-none
+          restore-keys: ims-cache-
+
       - name: Search
         run: oldfolk-build search
 
@@ -69,13 +77,6 @@ jobs:
           timeout 300m oldfolk-build fetch --pause 0.25 || true
           oldfolk-build status
 
-      - name: Save metadata cache
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: builder/cache
-          key: tracklist-cache-${{ github.run_id }}
-
       - name: Is fetching complete?
         id: done
         run: |
@@ -85,6 +86,21 @@ jobs:
           else
             echo "complete=false" >> "$GITHUB_OUTPUT"
           fi
+
+      # Recordings from the Library of Congress (rules/loc.yaml) and Finna
+      # (rules/finna.yaml): one request at a time, cached with the rest, so
+      # later runs only fetch what's new.
+      - name: Fetch loc.gov and Finna recordings (time-boxed)
+        if: steps.done.outputs.complete == 'true'
+        run: |
+          timeout 40m oldfolk-build ext-fetch || echo "::notice::loc.gov harvest not finished; continues next run"
+
+      - name: Save metadata cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: builder/cache
+          key: tracklist-cache-${{ github.run_id }}
 
       # US Pre-1972 Sound Recording Schedules (recordings claimed by labels),
       # used to exclude claimed recordings. Refreshed monthly; ~35 min to fetch.
@@ -106,6 +122,14 @@ jobs:
         with:
           path: builder/cache/pre1972_schedules.jsonl
           key: pre1972-schedules-${{ steps.done.outputs.month }}
+
+      - name: Download rights-check results
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p cache-rights
+          gh release download rights-data -p 'availability.jsonl' -p 'writer_deaths.json' -D cache-rights --clobber \
+            || echo "::notice::No rights-check data yet: composed songs stay in review, no streaming filter."
 
       - name: Build
         id: build
@@ -134,7 +158,7 @@ jobs:
         run: |
           if ! gh release view tracklist >/dev/null 2>&1; then
             gh release create tracklist --prerelease --title "Track list" \
-              --notes "Track list data for the Old Folk app (CC0). Updated by the Build track list workflow."
+              --notes "Track list data for the Old Folk Air app (CC0). Updated by the Build track list workflow."
           fi
           # Shards first, index last, then remove assets that are no longer listed.
           gh release upload tracklist s-*.json r-*.json flagged.csv writers.csv excluded.csv report.md summary.json --clobber
@@ -142,7 +166,7 @@ jobs:
           for a in $(gh release view tracklist --json assets -q '.assets[].name'); do
             [ -e "$a" ] || gh release delete-asset tracklist "$a" -y
           done
-          gh release edit tracklist --notes "Track list data for the Old Folk app (CC0). Version $(jq .v index.json), $(jq .n index.json) tracks, mode: ${{ inputs.mode }}."
+          gh release edit tracklist --notes "Track list data for the Old Folk Air app (CC0). Version $(jq .v index.json), $(jq .n index.json) tracks, mode: ${{ inputs.mode }}."
 
       - name: Summary
         if: steps.build.outputs.skip != 'true'

@@ -14,6 +14,7 @@ can be tuned and re-run without touching the network.
 from __future__ import annotations
 
 import html
+from datetime import date
 import re
 from dataclasses import dataclass, field
 
@@ -53,6 +54,9 @@ class Track:
     genre: str
     seconds: float | None = None
     picture: str | int | None = None
+    url: str | None = None      # full audio URL, for recordings not on the Internet Archive
+    page: str | None = None     # the recording's web page, likewise
+    source: str | None = None   # holding institution shown in the app ("Library of Congress")
 
 
 @dataclass
@@ -236,6 +240,28 @@ def is_generic_folk(tags: set[str], rules: Rules) -> bool:
     return any(has_word(t, "folk") or has_word(t, "traditional") for t in tags)
 
 
+def traditional_art_waiver(tags: set[str], title: str, artist: str | None, desc: str,
+                           rules: Rules) -> set[str]:
+    """Exclude tags to ignore for non-Western classical and court traditions.
+
+    Discogs files raga, gagaku, Cantonese music, Peking opera and the like under
+    "Classical" (and "Opera"); the exclude list means Western art music. Returns
+    the tags to waive: classical and opera when a tradition is named in the tags,
+    title or performer; only classical when the item is merely from such a region.
+    Nothing is waived when the title or description names Western forms
+    (concerto, symphony...).
+    """
+    if find_words(f"{title} | {desc}".lower(), rules.western_art_words):
+        return set()
+    named = f"{title} | {artist or ''}".lower()
+    if tags & rules.traditional_art_tags or find_words(named, rules.traditional_art_words):
+        return {"classical", "opera"}
+    region = region_from_text(" | ".join(sorted(tags)) + " | " + title, rules)
+    if region in rules.traditional_art_regions:
+        return {"classical"}
+    return set()
+
+
 def looks_like_lp(meta: dict) -> bool:
     ident = str(meta.get("identifier", ""))
     colls = [c.lower() for c in as_list(meta.get("collection"))]
@@ -264,6 +290,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if ident in set(ov.get("exclude", []) or []):
         return exclude("excluded in overrides.yaml")
     force_include = ident in set(ov.get("include", []) or [])
+    for pattern, reason in rules.exclude_id_patterns:
+        if pattern.search(ident):
+            return exclude(reason)
 
     desc = strip_html(as_text(meta.get("description")))
     notes = strip_html(as_text(meta.get("notes")))
@@ -284,7 +313,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     colls = {c.lower() for c in as_list(meta.get("collection"))}
     bad_colls = colls & rules.exclude_collections
     if bad_colls:
-        return exclude(f"broadcast/spoken collection: {', '.join(sorted(bad_colls))}")
+        return exclude(f"excluded collection: {', '.join(sorted(bad_colls))}")
 
     # 2. Genre.
     synthetic = tags & rules.synthetic_tags
@@ -301,9 +330,17 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if teaching:
         return exclude(f"folk-dance instruction record: {teaching[0]}")
     genre = specific_genre(tags, kind, rules)
-    excluded = tags & rules.exclude_tags
+    # Any rock or psychedelic style ("psychedelic rock", "blues rock", "acid rock") is not folk.
+    excluded = (tags & rules.exclude_tags) | {t for t in tags if has_word(t, "rock") or has_word(t, "psychedelic")}
+    excluded -= traditional_art_waiver(tags, title, artist, desc, rules)
+    if excluded and excluded <= rules.ethnic_waivable_tags and tags & rules.ethnic_record_tags:
+        excluded = set()    # LoC/Victor "ethnic music" discs: "popular music" just means secular
     generic = is_generic_folk(tags - excluded, rules)
     if excluded and not genre:
+        if generic and excluded & rules.pop_tags \
+                and not is_generic_folk(tags - excluded - rules.weak_generic_tags, rules):
+            return exclude(f"not folk: {', '.join(sorted(excluded))} "
+                           "(only the broad 'Folk, World, & Country' label)")
         if generic:
             flags.append(f"folk tag mixed with non-folk tags: {', '.join(sorted(excluded))}")
         else:
@@ -363,6 +400,16 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     res.writers = writers
     if unapproved and rules.flag_named_writers:
         flags.append(f"named writer (check composition rights): {'; '.join(unapproved[:4])}")
+    elif unapproved and rules.writer_rule:
+        # Composed songs stay out of the app until every writer is known to have
+        # died long enough ago (life + 70); traditional and uncredited songs pass.
+        cutoff = date.today().year - rules.writer_life_plus - 1
+        deaths = rules.load_writer_deaths()
+        unclear = [w for w in unapproved
+                   if not ((d := deaths.get(w)) and d.get("status") == "dead" and d.get("died")
+                           and d["died"] <= cutoff)]
+        if unclear:
+            flags.append(f"named writer not confirmed died by {cutoff}: {'; '.join(unclear[:4])}")
 
     region, region_src = guess_region(meta, tags, title, desc, genre, rules)
     genre_from_region = genre is None
@@ -377,12 +424,20 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     picture = pick_image(ident, files)
     multi = len(choices) > 1
 
+    claimed_tracks = []
     for c in choices:
         if c.seconds is not None and c.seconds < rules.min_seconds:
             continue
         if c.seconds is not None and c.seconds > rules.max_seconds:
             continue
         t_title = clean_title(c.title or title)
+        # US claims are also checked per track: an album's own title rarely
+        # matches, but its songs do ("St. Stephen" by the Grateful Dead).
+        if index is not None and c.title and not (year and year <= rules.us_public_domain_year):
+            claimed, owner = index.match(t_title, c.artist or artist or "")
+            if claimed == "yes":
+                claimed_tracks.append(f"{t_title} ({owner})")
+                continue
         t_region, t_genre = region, genre
         if multi:
             # Compilations: a track title like "Music Of Panama" beats the item's region.
@@ -398,8 +453,13 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
             artist=(c.artist or artist),
             year=year, region=t_region, genre=t_genre, seconds=c.seconds, picture=picture,
         ))
+    if not res.tracks and claimed_tracks:
+        return exclude(f"recording claimed in the US (pre-1972 schedules): {claimed_tracks[0]}")
     if not res.tracks:
         return exclude("no MP3 of usable length")
+    if claimed_tracks:
+        # Some songs on the album are claimed: the label is active, so a person checks the rest.
+        flags.append(f"other tracks claimed in the US (pre-1972 schedules): {'; '.join(claimed_tracks[:3])}")
     if not indigenous and any(t.region == "Indigenous North America" for t in res.tracks):
         flags.append("Indigenous recording, check community protocols: region")
 

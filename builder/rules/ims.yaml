@@ -1,0 +1,60 @@
+# Discografia Brasileira (Instituto Moreira Salles): Brazilian 78s, 1902-1964.
+#
+# Every recording page states the year it entered the public domain in Brazil
+# (author's death + 70 years and recording + 70 years). Only recordings with a
+# public-domain year up to the current year, released in 1970 or earlier, and
+# in a traditional/regional genre below are used. Their MP3s are public files.
+#
+# The site asks crawlers to wait 5 seconds between requests (robots.txt), so a
+# full harvest of ~63,000 recording pages takes days; it runs in its own
+# scheduled, resumable workflow and keeps its own cache (cache-ims/ims.sqlite).
+
+user_agent: "OldFolkAirListBuilder/1.0 (+https://github.com/thehowardsmith/old-folk)"
+pause: 5.0
+sitemap: https://discografiabrasileira.com.br/sitemap.xml
+credit: Instituto Moreira Salles
+
+# Brazilian traditional / regional genres (the `genre` on each recording page,
+# compared lower-case, accents kept). Popular-song genres (samba, marcha,
+# fox-trot, tango, bolero...) are left out under the "no pop" rule.
+folk_genres:
+  - toada
+  - embolada
+  - cateretê
+  - catira
+  - coco
+  - lundu
+  - lundum
+  - moda de viola
+  - moda
+  - desafio
+  - cururu
+  - jongo
+  - batuque
+  - maracatu
+  - cana-verde
+  - chula
+  - folia de reis
+  - recortado
+  - cana verde
+  - caboclo
+  - canção sertaneja
+  - sertaneja
+  - toada sertaneja
+  - xote
+  - baião
+  - modinha
+  - choro
+  - maxixe
+  - polca
+  - schottisch
+  - quadrilha
+  - congada
+  - samba de roda
+  - ponto
+  - ponto de macumba
+  - frevo
+  - rancheira
+  - arrasta-pé
+  - xaxado
+  - viola

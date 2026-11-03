@@ -11,7 +11,6 @@ import android.util.Log
 import androidx.media3.common.C
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
-import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.ContentMetadata
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,8 +24,8 @@ import kotlin.math.log10
 import kotlin.math.pow
 
 /**
- * Loudness levelling and noise check. When a track has been downloaded
- * (prefetched into the cache, or saved for a playlist) its first [MAX_SECONDS]
+ * Loudness levelling and noise check. When a track has been fetched into the
+ * playback cache, its first [MAX_SECONDS]
  * are decoded once:
  *  - a gated RMS loudness is measured (a simplified EBU R128-style reading);
  *    the playback gain that brings it to [TARGET_DB] is applied by
@@ -66,16 +65,11 @@ class Levels(private val file: File) {
 
     fun has(key: Long) = gains.containsKey(key)
 
-    fun analyzeCached(key: Long, cache: Cache, url: String) {
+    fun analyzeCached(key: Long, media: MediaCache, url: String) {
         if (has(key)) return
-        val size = ContentMetadata.getContentLength(cache.getContentMetadata(url))
+        val size = ContentMetadata.getContentLength(media.cache.getContentMetadata(url))
         if (size <= 0) return
-        CacheMediaDataSource(cache, url, size).use { src -> store(key, read { it.setDataSource(src) }) }
-    }
-
-    fun analyzeFile(key: Long, f: File) {
-        if (has(key) || !f.exists()) return
-        store(key, read { it.setDataSource(f.absolutePath) })
+        CacheMediaDataSource(media.cacheOnly, url, size).use { src -> store(key, read { it.setDataSource(src) }) }
     }
 
     private fun store(key: Long, reading: Reading?) {
@@ -136,6 +130,14 @@ class Levels(private val file: File) {
                 c.start()
 
                 val windows = ArrayList<Double>()   // mean square per window
+                // Per-channel mean squares (stereo only), for one-sided transfers that
+                // ChannelFixer plays on both speakers: those are measured on the loud channel.
+                val windowsL = ArrayList<Double>()
+                val windowsR = ArrayList<Double>()
+                var winL = 0.0
+                var winR = 0.0
+                var totalL = 0.0
+                var totalR = 0.0
                 var mono = FloatArray(rate * NoiseCheck.SECONDS)  // first seconds, channels averaged
                 var monoLen = 0
                 var frameSum = 0f
@@ -177,6 +179,7 @@ class Levels(private val file: File) {
                         while (shorts.hasRemaining()) {
                             val v = shorts.get() / 32768.0
                             winSum += v * v
+                            if (channels == 2) { if (chan == 0) winL += v * v else winR += v * v }
                             frameSum += v.toFloat()
                             if (++chan >= channels) {
                                 if (monoLen < mono.size) mono[monoLen++] = frameSum / channels
@@ -184,7 +187,11 @@ class Levels(private val file: File) {
                             }
                             if (++winCount >= winSize) {
                                 windows += winSum / winCount
-                                winSum = 0.0; winCount = 0
+                                if (channels == 2) {
+                                    windowsL += winL / (winCount / 2.0); windowsR += winR / (winCount / 2.0)
+                                    totalL += winL; totalR += winR
+                                }
+                                winSum = 0.0; winCount = 0; winL = 0.0; winR = 0.0
                             }
                             total++
                         }
@@ -193,7 +200,12 @@ class Levels(private val file: File) {
                     }
                 }
                 val noiseResult = if (monoLen >= rate * 8) NoiseCheck.analyze(mono, monoLen, rate) else null
-                return Reading(gatedLoudness(windows), noiseResult)
+                val measured = when (oneSided(totalL, totalR)) {
+                    1 -> windowsL
+                    2 -> windowsR
+                    else -> windows
+                }
+                return Reading(gatedLoudness(measured), noiseResult)
             } catch (e: Exception) {
                 Log.i(TAG, "level read failed: ${e.message}")
                 return null
@@ -202,6 +214,17 @@ class Levels(private val file: File) {
                 runCatching { codec?.release() }
                 ex.release()
             }
+        }
+
+        /**
+         * 1 if only the left channel carries sound, 2 if only the right, else 0
+         * (same -30 dB rule as [ChannelFixer]).
+         */
+        fun oneSided(energyL: Double, energyR: Double): Int = when {
+            energyL <= 0.0 && energyR <= 0.0 -> 0
+            energyR < energyL * 1e-3 -> 1
+            energyL < energyR * 1e-3 -> 2
+            else -> 0
         }
 
         /** Mean loudness of windows above an absolute (-60 dB) and relative (-15 dB) gate. */
@@ -219,8 +242,11 @@ class Levels(private val file: File) {
 }
 
 /** Lets MediaExtractor read a fully cached stream straight from the media cache. */
-private class CacheMediaDataSource(cache: Cache, private val key: String, private val length: Long) : MediaDataSource() {
-    private val factory = CacheDataSource.Factory().setCache(cache)   // no upstream: cache only
+private class CacheMediaDataSource(
+    private val factory: CacheDataSource.Factory,   // cache only, decrypting
+    private val key: String,
+    private val length: Long,
+) : MediaDataSource() {
     private var ds: DataSource? = null
     private var pos = -1L
 

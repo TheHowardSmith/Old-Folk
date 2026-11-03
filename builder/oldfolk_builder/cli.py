@@ -9,6 +9,8 @@ Typical use:
 
     oldfolk-build fetch                  # full run; safe to interrupt and re-run
     oldfolk-build build                  # writes out/
+
+    oldfolk-build ext-fetch              # harvest loc.gov (rules/loc.yaml); build includes it
 """
 from __future__ import annotations
 
@@ -71,12 +73,93 @@ def cmd_fetch(args, rules, store):
     log.info("cache: %s", store.stats())
 
 
+def cmd_ext_fetch(args, rules, store):
+    from . import dsal, finna, ims, loc
+    if args.source == "ims":      # slow (5 s per page): its own cache file and workflow
+        ims_store = Store(Path(args.ims_db))
+        print(json.dumps({"ims": ims.harvest(ims_store, ims.load_config(), minutes=args.minutes,
+                                             limit=args.limit)}))
+        return
+    if args.source in ("finna", "all"):
+        print(json.dumps({"finna": finna.harvest(store, finna.load_config())}))
+    if args.source in ("dsal", "all"):
+        print(json.dumps({"dsal": dsal.harvest(store, dsal.load_config())}))
+    if args.source in ("loc", "all"):
+        cfg = loc.load_config()
+        if args.only:
+            cfg.collections = [c for c in cfg.collections if c["slug"] in args.only]
+        print(json.dumps({"loc": loc.harvest(store, cfg, details=not args.no_details, limit=args.limit)}))
+
+
+def with_subjects(data: dict, subjects: list[str] | None) -> dict:
+    """Add a source's collection-level subjects (sources.yaml `add_subjects`)."""
+    if not subjects:
+        return data
+    meta = dict(data.get("metadata") or {})
+    have = meta.get("subject") or []
+    meta["subject"] = ([have] if isinstance(have, str) else list(have)) + subjects
+    return {**data, "metadata": meta}
+
+
+def apply_availability(results, path: Path) -> int:
+    """Drop tracks found on sale or streaming (rights-checks.yml); returns how many."""
+    from .availability import load
+    from .classify import EXCLUDE
+    found = {k for k, r in load(path).items() if r.get("found")}
+    if not found:
+        return 0
+    dropped = 0
+    for r in results:
+        if r.status == EXCLUDE or not r.tracks:
+            continue
+        keep = [t for t in r.tracks if f"{t.id}/{t.file}" not in found]
+        if len(keep) < len(r.tracks):
+            dropped += len(r.tracks) - len(keep)
+            if not keep:
+                r.status, r.reasons = EXCLUDE, ["on sale or streaming today (iTunes)"]
+            r.tracks = keep
+    return dropped
+
+
+def cmd_availability(args, rules, store):
+    from . import availability
+    print(json.dumps(availability.run(Path(args.tracklist), Path(args.out), args.shard, args.of,
+                                      Path(args.previous) if args.previous else None, args.minutes)))
+
+
+def cmd_availability_merge(args, rules, store):
+    from . import availability
+    print(json.dumps(availability.merge([Path(p) for p in args.parts], Path(args.out))))
+
+
+def cmd_writer_deaths(args, rules, store):
+    from . import deaths
+    names = deaths.collect(store, rules)
+    print(json.dumps(deaths.lookup_all(names, Path(args.previous) if args.previous else None,
+                                       Path(args.out), args.minutes)))
+
+
 def cmd_build(args, rules, store):
     out = Path(args.out) if args.out else BUILDER_DIR / ("out-sample" if args.sample else "out")
-    results = [classify_item(i, kind, data, rules)
-               for i, _src, kind, data in store.fetched(sample_only=args.sample)]
+    extra = {s["name"]: list(s.get("add_subjects") or []) for s in rules.sources}
+    results = [classify_item(i, kind, with_subjects(data, extra.get(src)), rules)
+               for i, src, kind, data in store.fetched(sample_only=args.sample)]
     if not results:
         sys.exit("no fetched items - run `fetch` first")
+    if not args.no_ext:
+        from . import dsal, finna, loc
+        for name, mod in (("loc.gov", loc), ("finna", finna), ("dsal", dsal)):
+            ext = mod.classify_all(store, rules)
+            log.info("%s: %d items in the cache", name, len(ext))
+            results += ext
+        from . import ims
+        if Path(args.ims_db).exists():
+            ext = ims.classify_all(Store(Path(args.ims_db)), rules)
+            log.info("discografia brasileira: %d items in the cache", len(ext))
+            results += ext
+    dropped = apply_availability(results, BUILDER_DIR / "cache-rights" / "availability.jsonl")
+    if dropped:
+        log.info("dropped %d tracks that are on sale or streaming today", dropped)
     summary = write_all(results, out, rules.genres, version=args.version,
                         shard_size=args.shard_size)
     print(json.dumps(summary, indent=1, ensure_ascii=False))
@@ -118,6 +201,35 @@ def main(argv=None):
     s.add_argument("--out", help="output directory")
     s.add_argument("--version", type=int, help="list version (default: UTC yyyymmddHHMM)")
     s.add_argument("--shard-size", type=int, default=SHARD_SIZE)
+    s.add_argument("--no-ext", action="store_true", help="leave out other archives (loc.gov, finna, IMS)")
+    s.add_argument("--ims-db", default=str(BUILDER_DIR / "cache-ims" / "ims.sqlite"))
+
+    s = sub.add_parser("availability", help="check listed tracks against the iTunes catalogue")
+    s.add_argument("--tracklist", required=True, help="folder with a published index.json and s-*.json")
+    s.add_argument("--out", required=True)
+    s.add_argument("--previous", help="earlier results; tracks in it are skipped")
+    s.add_argument("--shard", type=int, default=0)
+    s.add_argument("--of", type=int, default=1)
+    s.add_argument("--minutes", type=float)
+
+    s = sub.add_parser("availability-merge", help="combine availability result files")
+    s.add_argument("--out", required=True)
+    s.add_argument("parts", nargs="+")
+
+    s = sub.add_parser("writer-deaths", help="look up death years of credited writers")
+    s.add_argument("--out", required=True)
+    s.add_argument("--previous")
+    s.add_argument("--minutes", type=float)
+
+    s = sub.add_parser("ext-fetch", help="harvest other archives (loc.gov, finna.fi) into the cache")
+    s.add_argument("--source", choices=("all", "loc", "finna", "dsal", "ims"), default="all",
+                   help="'all' = loc + finna + dsal; 'ims' (Discografia Brasileira) runs on its own, slowly")
+    s.add_argument("--minutes", type=float, help="ims: stop after this many minutes")
+    s.add_argument("--ims-db", default=str(BUILDER_DIR / "cache-ims" / "ims.sqlite"))
+    s.add_argument("--only", nargs="*", help="loc.gov collection slugs to harvest")
+    s.add_argument("--no-details", action="store_true",
+                   help="skip the per-item requests for items whose search record lacks the MP3")
+    s.add_argument("--limit", type=int, help="at most N per-item requests (for testing)")
 
     s = sub.add_parser("status", help="show cache statistics")
     s.add_argument("--require-complete", action="store_true",
@@ -129,7 +241,9 @@ def main(argv=None):
     rules = load_rules()
     store = Store(Path(args.db))
     {"search": cmd_search, "sample": cmd_sample, "fetch": cmd_fetch,
-     "build": cmd_build, "status": cmd_status}[args.cmd](args, rules, store)
+     "build": cmd_build, "status": cmd_status, "ext-fetch": cmd_ext_fetch,
+     "availability": cmd_availability, "availability-merge": cmd_availability_merge,
+     "writer-deaths": cmd_writer_deaths}[args.cmd](args, rules, store)
 
 
 if __name__ == "__main__":

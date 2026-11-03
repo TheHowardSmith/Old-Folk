@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "oldfolk-builder"
 version = "0.1.0"
-description = "Builds the Old Folk track list from public-domain Internet Archive recordings"
+description = "Builds the Old Folk Air track list from public-domain Internet Archive recordings"
 license = "Apache-2.0"
 requires-python = ">=3.10"
 dependencies = ["internetarchive>=5.0", "PyYAML>=6.0"]

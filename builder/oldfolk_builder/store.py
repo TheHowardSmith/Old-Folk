@@ -24,13 +24,33 @@ CREATE TABLE IF NOT EXISTS items (
     attempts    INTEGER DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS items_unfetched ON items(meta) WHERE meta IS NULL;
+
+-- Recordings from other archives (e.g. source = 'loc' for loc.gov).
+CREATE TABLE IF NOT EXISTS ext_items (
+    source      TEXT NOT NULL,
+    id          TEXT NOT NULL,
+    coll        TEXT NOT NULL,          -- collection it was first found in
+    record      TEXT NOT NULL,          -- JSON search record
+    detail      TEXT,                   -- JSON extra item data, when the record wasn't enough
+    fetched_at  REAL,
+    error       TEXT,
+    attempts    INTEGER DEFAULT 0,
+    PRIMARY KEY (source, id)
+);
+-- Search pages already read (resume), and each collection's last page.
+CREATE TABLE IF NOT EXISTS ext_pages (
+    source      TEXT NOT NULL,
+    key         TEXT NOT NULL,
+    value       INTEGER,
+    PRIMARY KEY (source, key)
+);
 """
 
 
 class Store:
     def __init__(self, path: Path):
         path.parent.mkdir(parents=True, exist_ok=True)
-        self.db = sqlite3.connect(str(path), check_same_thread=False)
+        self.db = sqlite3.connect(str(path), check_same_thread=False, timeout=60)
         self.db.executescript(SCHEMA)
         self.db.commit()
 
@@ -80,6 +100,61 @@ class Store:
             q += " AND sample = 1"
         for ident, source, kind, meta in self.db.execute(q + " ORDER BY id"):
             yield ident, source, kind, json.loads(meta)
+
+    # ---------------------------------------------------------------- other archives
+
+    def save_ext_records(self, source: str, coll: str, records: list[tuple[str, dict]]) -> None:
+        self.db.executemany(
+            "INSERT INTO ext_items(source, id, coll, record, fetched_at) VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(source, id) DO UPDATE SET record = excluded.record, fetched_at = excluded.fetched_at",
+            [(source, i, coll, json.dumps(r, separators=(",", ":")), time.time()) for i, r in records],
+        )
+        self.db.commit()
+
+    def ext_page_done(self, source: str, key: str) -> bool:
+        return self.db.execute("SELECT 1 FROM ext_pages WHERE source = ? AND key = ?",
+                               (source, key)).fetchone() is not None
+
+    def mark_ext_page(self, source: str, key: str) -> None:
+        self.db.execute("INSERT OR IGNORE INTO ext_pages(source, key) VALUES (?, ?)", (source, key))
+        self.db.commit()
+
+    def ext_last_page(self, source: str, coll: str) -> int | None:
+        row = self.db.execute("SELECT value FROM ext_pages WHERE source = ? AND key = ?",
+                              (source, f"{coll}#last")).fetchone()
+        return row[0] if row else None
+
+    def set_ext_last_page(self, source: str, coll: str, page: int) -> None:
+        self.db.execute("INSERT OR REPLACE INTO ext_pages(source, key, value) VALUES (?, ?, ?)",
+                        (source, f"{coll}#last", page))
+        self.db.commit()
+
+    def ext_needing_detail(self, source: str, max_attempts: int = 3) -> list[tuple[str, dict]]:
+        q = ("SELECT id, record FROM ext_items WHERE source = ? AND detail IS NULL AND attempts < ? "
+             "ORDER BY id")
+        return [(i, json.loads(r)) for i, r in self.db.execute(q, (source, max_attempts))]
+
+    def save_ext_detail(self, source: str, ident: str, detail: dict) -> None:
+        self.db.execute("UPDATE ext_items SET detail = ?, error = NULL, attempts = attempts + 1 "
+                        "WHERE source = ? AND id = ?",
+                        (json.dumps(detail, separators=(",", ":")), source, ident))
+        self.db.commit()
+
+    def save_ext_error(self, source: str, ident: str, error: str) -> None:
+        self.db.execute("UPDATE ext_items SET error = ?, attempts = attempts + 1 "
+                        "WHERE source = ? AND id = ?", (error[:500], source, ident))
+        self.db.commit()
+
+    def ext_items(self, source: str) -> Iterator[tuple[str, str, dict, dict | None]]:
+        q = "SELECT id, coll, record, detail FROM ext_items WHERE source = ? ORDER BY id"
+        for ident, coll, record, detail in self.db.execute(q, (source,)):
+            yield ident, coll, json.loads(record), json.loads(detail) if detail else None
+
+    def ext_stats(self, source: str) -> dict:
+        one = lambda where: self.db.execute(  # noqa: E731
+            f"SELECT COUNT(*) FROM ext_items WHERE source = ? AND {where}", (source,)).fetchone()[0]
+        return {"items": one("1=1"), "with_detail": one("detail IS NOT NULL"),
+                "failed": one("detail IS NULL AND error IS NOT NULL")}
 
     def count(self, where: str = "1=1") -> int:
         return self.db.execute(f"SELECT COUNT(*) FROM items WHERE {where}").fetchone()[0]

@@ -1,0 +1,118 @@
+name: Rights checks
+
+# 1. Streaming/sale check: every listed Internet Archive track after 1925 is
+#    looked up in Apple's iTunes catalogue (about 20 searches a minute per
+#    runner, so the list is split into 10 parallel shards).
+# 2. Writer death years: credited songwriters/composers in the metadata cache
+#    are looked up in the Library of Congress, GND and Wikidata.
+# Results accumulate in the `rights-data` pre-release (availability.jsonl,
+# writer_deaths.json); each run only checks what's new. The track-list build
+# downloads them and leaves out tracks on sale/streaming and composed songs
+# whose writers aren't confirmed to have died 70+ years ago.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 4 * * 1"          # weekly, after the list may have changed
+  push:
+    paths: [".github/workflows/rights-checks.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rights-checks
+  cancel-in-progress: false
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  availability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e builder
+      - name: Download the published track list and earlier results
+        run: |
+          gh release download tracklist -p 'index.json' -p 's-*.json' -D tl
+          mkdir -p prev
+          gh release download rights-data -p 'availability.jsonl' -D prev || touch prev/availability.jsonl
+      - name: Check shard ${{ matrix.shard }} of 10
+        run: |
+          oldfolk-build availability --tracklist tl --previous prev/availability.jsonl \
+            --shard ${{ matrix.shard }} --of 10 --out part-${{ matrix.shard }}.jsonl --minutes 330 || true
+          touch part-${{ matrix.shard }}.jsonl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: availability-${{ matrix.shard }}
+          path: part-${{ matrix.shard }}.jsonl
+
+  writer-deaths:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    defaults:
+      run:
+        working-directory: builder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Restore metadata cache (from the track-list build)
+        uses: actions/cache/restore@v4
+        with:
+          path: builder/cache
+          key: tracklist-cache-none
+          restore-keys: tracklist-cache-
+      - name: Earlier results
+        run: |
+          mkdir -p prev
+          gh release download rights-data -p 'writer_deaths.json' -D prev || echo '{}' > prev/writer_deaths.json
+      - name: Look up death years
+        run: |
+          oldfolk-build writer-deaths --previous prev/writer_deaths.json --out writer_deaths.json --minutes 320 || cp prev/writer_deaths.json writer_deaths.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: writer-deaths
+          path: builder/writer_deaths.json
+
+  publish:
+    needs: [availability, writer-deaths]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e builder
+      - uses: actions/download-artifact@v4
+        with:
+          path: parts
+      - name: Merge and publish
+        run: |
+          mkdir -p prev out
+          gh release download rights-data -p 'availability.jsonl' -D prev || touch prev/availability.jsonl
+          oldfolk-build availability-merge --out out/availability.jsonl prev/availability.jsonl parts/availability-*/part-*.jsonl
+          if [ -s parts/writer-deaths/writer_deaths.json ]; then cp parts/writer-deaths/writer_deaths.json out/; fi
+          if ! gh release view rights-data >/dev/null 2>&1; then
+            gh release create rights-data --prerelease --title "Rights check data" \
+              --notes "Results of the Rights checks workflow (streaming availability, writer death years), read by the track-list build." 
+          fi
+          gh release upload rights-data out/* --clobber
+          echo "### Rights checks" >> "$GITHUB_STEP_SUMMARY"
+          python3 -c "
+          import json
+          rows=[json.loads(l) for l in open('out/availability.jsonl') if l.strip()]
+          print(f'- availability: {len(rows)} tracks checked, {sum(1 for r in rows if r.get(\"found\"))} on sale/streaming')
+          " >> "$GITHUB_STEP_SUMMARY"

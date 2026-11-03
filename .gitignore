@@ -14,6 +14,8 @@
 # --- Generated track list / builder state ---
 builder/out*/
 builder/cache/
+builder/cache-ims/
+builder/cache-rights/
 *.sqlite
 *.sqlite3
 *.db
@@ -48,3 +50,6 @@ android/.kotlin/
 .idea/
 *.iml
 .DS_Store
+
+# Website screenshots are copied in by the Website workflow
+site/img/

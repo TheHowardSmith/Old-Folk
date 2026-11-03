@@ -22,13 +22,16 @@ import kotlin.math.sin
  * score about -30 dB; the two reported "hard to listen to" examples scored
  * -14.5 dB (Chaliapin, "Dubinoushka") and -9.8 dB ("Frohe Genossen", 1923),
  * flatness 0.56-0.57; a bright but clean band (Jimmy Shand) scored -11.7 dB
- * with flatness 0.22 and is kept. On a random sample these thresholds skip
- * about 15% of tracks.
+ * with flatness 0.22 and is kept. Lowered from -15.5 dB / 0.50 after "Roll On
+ * Silver Moon" was reported: the 1906 Watson & Ernest side (-12.0 dB, flatness
+ * 0.48) and Frank Kaplain's (-15.6 dB, 0.52) slipped just under; clean sides
+ * score flatness 0.45-0.49 but a ratio near -30 dB, so they stay well clear.
+ * On a 45-track random sample these thresholds skip 10 (about 1 in 5).
  */
 object NoiseCheck {
     const val SECONDS = 30
-    const val RATIO_THRESHOLD_DB = -15.5
-    const val FLATNESS_THRESHOLD = 0.5
+    const val RATIO_THRESHOLD_DB = -16.0
+    const val FLATNESS_THRESHOLD = 0.45
     private const val N = 2048
     private const val HOP = 1024
 

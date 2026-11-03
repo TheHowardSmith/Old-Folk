@@ -5,6 +5,7 @@ from oldfolk_builder.tracks import parse_length, pick_files
 
 RULES = load_rules()
 RULES.schedules_path = None   # tests never use the real US schedules index
+RULES.writer_deaths = {}      # ... nor real writer death lookups
 
 
 def mp3(name, original=None, fmt="VBR MP3", length="180.0", **extra):
@@ -101,15 +102,21 @@ def test_compilation_and_later_year_flagged():
     assert "1994" in joined and "compilation" in joined
 
 
-def test_writer_credit_flagged_and_approvable():
+def test_writer_credit_needs_confirmed_old_deaths():
     meta = {"genre": "Hillbilly", "description": "<p><b>Writer:</b> Rodgers; McMichen</p>"}
-    r = classify_item("w", "78rpm", item(meta), RULES)
-    assert r.status == INCLUDE and r.writers == ["Rodgers", "McMichen"]   # kept by default
     rules = load_rules()
-    rules.flag_named_writers = True
-    assert classify_item("w", "78rpm", item(meta), rules).status == FLAG
+    rules.schedules_path = None
+    rules.writer_deaths = {}                      # nothing looked up yet: out of the app for now
+    r = classify_item("w", "78rpm", item(meta), rules)
+    assert r.status == FLAG and r.writers == ["Rodgers", "McMichen"]
+    assert "not confirmed died by" in r.reasons[0]
+    rules.writer_deaths = {"Rodgers": {"status": "dead", "died": 1933}, "McMichen": {"status": "dead", "died": 1970}}
+    assert classify_item("w", "78rpm", item(meta), rules).status == FLAG      # one died too recently
+    rules.writer_deaths["McMichen"] = {"status": "dead", "died": 1950}
+    assert classify_item("w", "78rpm", item(meta), rules).status == INCLUDE   # both died 70+ years ago
+    rules.writer_deaths = {}
     rules.overrides = {"approved_writers": ["Rodgers", "mcmichen"]}
-    assert classify_item("w", "78rpm", item(meta), rules).status == INCLUDE
+    assert classify_item("w", "78rpm", item(meta), rules).status == INCLUDE   # approved by hand
 
 
 def test_traditional_writer_not_flagged():
@@ -250,3 +257,157 @@ def test_us_claimed_recordings_excluded_unless_us_public_domain():
     assert classify_item("s", "78rpm", item(dict(meta, date="1922")), rules).status == INCLUDE
     # same title, different performer: kept
     assert classify_item("t", "78rpm", item(dict(meta, creator="Other Fiddler")), rules).status == INCLUDE
+
+
+def lp(ident, title, genres, creator="Various", description="Tracklist: 1. A  2. B", date="1962"):
+    return classify_item(ident, "other",
+                         item({"identifier": ident, "title": title, "creator": creator,
+                               "genre": genres, "date": date, "description": description,
+                               "collection": ["album_recordings", "audio_music"]}), RULES)
+
+
+def test_non_western_classical_is_traditional():
+    r = lp("lp_raga-todi", "Raga Todi / Mishra Thumri",
+           ["Classical", "Folk, World, & Country", "Indian Classical"], creator="Bismillah Khan")
+    assert r.status == INCLUDE, r.reasons
+    r = lp("lp_hundred-feet", "Hundred Feet Above The Pole - Chinese Classical Music",
+           ["Classical", "Folk, World, & Country"])
+    assert r.status == INCLUDE, r.reasons
+    r = lp("lp_nagauta", "Nagauta Music And Arrangements From Older Classics",
+           ["Classical", "Folk, World, & Country"], creator="The Azuma Kabuki Musicians")
+    assert r.status == INCLUDE, r.reasons
+    r = lp("lp_dragon-robe", "Beating The Dragon Robe, A Traditional Peking Opera",
+           ["Folk, World, & Country", "Opera", "Chinese Classical"])
+    assert r.status == INCLUDE, r.reasons
+
+
+def test_western_forms_and_early_music_keep_classical_flag():
+    r = lp("lp_chinese-violin", "The Chinese Violin",
+           ["Classical", "Folk, World, & Country", "Chinese Classical"],
+           description="Tracklist: 1. Butterfly Lovers (A Violin Concerto): First Movement")
+    assert r.status == FLAG
+    r = lp("lp_andalusia", "Medieval Courtly Monody - Arabian Andalusia",
+           ["Classical", "Folk, World, & Country", "Medieval", "Andalusian Classical"])
+    assert r.status == FLAG and "medieval" in r.reasons[0]
+    r = lp("lp_bartok", "44 Violin Duets", ["Classical", "Folk, World, & Country", "Folk"])
+    assert r.status == FLAG
+
+
+def test_umbrella_genre_with_pop_tags_is_excluded():
+    r = lp("lp_holiday-in-japan", "Holiday In Japan",
+           ["Pop", "Folk, World, & Country", "Easy Listening"],
+           creator="Ricardo Santos And His Orchestra", date="1957")
+    assert r.status == EXCLUDE and "Folk, World, & Country" in r.reasons[0]
+    r = lp("lp_east-of-india", "East Of India: Exotic Melodies",
+           ["Folk, World, & Country", "Stage & Screen"], date="1959")
+    assert r.status == EXCLUDE
+    # a real folk tag alongside keeps it in review
+    r = lp("lp_mantovani", "Folk Songs Around The World",
+           ["Jazz", "Folk, World, & Country", "Folk", "Easy Listening"], date="1964")
+    assert r.status == FLAG
+
+
+def test_victor_ethnic_disc_popular_music_tag_ignored():
+    r = classify_item("loc-jukebox-20824-loussine-ga", "78rpm",
+                      item({"identifier": "loc-jukebox-20824-loussine-ga", "title": "Loussine ga",
+                            "date": "1916-12-08", "collection": ["78rpm", "audio_music"],
+                            "subject": ["ethnic music", "vocal", "victor", "armenian",
+                                        "popular music", "78rpm"]}), RULES)
+    assert r.status == INCLUDE, r.reasons
+    assert r.region == "Middle East & Caucasus"
+
+
+def test_vintagesense_series_excluded():
+    r = classify_item("www.VintageSense.com-Vintage-Indian-Music-80n", "78rpm",
+                      item({"identifier": "www.VintageSense.com-Vintage-Indian-Music-80n",
+                            "subject": "indian; folk; film; classical; hindi",
+                            "collection": ["78rpm", "audio_music"]}), RULES)
+    assert r.status == EXCLUDE and "VintageSense" in r.reasons[0]
+
+
+def test_central_asian_tracks_are_not_african_despite_bad_language_tag():
+    files = [mp3("01.mp3", title="Amu (Tajik Folk Song)"), mp3("02.mp3", title="Lezginka (Daghestan Dance)"),
+             mp3("03.mp3", title="Dombara (Kazakh Folk Song)")]
+    r = classify_item("x", "other", item({"title": "Folk Music Of The S.S.R. Middle East",
+                                          "subject": ["Folk"], "date": "1956",
+                                          "language": ["eng", "uzb", "hau"]}, files), RULES)
+    regions = {t.title: t.region for t in r.tracks}
+    assert regions["Amu (Tajik Folk Song)"] == "Central Asia"
+    assert regions["Dombara (Kazakh Folk Song)"] == "Central Asia"
+    assert regions["Lezginka (Daghestan Dance)"] == "Middle East & Caucasus"
+    assert {t.genre for t in r.tracks} == {"asia"}
+
+
+def test_indian_music_has_its_own_genre():
+    r = classify_item("x", "78rpm", item({"subject": ["Folk", "Hindustani"], "title": "Raga Bhairavi"}), RULES)
+    assert r.genre == "southasia"
+    r = classify_item("x", "78rpm", item({"subject": ["Folk"], "language": "hin"}), RULES)
+    assert r.genre == "southasia" and r.region == "South Asia"
+
+
+def test_russian_is_european_and_siberian_is_asian():
+    r = classify_item("x", "78rpm", item({"subject": ["Folk"], "title": "Don Cossack Song"}), RULES)
+    assert (r.region, r.genre) == ("Central & Eastern Europe", "european")
+    r = classify_item("x", "78rpm", item({"subject": ["Folk"], "title": "Russian Folk Song"}), RULES)
+    assert r.genre == "european"
+    r = classify_item("x", "other", item({"subject": ["Folk"], "title": "Tuvan Throat Singing", "date": "1960"}), RULES)
+    assert (r.region, r.genre) == ("Central Asia", "asia")
+    r = classify_item("x", "other", item({"subject": ["Folk"], "title": "Chukchi Songs", "date": "1960"}), RULES)
+    assert r.status == FLAG
+
+
+def test_source_level_subjects_bring_in_bolivian_78s():
+    from oldfolk_builder.cli import with_subjects
+    data = item({"subject": ["78rpm", "bolivia"], "title": "Chayanteña", "date": "1917"})
+    assert classify_item("x", "78rpm", data, RULES).status == EXCLUDE
+    r = classify_item("x", "78rpm", with_subjects(data, ["folk music", "bolivian"]), RULES)
+    assert r.status == INCLUDE and r.genre == "latin" and r.region == "Latin America"
+
+
+GD_TAGS = ["the grateful dead", "psychedelic rock", "acid rock", "folk", "blues rock", "blues", "usa",
+           "country", "country rock", "vinyl rip"]
+
+
+def test_rock_styles_are_not_folk():
+    r = classify_item("x", "other", item({"subject": GD_TAGS, "title": "Aoxomoxoa", "date": "1969"}), RULES)
+    assert r.status != INCLUDE
+
+
+def test_user_rip_collections_excluded():
+    r = classify_item("x", "other", item({"subject": ["folk"], "date": "1969",
+                                          "collection": ["hifidelity_potpourri", "hifidelity"]}), RULES)
+    assert r.status == EXCLUDE and "collection" in r.reasons[0]
+
+
+def test_claimed_songs_on_an_album_are_dropped(tmp_path):
+    import json
+    from dataclasses import replace
+    p = tmp_path / "sched.jsonl"
+    p.write_text(json.dumps({"title": ["St. Stephen"], "artist": ["Grateful Dead"],
+                             "rights_owner": ["Warner Records Inc."]}) + "\n")
+    rules = replace(RULES, schedules=None, schedules_path=p, exclude_us_claimed=True)
+    files = [mp3("a1.mp3", title="St. Stephen", creator="Grateful Dead"),
+             mp3("a2.mp3", title="Old Song", creator="Grateful Dead")]
+    r = classify_item("x", "other", item({"subject": ["folk"], "title": "An Album", "date": "1960",
+                                          "creator": "Grateful Dead"}, files), rules)
+    assert [t.title for t in r.tracks] == ["Old Song"]
+    assert r.status == FLAG and "claimed" in r.reasons[-1]
+    only = classify_item("x", "other", item({"subject": ["folk"], "title": "An Album", "date": "1960",
+                                             "creator": "Grateful Dead"}, files[:1]), rules)
+    assert only.status == EXCLUDE
+
+
+def test_availability_matching_and_filter(tmp_path):
+    import json
+    from oldfolk_builder import availability as av
+    from oldfolk_builder.cli import apply_availability
+    hit = {"trackName": "Good Old Fashioned Love", "artistName": "Wynn Stewart"}
+    assert av.is_match("Good Old Fashioned Love", "Wynn Stewart", hit)
+    assert not av.is_match("Good Old Fashioned Love", "Various", hit)          # title alone is too weak
+    assert not av.is_match("Old Love", "Wynn Stewart", {"trackName": "Love Me Do", "artistName": "Wynn Stewart"})
+    files = [mp3("a.mp3", title="Good Old Fashioned Love"), mp3("b.mp3", title="Other")]
+    r = classify_item("x", "other", item({"subject": ["folk"], "date": "1960", "creator": "Wynn Stewart"}, files), RULES)
+    p = tmp_path / "availability.jsonl"
+    p.write_text(json.dumps({"k": "x/a.mp3", "found": True}) + "\n" + json.dumps({"k": "x/b.mp3", "found": False}) + "\n")
+    assert apply_availability([r], p) == 1
+    assert [t.file for t in r.tracks] == ["b.mp3"]
