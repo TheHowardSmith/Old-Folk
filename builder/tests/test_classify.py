@@ -412,3 +412,17 @@ def test_availability_matching_and_filter(tmp_path):
     p.write_text(json.dumps({"k": "x/a.mp3", "found": True}) + "\n" + json.dumps({"k": "x/b.mp3", "found": False}) + "\n")
     assert apply_availability([r], p) == 1
     assert [t.file for t in r.tracks] == ["b.mp3"]
+
+
+def test_jewish_recordings_move_out_of_place_based_genres():
+    from oldfolk_builder.classify import is_jewish
+    assert is_jewish("Songs Of Israel")
+    assert is_jewish("Favorite Yiddish Songs")
+    assert is_jewish("Nigun Rikud")
+    assert is_jewish("Shuvi Nafshi", "Cantor Leibele Waldman")
+    assert is_jewish("Finjan", 'Yaffa Yarkoni, "Kol Israel" Orch.')
+    # place or surname alone is not enough
+    assert not is_jewish("Recitation from Firdausi's Shahname", "Ishak Ramani and Israel Kashi")
+    assert not is_jewish("Degirmenci", "Victoria Hazan")
+    assert not is_jewish("Donde Estan Los Carboneros", "Coros Cantores de Madrid")
+    assert not is_jewish("Hora Staccato")

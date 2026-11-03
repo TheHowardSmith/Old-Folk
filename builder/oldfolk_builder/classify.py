@@ -225,6 +225,27 @@ def clean_title(title: str) -> str:
     return title
 
 
+# Jewish recordings are often tagged only by place (Israel, Palestine, Eastern
+# Europe), which would file them under Asian & Middle Eastern or European. These
+# words in the title, description or subjects move them to Klezmer & Jewish.
+JEWISH_TEXT = re.compile(
+    r"\b(jewish|yiddish(e)?|hebrew|klezmer|cantor(s|ial)?|chazz?an(ut|im)?|hazzan(ut|im)?|"
+    r"c?hass?idi?(c|m)?|chassidim|hasidim|synagogue|sephardi(c|m)?|ladino|kol nidre|"
+    r"niguni?m?|nign|lubavitch(er)?|rebbe|shabb?(at|os|es)|israeli?|palestine dances?|"
+    r"yemenite|bukharian)\b", re.I)
+# Performer credits are only trusted for unambiguous ensemble names: a person
+# can be called Israel (e.g. Israel Kashi, a Persian singer) or Hazan (a
+# common surname, e.g. Victoria Hazan, who sang Turkish songs).
+JEWISH_PERFORMER = re.compile(
+    r"\b(cantor|chazz?an|hazzan|chassidim|hasidim|kol israel|voice of israel|"
+    r"israel(i)? (folk |philharmonic |symphony )?(orch|ensemble|choir|singers))\b", re.I)
+JEWISH_MOVABLE = ("asia", "world", "european")
+
+
+def is_jewish(text: str, performer: str = "") -> bool:
+    return bool(JEWISH_TEXT.search(text or "") or JEWISH_PERFORMER.search(performer or ""))
+
+
 def specific_genre(tags: set[str], kind: str, rules: Rules) -> str | None:
     for genre, genre_tags in rules.genre_tags.items():
         for tag in tags & genre_tags:
@@ -419,6 +440,8 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     # untagged discs with "polka" in the title.
     if genre in ("european", "world", "american") and re.search(r"\bpolka\b", title, re.I):
         genre = "polka"
+    if genre in JEWISH_MOVABLE and is_jewish(" ".join([title, desc, " ".join(sorted(tags))]), artist or ""):
+        genre = "jewish"
     res.genre, res.region = genre, region
     various = (artist or "").strip().lower() in ("various", "various artists")
     picture = pick_image(ident, files)
@@ -448,6 +471,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
                 t_region = "Various"
             if genre_from_region:
                 t_genre = rules.region_genre.get(t_region, "world")
+            # Mixed compilations: one track can be Jewish ("Hora - Israel").
+            if t_genre in JEWISH_MOVABLE and is_jewish(t_title, c.artist or ""):
+                t_genre = "jewish"
         res.tracks.append(Track(
             id=ident, file=c.name, title=t_title,
             artist=(c.artist or artist),
