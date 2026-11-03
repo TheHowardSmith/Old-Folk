@@ -412,3 +412,38 @@ def test_availability_matching_and_filter(tmp_path):
     p.write_text(json.dumps({"k": "x/a.mp3", "found": True}) + "\n" + json.dumps({"k": "x/b.mp3", "found": False}) + "\n")
     assert apply_availability([r], p) == 1
     assert [t.file for t in r.tracks] == ["b.mp3"]
+
+
+def test_jewish_recordings_move_out_of_place_based_genres():
+    from oldfolk_builder.classify import is_jewish
+    assert is_jewish("Songs Of Israel")
+    assert is_jewish("Favorite Yiddish Songs")
+    assert is_jewish("Nigun Rikud")
+    assert is_jewish("Shuvi Nafshi", "Cantor Leibele Waldman")
+    assert is_jewish("Finjan", 'Yaffa Yarkoni, "Kol Israel" Orch.')
+    # place or surname alone is not enough
+    assert not is_jewish("Recitation from Firdausi's Shahname", "Ishak Ramani and Israel Kashi")
+    assert not is_jewish("Degirmenci", "Victoria Hazan")
+    assert not is_jewish("Donde Estan Los Carboneros", "Coros Cantores de Madrid")
+    assert not is_jewish("Hora Staccato")
+
+
+def test_user_uploads_after_1925_go_to_review():
+    r = classify_item("some-1970-lp-rip", "other",
+                      item({"subject": "folk", "date": "1970-06-10", "collection": "opensource_audio",
+                            "language": "Japanese"}), RULES)
+    assert r.status == FLAG and any("user upload" in x for x in r.reasons), r.reasons
+    old = classify_item("old-upload", "other",
+                        item({"subject": "folk", "date": "1912", "collection": "opensource_audio"}), RULES)
+    assert not any("user upload" in x for x in old.reasons), old.reasons
+
+
+def test_approved_upload_lifts_only_the_upload_hold():
+    from oldfolk_builder.config import load_rules
+    rules = load_rules()
+    rules.schedules_path = None
+    rules.writer_deaths = {}
+    rules.overrides = {"approved_uploads": ["home-tape-1965"]}
+    r = classify_item("home-tape-1965", "other",
+                      item({"subject": "folk", "date": "1965", "collection": "opensource_audio"}), rules)
+    assert not any("user upload" in x for x in r.reasons), r.reasons
