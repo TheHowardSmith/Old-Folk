@@ -185,16 +185,16 @@ a { color: var(--primary); }
   display: grid; place-items: center; color: var(--knob-ink); padding: 0;
   background: linear-gradient(180deg, var(--knob-hi), var(--knob-cap) 55%, var(--knob-lo));
   /* the edge shades softly into the face rather than a hard outline */
-  box-shadow: 0 2px 6px rgba(0,0,0,.26), 0 0 0 1px rgba(25, 14, 6, .14),
-              inset 0 0 7px 1px rgba(25, 14, 6, .45), inset 0 1px 0 rgba(255, 240, 215, .2);
+  box-shadow: 0 2px 5px rgba(0,0,0,.24), 0 0 0 1px rgba(25, 14, 6, .22),
+              inset 0 0 2px 1px rgba(25, 14, 6, .3), inset 0 1px 0 rgba(255, 240, 215, .2);
   transition: transform .08s;
 }
 .knob svg { width: 36px; height: 36px; }
 .knob.big {
   width: 96px; height: 96px; color: #3A2414;
   background: linear-gradient(180deg, #F5EDDC, #EADFC7 60%, #DDCDAC);
-  box-shadow: 0 2px 6px rgba(0,0,0,.26), 0 0 0 1px rgba(25, 14, 6, .14),
-              inset 0 0 6px 1px rgba(25, 14, 6, .3), inset 0 0 0 3px #B08A45, inset 0 0 8px 3px rgba(0,0,0,.12);
+  box-shadow: 0 2px 5px rgba(0,0,0,.24), 0 0 0 1px rgba(25, 14, 6, .22),
+              inset 0 0 0 3px #B08A45, inset 0 0 2px 4px rgba(0,0,0,.1);
 }
 .knob.big svg { width: 50px; height: 50px; }
 .knob:focus-visible, .chip:focus-visible, .tabs a:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
