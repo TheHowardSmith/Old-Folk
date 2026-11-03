@@ -1,5 +1,10 @@
 package nz.oldfolk.ui
 
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import nz.oldfolk.R
 import android.net.Uri
 
 import android.text.format.Formatter
@@ -163,21 +168,39 @@ fun AppFrame(
     val rc = LocalRadioColors.current
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(title, style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    if (showBack) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
-                },
-                actions = {
-                    if (showAboutButton) IconButton(onClick = onAbout) { Icon(Icons.Filled.Info, "About", tint = rc.brass) }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-            )
+            Column(Modifier.decoBand(rc.band, rc.bandLo, rc.bandLine)) {
+                TopAppBar(
+                    title = {
+                        if (title == "Old Folk Air") {
+                            Row(verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "Old Folk Air" }) {
+                                Image(painterResource(R.drawable.logo_roundel), null, Modifier.size(34.dp))
+                                Spacer(Modifier.width(10.dp))
+                                Icon(painterResource(R.drawable.logo_wordmark), null, Modifier.height(22.dp), tint = rc.onBand)
+                            }
+                        } else {
+                            Text(title, style = MaterialTheme.typography.titleLarge)
+                        }
+                    },
+                    navigationIcon = {
+                        if (showBack) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                    },
+                    actions = {
+                        if (showAboutButton) IconButton(onClick = onAbout) { Icon(Icons.Filled.Info, "About", tint = Color(0xFFE3C27A)) }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent, titleContentColor = rc.onBand,
+                        navigationIconContentColor = rc.onBand, actionIconContentColor = rc.onBand,
+                    ),
+                )
+                HorizontalDivider(thickness = 2.dp, color = Color(0xFFB08D4A))   // brass rule
+            }
         },
         bottomBar = {
             Column {
                 HorizontalDivider(thickness = 2.dp, color = Color(0xFFB08D4A))   // brass trim rail
-                NavigationBar(containerColor = rc.walnut, tonalElevation = 0.dp) {
+                NavigationBar(containerColor = Color.Transparent, tonalElevation = 0.dp,
+                    modifier = Modifier.decoBand(rc.band, rc.bandLo, rc.bandLine)) {
                     Tab.entries.forEach { t ->
                         NavigationBarItem(
                             selected = tab == t,
@@ -185,11 +208,11 @@ fun AppFrame(
                             icon = { Icon(t.icon, null) },
                             label = { Text(t.label) },
                             colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = rc.onWalnut.copy(alpha = 0.16f),
-                                selectedIconColor = rc.onWalnut,
-                                selectedTextColor = rc.onWalnut,
-                                unselectedIconColor = rc.onWalnut.copy(alpha = 0.62f),
-                                unselectedTextColor = rc.onWalnut.copy(alpha = 0.62f),
+                                indicatorColor = rc.onBand.copy(alpha = 0.16f),
+                                selectedIconColor = rc.onBand,
+                                selectedTextColor = rc.onBand,
+                                unselectedIconColor = rc.onBand.copy(alpha = 0.7f),
+                                unselectedTextColor = rc.onBand.copy(alpha = 0.7f),
                             ),
                         )
                     }
@@ -280,7 +303,7 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
     ) {
         TuningDial(year = track?.year, station = ui.station, playing = ui.isPlaying)
         Spacer(Modifier.height(16.dp))
-        AlbumArt(track?.artUrl, Modifier.size(224.dp))
+        AlbumArt(track?.artUrl, Modifier.size(268.dp))
         Spacer(Modifier.height(12.dp))
 
         // Now playing.
@@ -336,8 +359,7 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
         Box(
             Modifier.fillMaxWidth().height(116.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(rc.cloth)
-                .grille(rc.grille)
+                .voxCloth(rc.voxBase, rc.voxFawn, rc.voxMid, rc.voxHi)
                 .clothSetIn()
                 .border(1.dp, Color(0x66000000), RoundedCornerShape(8.dp)),
             contentAlignment = Alignment.Center,
