@@ -513,8 +513,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if not res.tracks:
         return exclude("no MP3 of usable length")
     if claimed_tracks:
-        # Some songs on the album are claimed: the label is active, so a person checks the rest.
-        flags.append(f"other tracks claimed in the US (pre-1972 schedules): {'; '.join(claimed_tracks[:3])}")
+        # Some songs on the album are claimed and dropped; the rest aren't, so they
+        # stay in, but the label is active, so they go on the check list.
+        res.checks.append(f"other tracks claimed in the US (pre-1972 schedules): {'; '.join(claimed_tracks[:3])}")
     if not indigenous and any(t.region == "Indigenous North America" for t in res.tracks):
         flags.append("Indigenous recording, check community protocols: region")
 

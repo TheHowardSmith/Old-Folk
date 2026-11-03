@@ -403,7 +403,7 @@ def test_claimed_songs_on_an_album_are_dropped(tmp_path):
     r = classify_item("x", "other", item({"subject": ["folk"], "title": "An Album", "date": "1960",
                                           "creator": "Grateful Dead"}, files), rules)
     assert [t.title for t in r.tracks] == ["Old Song"]
-    assert r.status == FLAG and "claimed" in r.reasons[-1]
+    assert r.status == INCLUDE and any("claimed" in c for c in r.checks)   # unclaimed songs kept, checked
     only = classify_item("x", "other", item({"subject": ["folk"], "title": "An Album", "date": "1960",
                                              "creator": "Grateful Dead"}, files[:1]), rules)
     assert only.status == EXCLUDE
