@@ -95,29 +95,24 @@ fun Modifier.voxCloth(base: Color, gold: Color, teal: Color, maroon: Color, tile
     }
 }
 
-/** Bakelite knob face: a finely ribbed edge and a domed cap; ivory with a brass ring for the main knob. */
+/** Smooth domed bakelite knob face (caramel); the main knob in ivory with a brass ring. */
 fun DrawScope.flutedKnob(primary: Boolean, rc: RadioColors) {
     val r = size.minDimension / 2
     val c = center
-    val flutes = 48
-    val (lo, hi) = if (primary) Color(0xFFE2D6BC) to Color(0xFFEBE2CE) else rc.knobFluteLo to rc.knobFluteHi
-    for (i in 0 until flutes) {
-        drawArc(if (i % 2 == 0) lo else hi, i * 360f / flutes, 360f / flutes, true)
-    }
-    drawCircle(Color.Black.copy(alpha = 0.4f), r, c, style = Stroke(1.dp.toPx()))
+    val (hi, mid, lo) = if (primary) Triple(Color(0xFFFBF4E4), Color(0xFFEDE1C8), Color(0xFFD6C4A0))
+        else Triple(rc.knobFluteHi, rc.knobCap, rc.knobFluteLo)
+    drawCircle(Brush.radialGradient(0f to hi, 0.62f to mid, 1f to lo, center = Offset(c.x, c.y - r * 0.2f), radius = r * 1.1f), r, c)
+    // a little shade at the lower edge, like a dome
+    drawCircle(Brush.verticalGradient(0.6f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.18f),
+        startY = c.y - r, endY = c.y + r), r, c)
     if (primary) {
-        drawCircle(Color.Black.copy(alpha = 0.2f), r * 0.8f, c)
-        drawCircle(Color(0xFFB08A45), r * 0.78f, c)
-        drawCircle(Color(0xFFF2E8D3), r * 0.74f, c)
-    } else {
-        drawCircle(Color.Black.copy(alpha = 0.3f), r * 0.8f, c)
-        drawCircle(rc.knobCap, r * 0.78f, c)
+        drawCircle(Color(0xFFB08A45), r - 1.5.dp.toPx(), c, style = Stroke(3.dp.toPx()))
+        drawCircle(Color.Black.copy(alpha = 0.2f), r - 3.5.dp.toPx(), c, style = Stroke(1.dp.toPx()))
     }
+    drawCircle(Color.Black.copy(alpha = 0.3f), r - 0.5.dp.toPx(), c, style = Stroke(1.dp.toPx()))
     drawCircle(
-        Brush.radialGradient(
-            listOf(Color.White.copy(alpha = if (primary) 0.35f else 0.16f), Color.Transparent),
-            center = Offset(c.x - r * 0.1f, c.y - r * 0.36f), radius = r,
-        ),
+        Brush.radialGradient(listOf(Color.White.copy(alpha = if (primary) 0.6f else 0.38f), Color.Transparent),
+            center = Offset(c.x - r * 0.16f, c.y - r * 0.4f), radius = r * 0.92f),
         r, c,
     )
 }

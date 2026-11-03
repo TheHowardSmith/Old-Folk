@@ -50,7 +50,7 @@ data class RadioColors(
     val voxGold: Color,
     val voxTeal: Color,
     val voxMaroon: Color,
-    val knobFluteHi: Color,   // fluted bakelite knobs
+    val knobFluteHi: Color,   // caramel bakelite knobs: highlight, edge, body
     val knobFluteLo: Color,
     val knobCap: Color,
 )
@@ -91,7 +91,7 @@ private val LightRadio = RadioColors(
     cloth = Color(0xFFE6D5B6),
     grille = Color(0x99C2AB84),
     knob = Color(0xFF6B4A30),           // brown bakelite
-    knobIcon = Color(0xFFF6EBD5),
+    knobIcon = Color(0xFFFFF6E4),
     ivory = Color(0xFFF2E8D3),
     walnut = Color(0xFF5A3A24),
     onWalnut = Color(0xFFF3E6CB),
@@ -99,8 +99,8 @@ private val LightRadio = RadioColors(
     woodHi = Color(0xFF8A5A33),
     wood = Color(0xFF6E4426),
     woodLo = Color(0xFF4E2E17),
-    band = Color(0xFFF1E3C8),           // light: cream band, oxblood lettering and pattern
-    bandLo = Color(0xFFEAD9B9),
+    band = Color(0xFFEFE0C3),           // light: cream band, oxblood lettering and pattern
+    bandLo = Color(0xFFEFE0C3),
     onBand = Color(0xFF5C1E16),
     bandLine = Color(0x295C1E16),
     bandAccent = Color(0xFF7A5A1E),
@@ -108,9 +108,9 @@ private val LightRadio = RadioColors(
     voxGold = Color(0x8CD6B676),
     voxTeal = Color(0x6B6EA896),
     voxMaroon = Color(0x80A84A46),
-    knobFluteHi = Color(0xFF6E4C31),
-    knobFluteLo = Color(0xFF523520),
-    knobCap = Color(0xFF5E3E25),
+    knobFluteHi = Color(0xFFC39466),
+    knobFluteLo = Color(0xFF7E5634),
+    knobCap = Color(0xFFA47750),
 )
 
 // Evening: dark walnut with the valves glowing amber.
@@ -149,7 +149,7 @@ private val DarkRadio = RadioColors(
     cloth = Color(0xFF33251A),
     grille = Color(0x26E8C98A),
     knob = Color(0xFF4E3624),
-    knobIcon = Color(0xFFF0E2C8),
+    knobIcon = Color(0xFFFFF4DE),
     ivory = Color(0xFFE6DAC0),
     walnut = Color(0xFF3B281A),
     onWalnut = Color(0xFFF0E2C8),
@@ -157,8 +157,8 @@ private val DarkRadio = RadioColors(
     woodHi = Color(0xFF6A4428),
     wood = Color(0xFF52331C),
     woodLo = Color(0xFF3A2312),
-    band = Color(0xFF3C130E),
-    bandLo = Color(0xFF2C0D09),
+    band = Color(0xFF36110C),
+    bandLo = Color(0xFF36110C),
     onBand = Color(0xFFF6E7C8),
     bandLine = Color(0x24E3C27A),
     bandAccent = Color(0xFFE3C27A),
@@ -166,9 +166,9 @@ private val DarkRadio = RadioColors(
     voxGold = Color(0x66D6B676),
     voxTeal = Color(0x4D6EA896),
     voxMaroon = Color(0x61A84A46),
-    knobFluteHi = Color(0xFF5A3E2A),
-    knobFluteLo = Color(0xFF3E2817),
-    knobCap = Color(0xFF4A301C),
+    knobFluteHi = Color(0xFFA87E56),
+    knobFluteLo = Color(0xFF64442A),
+    knobCap = Color(0xFF8A6242),
 )
 
 val LocalRadioColors = staticCompositionLocalOf { LightRadio }
