@@ -451,7 +451,9 @@ exclude_collections:
 
 # Collections anyone can upload to. Items in them dated after the US
 # public-domain year (or undated) go to review instead of straight in, since
-# some are rips of commercial records.
+# some are rips of commercial records. (Not the Internet Archive's own LP
+# digitisation, unlockedrecordings / recycledrecords: those lp_ items go
+# through the normal rules like the 78s.)
 review_collections:
   - opensource_audio
   - community
@@ -461,8 +463,6 @@ review_collections:
   - vinyl-archive
   - the-vinyl-box
   - roiocollection
-  - recycledrecords
-  - unlockedrecordings
   - emiliosunforgottenmusic
 
 # Indigenous / ceremonial restrictions. If any phrase appears in the
