@@ -44,7 +44,7 @@ We're happy to follow any conditions you set: attribution wording, which collect
 
 With thanks,
 [Your name]
-Old Folk Air · thehowardsmith@gmail.com
+Old Folk Air · info@oldfolkair.com
 
 ## Instituto Moreira Salles (Discografia Brasileira), in Portuguese
 
@@ -61,7 +61,7 @@ O aplicativo toca cada faixa diretamente dos servidores do IMS, credita o Instit
 Hoje, para encontrar as gravações em domínio público, precisaríamos percorrer o site página por página, cinco segundos entre cada uma, como pede o robots.txt. Isso levaria vários dias. Vocês poderiam nos enviar uma lista (CSV ou similar) das gravações em domínio público, com os links de áudio? Seria mais rápido para nós e mais leve para o site.
 
 Muito obrigado,
-[Seu nome] · thehowardsmith@gmail.com
+[Seu nome] · info@oldfolkair.com
 
 ## CREM-CNRS (Archives sonores du CNRS – Musée de l'Homme), in French
 
@@ -89,7 +89,7 @@ Nous suivrions bien sûr toutes les conditions que vous fixeriez : collections c
 
 Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
 
-[Votre nom] · Old Folk Air · thehowardsmith@gmail.com
+[Votre nom] · Old Folk Air · info@oldfolkair.com
 
 ## National Diet Library (Japan), Rekion: Japanese, with an English version
 
@@ -115,7 +115,7 @@ Have a native speaker check the Japanese.
 
 何卒よろしくお願い申し上げます。
 
-[お名前] · Old Folk Air · thehowardsmith@gmail.com
+[お名前] · Old Folk Air · info@oldfolkair.com
 
 *English version:*
 
@@ -130,7 +130,7 @@ Each recording would be credited to the National Diet Library with a link to its
 Could you tell us (1) whether the app may play the audio directly from your servers, and (2) if not, whether NDL could provide audio files or another form of access for out-of-copyright recordings? We are happy to register as a continuous user if required.
 
 With thanks,
-[Your name] · Old Folk Air · thehowardsmith@gmail.com
+[Your name] · Old Folk Air · info@oldfolkair.com
 
 ## Archive of Indian Music
 
@@ -153,7 +153,7 @@ Because your recordings are published on SoundCloud, whose terms don't allow an 
 Would you be open to this?
 
 Warm regards,
-[Your name] · Old Folk Air · thehowardsmith@gmail.com
+[Your name] · Old Folk Air · info@oldfolkair.com
 
 ## Max Hunter Collection (Springfield-Greene County Library, Missouri)
 
@@ -177,4 +177,4 @@ Your site asks that the recordings be used for educational and research purposes
 Would the library be happy for us to do this, and are there any conditions you'd like us to follow?
 
 With thanks,
-[Your name] · Old Folk Air · thehowardsmith@gmail.com
+[Your name] · Old Folk Air · info@oldfolkair.com

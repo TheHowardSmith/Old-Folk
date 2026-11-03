@@ -103,7 +103,7 @@ To build the app yourself: install Android Studio (or JDK 17 plus the Android SD
 
 The recordings are hosted by the **Internet Archive**, the **Library of Congress**, the **National Library of Finland**, the **Finnish Literature Society**, the **Instituto Moreira Salles** and the **Digital South Asia Library**, not by this project, and are **not covered by this repository's licenses**. Every track meets the [selection rules](#selection-rules) above: recorded or released in 1970 or earlier, not claimed in the US Copyright Office's pre-1972 schedules, not on sale or streaming in the stores we check (for recordings after 1925), and songs credited to a writer only when every writer died at least 70 years ago. Most of these recordings are old enough to be out of copyright, but some may still be protected in some countries, so the checks keep running and any recording is removed on request.
 
-Rights holders who want a recording removed from the list can email **thehowardsmith@gmail.com**, or open an issue on this repository. Removed items are added to `builder/overrides.yaml` so they never return.
+Rights holders who want a recording removed from the list can email **info@oldfolkair.com**, or open an issue on this repository. Removed items are added to `builder/overrides.yaml` so they never return.
 
 **Archives and libraries:** if you look after a collection of traditional or historical recordings and would like listeners to hear them through Old Folk Air, please get in touch at the same address. The app streams from your own servers, credits your institution on every track with a link back to your catalogue, and never copies or re-hosts your files.
 

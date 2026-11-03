@@ -747,7 +747,7 @@ private fun HistoryItem(t: Track, label: String?, saved: Boolean, kind: Int, onC
 
 // ====================================================================== about
 
-const val CONTACT_EMAIL = "thehowardsmith@gmail.com"
+const val CONTACT_EMAIL = "info@oldfolkair.com"
 
 data class AboutInfo(
     val listVersion: String,
