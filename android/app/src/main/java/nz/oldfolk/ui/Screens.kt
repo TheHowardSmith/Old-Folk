@@ -1,6 +1,7 @@
 package nz.oldfolk.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
@@ -178,7 +179,7 @@ fun AppFrame(
                         if (title == "Old Folk Air") {
                             Row(verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "Old Folk Air" }
-                                    .background(Color(0xFF16100C), CircleShape).border(1.dp, Color(0xFFB08A45), CircleShape)
+                                    .background(Color(0xFF3A2C22), CircleShape).border(1.dp, Color(0xFFB08A45), CircleShape)
                                     .padding(start = 3.dp, top = 3.dp, bottom = 3.dp, end = 14.dp)) {
                                 Image(painterResource(R.drawable.logo_roundel), null, Modifier.size(34.dp))
                                 Spacer(Modifier.width(10.dp))
@@ -210,7 +211,7 @@ fun AppFrame(
             Column {
                 HorizontalDivider(thickness = 2.dp, color = Color(0xFFB08D4A))   // brass trim rail
                 NavigationBar(containerColor = Color.Transparent, tonalElevation = 0.dp,
-                    modifier = Modifier.woodGrain(rc.woodHi, rc.wood, rc.woodLo)) {
+                    modifier = Modifier.background(Brush.verticalGradient(listOf(rc.woodHi, rc.wood)))) {
                     Tab.entries.forEach { t ->
                         NavigationBarItem(
                             selected = tab == t,
@@ -366,13 +367,11 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
 
         // Controls on a faint speaker grille.
         Spacer(Modifier.height(12.dp))
-        WoodCabinet(Modifier.fillMaxWidth()) {
         Box(
-            Modifier.fillMaxWidth().height(112.dp)
-                .clip(RoundedCornerShape(8.dp))
+            Modifier.fillMaxWidth().height(128.dp)
+                .clip(RoundedCornerShape(20.dp))
                 .voxCloth(rc.voxBase, rc.voxGold, rc.voxTeal, rc.voxMaroon)
-                .clothSetIn()
-                .border(1.dp, Color(0x66000000), RoundedCornerShape(8.dp)),
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp)),
             contentAlignment = Alignment.Center,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
@@ -384,7 +383,6 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
                 }
                 Knob(actions.onNext, "Next track", 66.dp) { Icon(Icons.Filled.SkipNext, null, Modifier.size(38.dp)) }
             }
-        }
         }
 
         if (track != null) {

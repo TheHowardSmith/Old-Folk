@@ -7,10 +7,10 @@
   --wood-hi: #7C5434; --wood: #6A4529; --wood-lo: #573722; --glass: #2A1B10; --glass-lo: #170E07;
   --cab-shadow: rgba(60, 32, 10, 0.45);
   /* light: cream bands with oxblood lettering and pattern; dark: oxblood bands with cream lettering */
-  --band: #EFE3CB; --band-2: #EFE3CB; --on-band: #3F2817; --band-line: rgba(63, 40, 23, 0.13); --band-rule: #B08A45;
+  --band: #EFE3CB; --band-2: #EFE3CB; --on-band: #3F2817; --band-line: rgba(63, 40, 23, 0.055); --band-rule: #B08A45;
   --band-soft: rgba(63, 40, 23, .8); --band-tint: rgba(63, 40, 23, .08); --band-edge: rgba(63, 40, 23, .3);
-  --logo-bg: #16100C;
-  --vox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='36'%3E%3Crect width='44' height='36' fill='%238E715C'/%3E%3Cpath d='M0 0.5H44M0 2.5H44M0 4.5H44M0 6.5H44M0 8.5H44M0 10.5H44M0 12.5H44M0 14.5H44M0 16.5H44M0 18.5H44M0 20.5H44M0 22.5H44M0 24.5H44M0 26.5H44M0 28.5H44M0 30.5H44M0 32.5H44M0 34.5H44M1.5 0V36M3.5 0V36M5.5 0V36M7.5 0V36M9.5 0V36M11.5 0V36M13.5 0V36M15.5 0V36M17.5 0V36M19.5 0V36M21.5 0V36M23.5 0V36M25.5 0V36M27.5 0V36M29.5 0V36M31.5 0V36M33.5 0V36M35.5 0V36M37.5 0V36M39.5 0V36M41.5 0V36M43.5 0V36' stroke='rgba(0,0,0,.05)' stroke-width='.7' fill='none'/%3E%3Cpath d='M-44 16.60L88 124.60M-44 -19.40L88 -127.40M-44 -19.40L88 88.60M-44 16.60L88 -91.40M-44 -55.40L88 52.60M-44 52.60L88 -55.40M-44 -91.40L88 16.60M-44 88.60L88 -19.40M-44 -127.40L88 -19.40M-44 124.60L88 16.60' stroke='rgba(236,214,160,.38)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 18.00L88 126.00M-44 -18.00L88 -126.00M-44 -18.00L88 90.00M-44 18.00L88 -90.00M-44 -54.00L88 54.00M-44 54.00L88 -54.00M-44 -90.00L88 18.00M-44 90.00L88 -18.00M-44 -126.00L88 -18.00M-44 126.00L88 18.00' stroke='rgba(150,196,180,.26)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 19.40L88 127.40M-44 -16.60L88 -124.60M-44 -16.60L88 91.40M-44 19.40L88 -88.60M-44 -52.60L88 55.40M-44 55.40L88 -52.60M-44 -88.60L88 19.40M-44 91.40L88 -16.60M-44 -124.60L88 -16.60M-44 127.40L88 19.40' stroke='rgba(176,96,90,.30)' stroke-width='.8' fill='none'/%3E%3C/svg%3E");
+  --logo-bg: #3A2C22;
+  --vox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='36'%3E%3Crect width='44' height='36' fill='%23DCCBAE'/%3E%3Cpath d='M0 0.5H44M0 2.5H44M0 4.5H44M0 6.5H44M0 8.5H44M0 10.5H44M0 12.5H44M0 14.5H44M0 16.5H44M0 18.5H44M0 20.5H44M0 22.5H44M0 24.5H44M0 26.5H44M0 28.5H44M0 30.5H44M0 32.5H44M0 34.5H44M1.5 0V36M3.5 0V36M5.5 0V36M7.5 0V36M9.5 0V36M11.5 0V36M13.5 0V36M15.5 0V36M17.5 0V36M19.5 0V36M21.5 0V36M23.5 0V36M25.5 0V36M27.5 0V36M29.5 0V36M31.5 0V36M33.5 0V36M35.5 0V36M37.5 0V36M39.5 0V36M41.5 0V36M43.5 0V36' stroke='rgba(90,60,30,.04)' stroke-width='.7' fill='none'/%3E%3Cpath d='M-44 16.60L88 124.60M-44 -19.40L88 -127.40M-44 -19.40L88 88.60M-44 16.60L88 -91.40M-44 -55.40L88 52.60M-44 52.60L88 -55.40M-44 -91.40L88 16.60M-44 88.60L88 -19.40M-44 -127.40L88 -19.40M-44 124.60L88 16.60' stroke='rgba(150,112,60,.22)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 18.00L88 126.00M-44 -18.00L88 -126.00M-44 -18.00L88 90.00M-44 18.00L88 -90.00M-44 -54.00L88 54.00M-44 54.00L88 -54.00M-44 -90.00L88 18.00M-44 90.00L88 -18.00M-44 -126.00L88 -18.00M-44 126.00L88 18.00' stroke='rgba(80,130,115,.14)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 19.40L88 127.40M-44 -16.60L88 -124.60M-44 -16.60L88 91.40M-44 19.40L88 -88.60M-44 -52.60L88 55.40M-44 55.40L88 -52.60M-44 -88.60L88 19.40M-44 91.40L88 -16.60M-44 -124.60L88 -16.60M-44 127.40L88 19.40' stroke='rgba(150,70,60,.16)' stroke-width='.8' fill='none'/%3E%3C/svg%3E");
   --slot: #3A2516; --fader: #E9DCC2; --fader-lo: #BCA57E;
   --knob-hi: #7A5536; --knob-lo: #5A3C25; --knob-cap: #6B4A30; --knob-ink: #F4ECDC;
 }
@@ -21,10 +21,10 @@
     --walnut: #4A3220; --walnut-2: #3A2616; --dial-ink: #F0DDB8; --ivory: #E6DAC0;
     --wood-hi: #5E3E26; --wood: #52361F; --wood-lo: #452C19; --glass: #1C120A; --glass-lo: #0E0804;
     --cab-shadow: rgba(0, 0, 0, 0.6);
-    --band: #3F2817; --band-2: #3F2817; --on-band: #F4ECDC; --band-line: rgba(176, 138, 69, 0.16);
-    --logo-bg: #16100C;
+    --band: #3F2817; --band-2: #3F2817; --on-band: #F4ECDC; --band-line: rgba(176, 138, 69, 0.075);
+    --logo-bg: #3A2C22;
     --band-soft: rgba(244, 236, 220, .78); --band-tint: rgba(244, 236, 220, .12); --band-edge: rgba(176, 138, 69, .5);
-    --vox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='36'%3E%3Crect width='44' height='36' fill='%2347302A'/%3E%3Cpath d='M0 0.5H44M0 2.5H44M0 4.5H44M0 6.5H44M0 8.5H44M0 10.5H44M0 12.5H44M0 14.5H44M0 16.5H44M0 18.5H44M0 20.5H44M0 22.5H44M0 24.5H44M0 26.5H44M0 28.5H44M0 30.5H44M0 32.5H44M0 34.5H44M1.5 0V36M3.5 0V36M5.5 0V36M7.5 0V36M9.5 0V36M11.5 0V36M13.5 0V36M15.5 0V36M17.5 0V36M19.5 0V36M21.5 0V36M23.5 0V36M25.5 0V36M27.5 0V36M29.5 0V36M31.5 0V36M33.5 0V36M35.5 0V36M37.5 0V36M39.5 0V36M41.5 0V36M43.5 0V36' stroke='rgba(0,0,0,.08)' stroke-width='.7' fill='none'/%3E%3Cpath d='M-44 16.60L88 124.60M-44 -19.40L88 -127.40M-44 -19.40L88 88.60M-44 16.60L88 -91.40M-44 -55.40L88 52.60M-44 52.60L88 -55.40M-44 -91.40L88 16.60M-44 88.60L88 -19.40M-44 -127.40L88 -19.40M-44 124.60L88 16.60' stroke='rgba(214,182,118,.24)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 18.00L88 126.00M-44 -18.00L88 -126.00M-44 -18.00L88 90.00M-44 18.00L88 -90.00M-44 -54.00L88 54.00M-44 54.00L88 -54.00M-44 -90.00L88 18.00M-44 90.00L88 -18.00M-44 -126.00L88 -18.00M-44 126.00L88 18.00' stroke='rgba(110,168,150,.17)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 19.40L88 127.40M-44 -16.60L88 -124.60M-44 -16.60L88 91.40M-44 19.40L88 -88.60M-44 -52.60L88 55.40M-44 55.40L88 -52.60M-44 -88.60L88 19.40M-44 91.40L88 -16.60M-44 -124.60L88 -16.60M-44 127.40L88 19.40' stroke='rgba(168,74,70,.22)' stroke-width='.8' fill='none'/%3E%3C/svg%3E");
+    --vox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='36'%3E%3Crect width='44' height='36' fill='%2333251A'/%3E%3Cpath d='M0 0.5H44M0 2.5H44M0 4.5H44M0 6.5H44M0 8.5H44M0 10.5H44M0 12.5H44M0 14.5H44M0 16.5H44M0 18.5H44M0 20.5H44M0 22.5H44M0 24.5H44M0 26.5H44M0 28.5H44M0 30.5H44M0 32.5H44M0 34.5H44M1.5 0V36M3.5 0V36M5.5 0V36M7.5 0V36M9.5 0V36M11.5 0V36M13.5 0V36M15.5 0V36M17.5 0V36M19.5 0V36M21.5 0V36M23.5 0V36M25.5 0V36M27.5 0V36M29.5 0V36M31.5 0V36M33.5 0V36M35.5 0V36M37.5 0V36M39.5 0V36M41.5 0V36M43.5 0V36' stroke='rgba(0,0,0,.08)' stroke-width='.7' fill='none'/%3E%3Cpath d='M-44 16.60L88 124.60M-44 -19.40L88 -127.40M-44 -19.40L88 88.60M-44 16.60L88 -91.40M-44 -55.40L88 52.60M-44 52.60L88 -55.40M-44 -91.40L88 16.60M-44 88.60L88 -19.40M-44 -127.40L88 -19.40M-44 124.60L88 16.60' stroke='rgba(214,182,118,.14)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 18.00L88 126.00M-44 -18.00L88 -126.00M-44 -18.00L88 90.00M-44 18.00L88 -90.00M-44 -54.00L88 54.00M-44 54.00L88 -54.00M-44 -90.00L88 18.00M-44 90.00L88 -18.00M-44 -126.00L88 -18.00M-44 126.00L88 18.00' stroke='rgba(110,168,150,.10)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 19.40L88 127.40M-44 -16.60L88 -124.60M-44 -16.60L88 91.40M-44 19.40L88 -88.60M-44 -52.60L88 55.40M-44 55.40L88 -52.60M-44 -88.60L88 19.40M-44 91.40L88 -16.60M-44 -124.60L88 -16.60M-44 127.40L88 19.40' stroke='rgba(168,74,70,.12)' stroke-width='.8' fill='none'/%3E%3C/svg%3E");
     --slot: #120B06; --fader: #D9CBB0; --fader-lo: #A08A64;
     --knob-hi: #DCCBAB; --knob-lo: #B8A27E; --knob-cap: #CDB896; --knob-ink: #3F2817;
   }
@@ -168,11 +168,13 @@ a { color: var(--primary); }
 
 /* Grille: Vox-style diamond cloth set into the cabinet */
 .grille-cab { width: 100%; max-width: 420px; }
+.ti { display: none; }
 .grille {
   display: flex; justify-content: center; align-items: center; gap: 24px;
-  padding: 12px; border-radius: 8px;
+  padding: 16px; border-radius: 20px;
   background: var(--vox) center / 44px 36px;
-  box-shadow: 0 0 0 1px rgba(0,0,0,.4), inset 0 3px 7px rgba(0,0,0,.32), inset 0 -1px 0 rgba(255,255,255,.10);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 4px rgba(0,0,0,.12);
 }
 
 /* Knobs: flat-faced caramel bakelite with a slight bevel; the play knob in ivory with a brass ring */
@@ -306,8 +308,20 @@ h3 { font-size: 19px; margin: 20px 0 8px; }
   .brand img { width: 30px; height: 30px; }
   .brand .wordmark { height: 19px; }
   .get-app { padding: 6px 10px; font-size: 13px; }
-  .tabs { order: 3; width: 100%; margin: 0; justify-content: space-between; }
-  .tabs a { flex: 1; text-align: center; padding: 7px 4px; }
+  /* tabs become a bottom bar with icons, as in the app */
+  .bar { flex-wrap: nowrap; }
+  .tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; margin: 0; padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    display: flex; justify-content: space-around; gap: 0; border: none; border-radius: 0;
+    background: linear-gradient(180deg, var(--wood-hi), var(--wood)); border-top: 2px solid var(--band-rule);
+  }
+  .tabs a { flex: 1; display: grid; justify-items: center; gap: 2px; padding: 4px 2px; font-size: 12px;
+    color: rgba(244, 236, 220, .72); background: none; box-shadow: none; border-radius: 0; }
+  .tabs a:hover { color: #F4ECDC; }
+  .tabs a[aria-current="page"] { background: none; box-shadow: none; color: #F4ECDC; }
+  .ti { display: block; width: 24px; height: 24px; padding: 3px 14px; box-sizing: content-box; border-radius: 999px; }
+  .tabs a[aria-current="page"] .ti { background: rgba(244, 236, 220, .16); }
+  body { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
   .get-app { margin-left: auto; }
   .grille { gap: 20px; padding: 10px 8px; }
   .knob { width: 64px; height: 64px; }
