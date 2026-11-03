@@ -191,10 +191,10 @@ fun ValveLamp(on: Boolean, modifier: Modifier = Modifier) {
 @Composable
 fun WoodCabinet(modifier: Modifier = Modifier, frame: Dp = 11.dp, content: @Composable () -> Unit) {
     val rc = LocalRadioColors.current
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(if (frame < 8.dp) 21.dp else 20.dp)
     Box(
         modifier
-            .shadow(6.dp, shape, ambientColor = Color(0xFF3C200A), spotColor = Color(0xFF3C200A))
+            .shadow(if (frame < 8.dp) 3.dp else 6.dp, shape, ambientColor = Color(0xFF3C200A), spotColor = Color(0xFF3C200A))
             .clip(shape)
             .woodGrain(rc.woodHi, rc.wood, rc.woodLo)
             .padding(frame),

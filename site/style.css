@@ -168,6 +168,8 @@ a { color: var(--primary); }
 
 /* Grille: Vox-style diamond cloth set into the cabinet */
 .grille-cab { width: 100%; max-width: 420px; }
+.cabinet.thin { padding: 6px; border-radius: 22px; }
+.cabinet.thin .grille { border-radius: 16px; border-color: rgba(0,0,0,.25); }
 .ti { display: none; }
 .grille {
   display: flex; justify-content: center; align-items: center; gap: 24px;
@@ -327,6 +329,7 @@ h3 { font-size: 19px; margin: 20px 0 8px; }
   .knob { width: 64px; height: 64px; }
   .knob.big { width: 92px; height: 92px; }
   .cabinet { padding: 11px; border-radius: 17px; }
+  .cabinet.thin { padding: 5px; border-radius: 20px; }
   .dial { padding: 10px 14px 28px; }
   .scale { margin-top: 24px; }
   .scale span { font-size: 10.5px; }

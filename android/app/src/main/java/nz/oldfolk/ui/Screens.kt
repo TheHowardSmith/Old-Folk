@@ -367,11 +367,12 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
 
         // Controls on a faint speaker grille.
         Spacer(Modifier.height(12.dp))
+        WoodCabinet(Modifier.fillMaxWidth(), frame = 5.dp) {
         Box(
-            Modifier.fillMaxWidth().height(128.dp)
-                .clip(RoundedCornerShape(20.dp))
+            Modifier.fillMaxWidth().height(124.dp)
+                .clip(RoundedCornerShape(16.dp))
                 .voxCloth(rc.voxBase, rc.voxGold, rc.voxTeal, rc.voxMaroon)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp)),
+                .border(1.dp, Color(0x40000000), RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
@@ -383,6 +384,7 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
                 }
                 Knob(actions.onNext, "Next track", 66.dp) { Icon(Icons.Filled.SkipNext, null, Modifier.size(38.dp)) }
             }
+        }
         }
 
         if (track != null) {
