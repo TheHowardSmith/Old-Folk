@@ -168,6 +168,12 @@ jobs:
           done
           gh release edit tracklist --notes "Track list data for the Old Folk Air app (CC0). Version $(jq .v index.json), $(jq .n index.json) tracks, mode: ${{ inputs.mode }}."
 
+      - name: Refresh the website's copy of the list
+        if: steps.build.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main || echo "::notice::Website refresh not started"
+
       - name: Summary
         if: steps.build.outputs.skip != 'true'
         run: cat ../dist/report.md | head -80 >> "$GITHUB_STEP_SUMMARY"

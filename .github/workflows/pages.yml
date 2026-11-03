@@ -1,15 +1,15 @@
 name: Website
 
-# Publishes site/ to GitHub Pages (and the custom domain set in
-# Settings -> Pages). The app screenshots are copied in from the Paparazzi
-# snapshots at build time, so the site always shows the current app.
+# Publishes site/ (the web radio at oldfolkair.com) to GitHub Pages. The
+# current track list is copied in from the `tracklist` release at deploy time
+# (browsers can't read release downloads directly), so this runs again after
+# each track-list build.
 
 on:
   push:
     branches: [main]
     paths:
       - "site/**"
-      - "android/app/src/test/snapshots/images/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -30,14 +30,13 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Add app screenshots
+      - name: Add the current track list
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          S=android/app/src/test/snapshots/images
-          mkdir -p site/img
-          cp "$S/nz.oldfolk.ui_ScreenshotTest_radioPlayingLight.png" site/img/radio-light.png
-          cp "$S/nz.oldfolk.ui_ScreenshotTest_radioPlayingDark.png" site/img/radio-dark.png
-          cp "$S/nz.oldfolk.ui_ScreenshotTest_historyLight.png" site/img/history.png
-          cp "$S/nz.oldfolk.ui_ScreenshotTest_genresDark.png" site/img/genres.png
+          mkdir -p site/data
+          gh release download tracklist -p 'index.json' -p 's-*.json' -p 'x-*.json' -D site/data
+          ls site/data | wc -l
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
