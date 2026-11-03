@@ -1,5 +1,7 @@
 # Website (oldfolkair.com)
 
+Live at https://oldfolkair.com (GitHub Pages, DNS at Cloudflare with the proxy off, HTTPS by GitHub).
+
 A single static page, published to GitHub Pages by `.github/workflows/pages.yml`
 whenever `site/` (or the app screenshots) change on `main`. The screenshots in
 `img/` are copied from the app's Paparazzi snapshots at build time.
