@@ -102,21 +102,30 @@ def test_compilation_and_later_year_flagged():
     assert "1994" in joined and "compilation" in joined
 
 
-def test_writer_credit_needs_confirmed_old_deaths():
-    meta = {"genre": "Hillbilly", "description": "<p><b>Writer:</b> Rodgers; McMichen</p>"}
+def test_writer_rule_keeps_unless_a_late_death_is_confirmed():
+    meta = {"genre": "Hillbilly", "description": "<p><b>Writer:</b> Jimmie Rodgers; Clayton McMichen</p>"}
     rules = load_rules()
     rules.schedules_path = None
-    rules.writer_deaths = {}                      # nothing looked up yet: out of the app for now
+    rules.writer_deaths = {}                      # nothing known: kept, on the check list
     r = classify_item("w", "78rpm", item(meta), rules)
-    assert r.status == FLAG and r.writers == ["Rodgers", "McMichen"]
-    assert "not confirmed died by" in r.reasons[0]
-    rules.writer_deaths = {"Rodgers": {"status": "dead", "died": 1933}, "McMichen": {"status": "dead", "died": 1970}}
-    assert classify_item("w", "78rpm", item(meta), rules).status == FLAG      # one died too recently
-    rules.writer_deaths["McMichen"] = {"status": "dead", "died": 1950}
-    assert classify_item("w", "78rpm", item(meta), rules).status == INCLUDE   # both died 70+ years ago
+    assert r.status == INCLUDE and r.writers == ["Jimmie Rodgers", "Clayton McMichen"]
+    assert any("not confirmed" in c for c in r.checks)
+    rules.writer_deaths = {"Jimmie Rodgers": {"status": "dead", "died": 1933},
+                           "Clayton McMichen": {"status": "dead", "died": 1970}}
+    r = classify_item("w", "78rpm", item(meta), rules)
+    assert r.status == EXCLUDE and "McMichen (d. 1970)" in r.reasons[0]       # confirmed too recent
+    rules.writer_deaths["Clayton McMichen"] = {"status": "dead", "died": 1950}
+    r = classify_item("w", "78rpm", item(meta), rules)
+    assert r.status == INCLUDE and not r.checks                               # both died 70+ years ago
+    # A surname or initial alone isn't trusted to be the same person: kept and checked.
+    short = {"genre": "Polka", "description": "<p><b>Writer:</b> F. Wojnarowski</p>"}
+    rules.writer_deaths = {"F. Wojnarowski": {"status": "dead", "died": 1973}}
+    r = classify_item("p", "78rpm", item(short), rules)
+    assert r.status == INCLUDE and r.checks
     rules.writer_deaths = {}
-    rules.overrides = {"approved_writers": ["Rodgers", "mcmichen"]}
-    assert classify_item("w", "78rpm", item(meta), rules).status == INCLUDE   # approved by hand
+    rules.overrides = {"approved_writers": ["jimmie rodgers", "Clayton McMichen"]}
+    r = classify_item("w", "78rpm", item(meta), rules)
+    assert r.status == INCLUDE and not r.checks                               # approved by hand
 
 
 def test_traditional_writer_not_flagged():
@@ -374,10 +383,12 @@ def test_rock_styles_are_not_folk():
     assert r.status != INCLUDE
 
 
-def test_user_rip_collections_excluded():
+def test_user_rips_are_kept_but_checked_and_tv_excluded():
     r = classify_item("x", "other", item({"subject": ["folk"], "date": "1969",
                                           "collection": ["hifidelity_potpourri", "hifidelity"]}), RULES)
-    assert r.status == EXCLUDE and "collection" in r.reasons[0]
+    assert r.status == INCLUDE and any("hifidelity" in c for c in r.checks), (r.reasons, r.checks)
+    tv = classify_item("tv", "other", item({"subject": ["folk"], "date": "1966", "collection": ["television"]}), RULES)
+    assert tv.status == EXCLUDE and "collection" in tv.reasons[0]
 
 
 def test_claimed_songs_on_an_album_are_dropped(tmp_path):
@@ -428,14 +439,14 @@ def test_jewish_recordings_move_out_of_place_based_genres():
     assert not is_jewish("Hora Staccato")
 
 
-def test_user_uploads_after_1925_go_to_review():
+def test_user_uploads_after_1925_are_kept_and_checked():
     r = classify_item("some-1970-lp-rip", "other",
                       item({"subject": "folk", "date": "1970-06-10", "collection": "opensource_audio",
                             "language": "Japanese"}), RULES)
-    assert r.status == FLAG and any("user upload" in x for x in r.reasons), r.reasons
+    assert r.status == INCLUDE and any("user upload" in x for x in r.checks), (r.reasons, r.checks)
     old = classify_item("old-upload", "other",
                         item({"subject": "folk", "date": "1912", "collection": "opensource_audio"}), RULES)
-    assert not any("user upload" in x for x in old.reasons), old.reasons
+    assert not old.checks, old.checks
 
 
 def test_approved_upload_lifts_only_the_upload_hold():
@@ -446,4 +457,4 @@ def test_approved_upload_lifts_only_the_upload_hold():
     rules.overrides = {"approved_uploads": ["home-tape-1965"]}
     r = classify_item("home-tape-1965", "other",
                       item({"subject": "folk", "date": "1965", "collection": "opensource_audio"}), rules)
-    assert not any("user upload" in x for x in r.reasons), r.reasons
+    assert not any("user upload" in x for x in r.reasons + r.checks), (r.reasons, r.checks)

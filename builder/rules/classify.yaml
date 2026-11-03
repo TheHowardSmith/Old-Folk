@@ -438,23 +438,26 @@ exclude_collections:
   - radioprograms
   - radioshowarchive
   - auprofiles
-  # Users' own vinyl/cassette rips of commercial albums (no archive behind them;
-  # some with deliberately scrambled identifiers), and TV uploads.
-  - hifidelity
-  - hifidelity_potpourri
-  - phils-vinyl-addiction-albums
-  - cratediggers
-  - cassettetapes
+  # TV uploads. (Users' vinyl/cassette rips are kept and checked instead: see
+  # review_collections.)
   - television
   - classic_tv
   - classic_tv_1960s
 
 # Collections anyone can upload to. Items in them dated after the US
-# public-domain year (or undated) go to review instead of straight in, since
-# some are rips of commercial records. (Not the Internet Archive's own LP
+# public-domain year (or undated) stay in but go on the check list (checks.csv),
+# since some are rips of commercial records; confirmed ones are excluded in
+# overrides.yaml. (Not the Internet Archive's own LP
 # digitisation, unlockedrecordings / recycledrecords: those lp_ items go
 # through the normal rules like the 78s.)
 review_collections:
+  # Users' own vinyl/cassette rips of commercial albums (some with deliberately
+  # scrambled identifiers): kept, but on the check list.
+  - hifidelity
+  - hifidelity_potpourri
+  - phils-vinyl-addiction-albums
+  - cratediggers
+  - cassettetapes
   - opensource_audio
   - community
   - folksoundomy
