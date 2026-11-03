@@ -29,6 +29,7 @@
 </header>
 
 <main class="wrap">
+  <div class="deck">
   <!-- Radio -->
   <section id="tab-radio" class="tab" aria-label="Radio">
     <div class="dial" aria-hidden="true">
@@ -95,12 +96,19 @@
   <section id="tab-history" class="tab" aria-label="History" hidden>
     <h2>History</h2>
     <p class="intro">Everything you've heard in this browser, newest first, and what's coming up. Tap a track to play it.</p>
-    <h3>Up next</h3>
-    <ol class="tracks" id="upnext"></ol>
-    <h3>Played</h3>
-    <ol class="tracks" id="played"></ol>
-    <button class="chip" id="history-clear">Clear history</button>
+    <div class="hist-cols">
+      <div>
+        <h3>Up next</h3>
+        <ol class="tracks scroll" id="upnext"></ol>
+      </div>
+      <div>
+        <h3>Played</h3>
+        <ol class="tracks scroll" id="played"></ol>
+        <button class="chip" id="history-clear">Clear history</button>
+      </div>
+    </div>
   </section>
+  </div>
 
   <!-- About -->
   <section id="tab-about" class="tab about" aria-label="About" hidden>
@@ -114,6 +122,13 @@
       </div>
       <a class="btn" href="https://github.com/TheHowardSmith/Old-Folk/releases/latest/download/old-folk-air.apk">Download for Android</a>
       <p class="small">Android 8 or newer. Open this page on your phone, tap Download, then open the file; Android may ask you to allow installs from your browser.</p>
+    </div>
+
+    <div class="card">
+      <h3>Sound</h3>
+      <p>Every recording is measured as it loads and played at the same loudness, sudden pops are smoothed, and transfers with sound on only one channel play on both speakers.</p>
+      <label class="switch"><input type="checkbox" id="skip-noisy" checked> Skip very noisy recordings</label>
+      <p class="small">Checks each disc for heavy surface noise and skips it on the radio (tracks you pick from History always play). <span id="noisy-count"></span></p>
     </div>
 
     <div class="card">
@@ -155,9 +170,10 @@
   </section>
 </main>
 
-<audio id="audio" preload="auto"></audio>
-<audio id="preload" preload="auto" muted></audio>
+<audio id="audio" preload="auto" crossorigin="anonymous"></audio>
+<audio id="plain" preload="auto"></audio>
 <noscript><p class="wrap">The radio needs JavaScript. You can still <a href="https://github.com/TheHowardSmith/Old-Folk/releases/latest/download/old-folk-air.apk">get the Android app</a>.</p></noscript>
+<script src="sound.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
