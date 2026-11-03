@@ -3,8 +3,11 @@
  * Loads the published track list (copied into data/ when the site is
  * deployed), picks random tracks from the selected genres without repeating
  * any until all have been heard, and plays each one straight from the archive
- * that holds it. Only the next track is fetched ahead, to keep the load on the
- * archives light. Preferences and history live in this browser's localStorage.
+ * that holds it. Only the next track is fetched ahead (downloaded once, then
+ * played from that download), to keep the load on the archives light. Tracks
+ * are levelled, one-sided transfers play on both speakers, pops are limited and
+ * very noisy discs are skipped (sound.js). Preferences and history live in this
+ * browser's localStorage.
  */
 (() => {
   "use strict";
@@ -65,8 +68,19 @@
   const back = [];                                         // this session's previous tracks
   let errors = 0;
 
+  // Two players: `audio` goes through the sound graph (levelling, one-sided fix,
+  // limiter) and plays archives that allow cross-site audio (archive.org,
+  // loc.gov); `plain` plays the others untouched.
   const audio = $("audio");
-  const preload = $("preload");
+  const plain = $("plain");
+  let player = audio;
+  let graph = null;                                        // created on the first play (needs a click)
+  let skipNoisy = store.get("skipNoisy", true);
+  const CORS_HOSTS = ["archive.org", "loc.gov"];
+  const canProcess = (t) => { try { const h = new URL(streamUrl(t)).host; return CORS_HOSTS.some((d) => h === d || h.endsWith("." + d)); } catch { return false; } };
+  const ready = new Map();                                 // key -> {url, gainDb, side, noisy}
+  const pending = new Map();                               // key -> Promise
+  const MAX_HOLD = 40e6, HEAD_BYTES = 1600000;             // hold files up to 40 MB; measure the first 1.6 MB
 
   const inSelection = (t) => selected.size === 0 || selected.has(t.g);
   const status = (msg) => { $("status").textContent = msg || ""; };
@@ -149,30 +163,117 @@
       if (!t) break;
       queue.push(t);
     }
-    // Fetch only the very next track ahead.
-    const nextUrl = queue[0] ? streamUrl(queue[0]) : "";
-    if (preload.dataset.src !== nextUrl) {
-      preload.dataset.src = nextUrl;
-      if (nextUrl) { preload.src = nextUrl; preload.load(); } else preload.removeAttribute("src");
-    }
+    // Download only the very next track ahead (once: it then plays from that
+    // download), measure it, and drop it if it's very noisy.
+    if (queue[0]) prepare(queue[0]).then((r) => {
+      if (r && r.noisy && skipNoisy && queue[0] && keyOf(queue[0]) === keyOf(r.track)) {
+        noteNoisy(queue.shift());
+        fillQueue();
+      }
+    });
     renderUpNext();
   }
 
+  // ------------------------------------------------------------------ sound
+  function prepare(t, headOnly = false) {
+    const k = keyOf(t);
+    if (ready.has(k)) return Promise.resolve(ready.get(k));
+    if (!canProcess(t)) return Promise.resolve(null);
+    if (pending.has(k)) return pending.get(k);
+    const p = (async () => {
+      try {
+        const r = await fetch(streamUrl(t));
+        if (!r.ok) return null;
+        let head, url = null;
+        if (headOnly || +r.headers.get("content-length") > MAX_HOLD) {
+          // Already streaming, or too big to hold: read just the start to measure.
+          head = await readStart(r, HEAD_BYTES);
+        } else {
+          const blob = await r.blob();
+          head = await blob.slice(0, HEAD_BYTES).arrayBuffer();
+          url = URL.createObjectURL(blob);
+        }
+        let info = { gainDb: 0, side: 0, noisy: false };
+        try { info = await window.OFASound.analyse(head); }
+        catch (e) { console.warn("analyse", e); }
+        const res = { track: t, url, ...info };
+        ready.set(k, res);
+        trimReady();
+        return res;
+      } catch (e) { console.warn("prefetch", e); return null; }
+      finally { pending.delete(k); }
+    })();
+    pending.set(k, p);
+    return p;
+  }
+
+  async function readStart(r, n) {      // the first n bytes of a response, then cancel the rest
+    const reader = r.body.getReader(); const parts = []; let got = 0;
+    while (got < n) { const { done, value } = await reader.read(); if (done) break; parts.push(value); got += value.length; }
+    reader.cancel().catch(() => {});
+    const out = new Uint8Array(Math.min(got, n)); let o = 0;
+    for (const p of parts) { const c = p.subarray(0, out.length - o); out.set(c, o); o += c.length; if (o >= out.length) break; }
+    return out.buffer;
+  }
+
+  function trimReady() {               // keep downloads for the current, next and last few tracks
+    const keep = new Set([current, queue[0], ...back.slice(-3)].filter(Boolean).map(keyOf));
+    for (const [k, r] of ready) if (!keep.has(k)) { if (r.url) URL.revokeObjectURL(r.url); ready.delete(k); }
+  }
+
+  function noteNoisy(t) {
+    if (!t) return;
+    played.add(keyOf(t));               // don't pick it again
+    store.set("played", [...played]);
+    const n = store.get("noisySkipped", 0) + 1;
+    store.set("noisySkipped", n);
+    renderSound();
+  }
+
+  function stopAll() { for (const el of [audio, plain]) { el.pause(); el.removeAttribute("src"); el.load(); } }
+
   // ------------------------------------------------------------------ playback
-  function playTrack(t, { record = true } = {}) {
+  async function playTrack(t, { record = true, fromRadio = true } = {}) {
     current = t;
-    audio.src = streamUrl(t);
-    audio.play().catch(() => {});
+    const k = keyOf(t);
+    stopAll();
+    if (canProcess(t)) {
+      player = audio;
+      if (!graph) { try { graph = new window.OFASound.Graph(audio); } catch (e) { console.warn(e); } }
+      graph && graph.resume();
+      let r = ready.get(k);
+      if (!r && pending.has(k)) r = await Promise.race([pending.get(k), new Promise((ok) => setTimeout(ok, 6000))]);
+      if (current !== t) return;
+      if (r) {
+        graph && graph.setGain(r.gainDb); graph && graph.setSide(r.side);
+        audio.src = r.url || streamUrl(t);
+        if (r.noisy && skipNoisy && fromRadio) { noteNoisy(t); status(`Skipped a very noisy recording (“${t.t}”).`); setTimeout(next, 50); return; }
+      } else {
+        // Not downloaded yet (skipping fast): stream it and measure in the background.
+        graph && graph.setGain(0); graph && graph.setSide(0);
+        audio.src = streamUrl(t);
+        prepare(t, true).then((res) => {
+          if (!res || current !== t) return;
+          graph && graph.setGain(res.gainDb); graph && graph.setSide(res.side);
+          if (res.noisy && skipNoisy && fromRadio) { noteNoisy(t); status(`Skipped a very noisy recording (“${t.t}”).`); next(); }
+        });
+      }
+    } else {
+      player = plain;
+      plain.src = streamUrl(t);
+    }
+    player.play().catch(() => {});
     if (record) {
-      played.add(keyOf(t));
+      played.add(k);
       store.set("played", [...played]);
-      const { _k, ...plain } = t;
-      history.push({ t: plain, at: Date.now() });
+      const { _k, ...plainTrack } = t;
+      history.push({ t: plainTrack, at: Date.now() });
       if (history.length > 2000) history = history.slice(-2000);
       store.set("history", history);
     }
-    queue = queue.filter((q) => keyOf(q) !== keyOf(t));
+    queue = queue.filter((q) => keyOf(q) !== k);
     fillQueue();
+    trimReady();
     renderNow();
     renderHistory();
   }
@@ -186,27 +287,30 @@
   }
 
   function prev() {
-    if (audio.currentTime > 5 || !back.length) { audio.currentTime = 0; return; }
+    if (player.currentTime > 5 || !back.length) { player.currentTime = 0; return; }
     if (current) queue.unshift(current);
-    playTrack(back.pop(), { record: false });
+    playTrack(back.pop(), { record: false, fromRadio: false });
   }
 
   function togglePlay() {
     if (!current) { next(); return; }
-    if (audio.paused) audio.play().catch(() => {}); else audio.pause();
+    graph && graph.resume();
+    if (player.paused) player.play().catch(() => {}); else player.pause();
   }
 
-  audio.addEventListener("playing", () => { errors = 0; setPlaying(true); status(""); });
-  audio.addEventListener("pause", () => setPlaying(false));
-  audio.addEventListener("waiting", () => status("Buffering…"));
-  audio.addEventListener("ended", next);
-  audio.addEventListener("error", () => {
-    if (!current) return;
-    errors++;
-    if (errors >= 6) { status("Several tracks in a row wouldn't play. Check your connection and press play."); setPlaying(false); return; }
-    status(`Couldn't play “${current.t}”, skipping…`);
-    setTimeout(next, 900);
-  });
+  for (const el of [audio, plain]) {
+    el.addEventListener("playing", () => { if (el !== player) return; errors = 0; setPlaying(true); status(""); });
+    el.addEventListener("pause", () => { if (el === player) setPlaying(false); });
+    el.addEventListener("waiting", () => { if (el === player) status("Buffering…"); });
+    el.addEventListener("ended", () => { if (el === player) next(); });
+    el.addEventListener("error", () => {
+      if (el !== player || !current || !el.getAttribute("src")) return;
+      errors++;
+      if (errors >= 6) { status("Several tracks in a row wouldn't play. Check your connection and press play."); setPlaying(false); return; }
+      status(`Couldn't play “${current.t}”, skipping…`);
+      setTimeout(next, 900);
+    });
+  }
 
   function setPlaying(on) {
     $("eye").classList.toggle("on", on);
@@ -290,7 +394,7 @@
     ol.replaceChildren(...queue.map((t, n) => trackRow(t, `${t.a || "Unknown"} · ${yearLabel(t)}`, () => {
       if (current) back.push(current);
       queue.splice(n, 1);
-      playTrack(t);
+      playTrack(t, { fromRadio: false });
       showTab("radio");
     })));
     if (!queue.length) ol.innerHTML = '<li class="empty">Nothing queued yet.</li>';
@@ -303,7 +407,7 @@
     const rows = history.slice(-300).reverse().map(({ t, at }, n) =>
       trackRow(t, `${t.a || "Unknown"} · ${yearLabel(t)} · ${fmt.format(at)}`, () => {
         if (current) back.push(current);
-        playTrack(t, { record: false });
+        playTrack(t, { record: false, fromRadio: false });
         showTab("radio");
       }, n === 0 && current && keyOf(t) === keyOf(current)));
     ol.replaceChildren(...rows);
@@ -342,6 +446,14 @@
     fillQueue();
   }
 
+  function renderSound() {
+    const box = $("skip-noisy");
+    if (!box) return;
+    box.checked = skipNoisy;
+    const n = store.get("noisySkipped", 0);
+    $("noisy-count").textContent = n ? `${n.toLocaleString()} skipped so far in this browser.` : "";
+  }
+
   // ------------------------------------------------------------------ tabs
   const TABS = ["radio", "genres", "history", "about"];
   function showTab(name) {
@@ -372,8 +484,8 @@
     renderHistory();
   });
   if ("mediaSession" in navigator) {
-    navigator.mediaSession.setActionHandler("play", () => audio.play().catch(() => {}));
-    navigator.mediaSession.setActionHandler("pause", () => audio.pause());
+    navigator.mediaSession.setActionHandler("play", () => { graph && graph.resume(); player.play().catch(() => {}); });
+    navigator.mediaSession.setActionHandler("pause", () => player.pause());
     navigator.mediaSession.setActionHandler("nexttrack", next);
     navigator.mediaSession.setActionHandler("previoustrack", prev);
   }
@@ -382,6 +494,8 @@
     if (e.code === "Space" && !e.target.closest("button, a")) { e.preventDefault(); togglePlay(); }
   });
 
+  $("skip-noisy").addEventListener("change", (e) => { skipNoisy = e.target.checked; store.set("skipNoisy", skipNoisy); });
+  renderSound();
   showTab(location.hash.slice(1));
   load();
 })();

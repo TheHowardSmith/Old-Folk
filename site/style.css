@@ -125,6 +125,8 @@ h3 { font-size: 19px; margin: 20px 0 8px; }
   display: inline-block; background: var(--primary); color: var(--on-primary); padding: 12px 20px;
   border-radius: 999px; text-decoration: none; font-weight: 600; margin: 4px 0 8px;
 }
+.switch { display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; }
+.switch input { width: 20px; height: 20px; accent-color: var(--primary); }
 .sources { padding-left: 18px; }
 .sources li { margin: 6px 0; }
 .foot { margin: 24px 0 40px; }

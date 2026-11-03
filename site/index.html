@@ -117,6 +117,13 @@
     </div>
 
     <div class="card">
+      <h3>Sound</h3>
+      <p>Every recording is measured as it loads and played at the same loudness, sudden pops are smoothed, and transfers with sound on only one channel play on both speakers.</p>
+      <label class="switch"><input type="checkbox" id="skip-noisy" checked> Skip very noisy recordings</label>
+      <p class="small">Checks each disc for heavy surface noise and skips it on the radio (tracks you pick from History always play). <span id="noisy-count"></span></p>
+    </div>
+
+    <div class="card">
       <h3>Where the music comes from</h3>
       <p>There's no streaming server: every recording plays straight from the archive that holds it, which is credited on each track.</p>
       <ul class="sources">
@@ -155,9 +162,10 @@
   </section>
 </main>
 
-<audio id="audio" preload="auto"></audio>
-<audio id="preload" preload="auto" muted></audio>
+<audio id="audio" preload="auto" crossorigin="anonymous"></audio>
+<audio id="plain" preload="auto"></audio>
 <noscript><p class="wrap">The radio needs JavaScript. You can still <a href="https://github.com/TheHowardSmith/Old-Folk/releases/latest/download/old-folk-air.apk">get the Android app</a>.</p></noscript>
+<script src="sound.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
