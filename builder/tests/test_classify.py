@@ -436,3 +436,14 @@ def test_user_uploads_after_1925_go_to_review():
     old = classify_item("old-upload", "other",
                         item({"subject": "folk", "date": "1912", "collection": "opensource_audio"}), RULES)
     assert not any("user upload" in x for x in old.reasons), old.reasons
+
+
+def test_approved_upload_lifts_only_the_upload_hold():
+    from oldfolk_builder.config import load_rules
+    rules = load_rules()
+    rules.schedules_path = None
+    rules.writer_deaths = {}
+    rules.overrides = {"approved_uploads": ["home-tape-1965"]}
+    r = classify_item("home-tape-1965", "other",
+                      item({"subject": "folk", "date": "1965", "collection": "opensource_audio"}), rules)
+    assert not any("user upload" in x for x in r.reasons), r.reasons

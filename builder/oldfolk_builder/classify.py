@@ -416,7 +416,8 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     # covers). Unless the recording is old enough to be out of US copyright,
     # a person checks it first.
     community = colls & rules.review_collections
-    if community and not (year and year <= rules.us_public_domain_year):
+    approved = set((rules.overrides or {}).get("approved_uploads") or [])
+    if community and ident not in approved and not (year and year <= rules.us_public_domain_year):
         flags.append(f"user upload, may be a commercial release: {', '.join(sorted(community))}")
 
     # 5. Tracks.
