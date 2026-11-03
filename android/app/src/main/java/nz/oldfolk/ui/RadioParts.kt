@@ -209,7 +209,7 @@ fun Modifier.woodGrain(hi: Color, mid: Color, lo: Color): Modifier = drawWithCac
     val h = size.height
     val rnd = Random(7)
     val step = 10.dp.toPx()
-    val streaks = (h / 2.2.dp.toPx()).toInt().coerceIn(24, 160)
+    val streaks = (h / 7.dp.toPx()).toInt().coerceIn(6, 50)
     val grain = List(streaks) {
         val y0 = rnd.nextFloat() * h
         val amp = (0.4f + rnd.nextFloat() * 2.4f).dp.toPx()
@@ -223,17 +223,17 @@ fun Modifier.woodGrain(hi: Color, mid: Color, lo: Color): Modifier = drawWithCac
             x += step
             path.lineTo(x, y0 + amp * sin(x * freq + phase) + drift * x / w)
         }
-        val dark = rnd.nextFloat() < 0.8f
+        val dark = true
         Grain(
             path,
-            if (dark) Color(0xFF1E0E04).copy(alpha = 0.03f + rnd.nextFloat() * 0.08f)
+            if (dark) Color(0xFF1E0E04).copy(alpha = 0.02f + rnd.nextFloat() * 0.04f)
             else Color(0xFFF2C68E).copy(alpha = 0.02f + rnd.nextFloat() * 0.04f),
             (0.5f + rnd.nextFloat() * 1.7f).dp.toPx(),
         )
     }
     val base = Brush.verticalGradient(listOf(hi, mid, lo))
     val sheen = Brush.linearGradient(
-        listOf(Color.Transparent, Color(0x10FFDCAA), Color.Transparent),
+        listOf(Color.Transparent, Color(0x0AFFDCAA), Color.Transparent),
         start = Offset(w * 0.2f, 0f), end = Offset(w * 0.75f, h),
     )
     onDrawBehind {

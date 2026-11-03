@@ -204,7 +204,7 @@ fun Modifier.screenTexture(base: Color, dark: Boolean): Modifier = drawWithCache
     val strokes = mutableListOf<Triple<Path, Color, Float>>()
     if (dark) {
         // long, slightly wavy grain lines across the screen
-        val count = (h / 3.dp.toPx()).toInt().coerceIn(40, 400)
+        val count = (h / 12.dp.toPx()).toInt().coerceIn(10, 90)
         repeat(count) {
             val y0 = rnd.nextFloat() * h
             val amp = (1f + rnd.nextFloat() * 4f).dp.toPx()
@@ -218,7 +218,7 @@ fun Modifier.screenTexture(base: Color, dark: Boolean): Modifier = drawWithCache
             val light = rnd.nextFloat() < 0.35f
             strokes += Triple(path,
                 if (light) Color(0xFFE8C9A0).copy(alpha = 0.006f + rnd.nextFloat() * 0.012f)
-                else Color.Black.copy(alpha = 0.01f + rnd.nextFloat() * 0.025f),
+                else Color.Black.copy(alpha = 0.01f + rnd.nextFloat() * 0.02f),
                 (0.6f + rnd.nextFloat() * 1.8f).dp.toPx())
         }
     } else {

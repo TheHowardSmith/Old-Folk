@@ -1,26 +1,29 @@
 :root {
   --bg: #F4ECDC; --card: #F9F2E4; --ink: #2B1D12; --muted: #5A4733; --line: #D8C9AB;
-  --brass: #7A5A1E; --primary: #6B3E1F; --on-primary: #FFF8EC; --cloth: #E6D5B6;
-  --walnut: #6A4529; --walnut-2: #52331D; --dial-ink: #F3E6CB;
+  /* Palette: paper #F4ECDC / #EFE3CB, walnut #A47750 · #6A4529 · #3F2817, ink #2B1D12, brass #B08A45; red only on the label and needle */
+  --brass: #7A5A1E; --primary: #6A4529; --on-primary: #FFF8EC; --cloth: #E6D5B6;
+  --walnut: #6A4529; --walnut-2: #3F2817; --dial-ink: #F3E6CB;
   --needle: #FF5A2E; --eye: #8FDB5E; --ivory: #F2E8D3;
-  --wood-hi: #8A5A33; --wood: #6E4426; --wood-lo: #4E2E17; --glass: #2A1B10; --glass-lo: #170E07;
+  --wood-hi: #7C5434; --wood: #6A4529; --wood-lo: #573722; --glass: #2A1B10; --glass-lo: #170E07;
   --cab-shadow: rgba(60, 32, 10, 0.45);
   /* light: cream bands with oxblood lettering and pattern; dark: oxblood bands with cream lettering */
-  --band: #EFE0C3; --band-2: #EFE0C3; --on-band: #5C1E16; --band-line: rgba(92, 30, 22, 0.16); --band-rule: #B08A45;
-  --band-soft: rgba(92, 30, 22, .78); --band-tint: rgba(92, 30, 22, .08); --band-edge: rgba(92, 30, 22, .35);
+  --band: #EFE3CB; --band-2: #EFE3CB; --on-band: #3F2817; --band-line: rgba(63, 40, 23, 0.13); --band-rule: #B08A45;
+  --band-soft: rgba(63, 40, 23, .8); --band-tint: rgba(63, 40, 23, .08); --band-edge: rgba(63, 40, 23, .3);
+  --logo-bg: #6A4529;
   --vox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='36'%3E%3Crect width='44' height='36' fill='%238E715C'/%3E%3Cpath d='M0 0.5H44M0 2.5H44M0 4.5H44M0 6.5H44M0 8.5H44M0 10.5H44M0 12.5H44M0 14.5H44M0 16.5H44M0 18.5H44M0 20.5H44M0 22.5H44M0 24.5H44M0 26.5H44M0 28.5H44M0 30.5H44M0 32.5H44M0 34.5H44M1.5 0V36M3.5 0V36M5.5 0V36M7.5 0V36M9.5 0V36M11.5 0V36M13.5 0V36M15.5 0V36M17.5 0V36M19.5 0V36M21.5 0V36M23.5 0V36M25.5 0V36M27.5 0V36M29.5 0V36M31.5 0V36M33.5 0V36M35.5 0V36M37.5 0V36M39.5 0V36M41.5 0V36M43.5 0V36' stroke='rgba(0,0,0,.05)' stroke-width='.7' fill='none'/%3E%3Cpath d='M-44 16.60L88 124.60M-44 -19.40L88 -127.40M-44 -19.40L88 88.60M-44 16.60L88 -91.40M-44 -55.40L88 52.60M-44 52.60L88 -55.40M-44 -91.40L88 16.60M-44 88.60L88 -19.40M-44 -127.40L88 -19.40M-44 124.60L88 16.60' stroke='rgba(236,214,160,.38)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 18.00L88 126.00M-44 -18.00L88 -126.00M-44 -18.00L88 90.00M-44 18.00L88 -90.00M-44 -54.00L88 54.00M-44 54.00L88 -54.00M-44 -90.00L88 18.00M-44 90.00L88 -18.00M-44 -126.00L88 -18.00M-44 126.00L88 18.00' stroke='rgba(150,196,180,.26)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 19.40L88 127.40M-44 -16.60L88 -124.60M-44 -16.60L88 91.40M-44 19.40L88 -88.60M-44 -52.60L88 55.40M-44 55.40L88 -52.60M-44 -88.60L88 19.40M-44 91.40L88 -16.60M-44 -124.60L88 -16.60M-44 127.40L88 19.40' stroke='rgba(176,96,90,.30)' stroke-width='.8' fill='none'/%3E%3C/svg%3E");
   --slot: #3A2516; --fader: #E9DCC2; --fader-lo: #BCA57E;
-  --knob-hi: #B48a60; --knob-lo: #946A45; --knob-cap: #A47750; --knob-ink: #FFF6E4;
+  --knob-hi: #B08460; --knob-lo: #946A45; --knob-cap: #A47750; --knob-ink: #F4ECDC;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #1F160F; --card: #2E2117; --ink: #EDE0C8; --muted: #C9B79B; --line: #3E3125;
     --brass: #CDAE6E; --primary: #F0B565; --on-primary: #3D2300; --cloth: #33251A;
     --walnut: #4A3220; --walnut-2: #3A2616; --dial-ink: #F0DDB8; --ivory: #E6DAC0;
-    --wood-hi: #6A4428; --wood: #52331C; --wood-lo: #3A2312; --glass: #1C120A; --glass-lo: #0E0804;
+    --wood-hi: #5E3E26; --wood: #52361F; --wood-lo: #452C19; --glass: #1C120A; --glass-lo: #0E0804;
     --cab-shadow: rgba(0, 0, 0, 0.6);
-    --band: #4E3428; --band-2: #4E3428; --on-band: #F6E7C8; --band-line: rgba(227, 194, 122, 0.14);
-    --band-soft: rgba(246, 231, 200, .78); --band-tint: rgba(246, 231, 200, .14); --band-edge: rgba(227, 194, 122, .45);
+    --band: #3F2817; --band-2: #3F2817; --on-band: #F4ECDC; --band-line: rgba(176, 138, 69, 0.16);
+    --logo-bg: #6A4529;
+    --band-soft: rgba(244, 236, 220, .78); --band-tint: rgba(244, 236, 220, .12); --band-edge: rgba(176, 138, 69, .5);
     --vox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='36'%3E%3Crect width='44' height='36' fill='%2347302A'/%3E%3Cpath d='M0 0.5H44M0 2.5H44M0 4.5H44M0 6.5H44M0 8.5H44M0 10.5H44M0 12.5H44M0 14.5H44M0 16.5H44M0 18.5H44M0 20.5H44M0 22.5H44M0 24.5H44M0 26.5H44M0 28.5H44M0 30.5H44M0 32.5H44M0 34.5H44M1.5 0V36M3.5 0V36M5.5 0V36M7.5 0V36M9.5 0V36M11.5 0V36M13.5 0V36M15.5 0V36M17.5 0V36M19.5 0V36M21.5 0V36M23.5 0V36M25.5 0V36M27.5 0V36M29.5 0V36M31.5 0V36M33.5 0V36M35.5 0V36M37.5 0V36M39.5 0V36M41.5 0V36M43.5 0V36' stroke='rgba(0,0,0,.08)' stroke-width='.7' fill='none'/%3E%3Cpath d='M-44 16.60L88 124.60M-44 -19.40L88 -127.40M-44 -19.40L88 88.60M-44 16.60L88 -91.40M-44 -55.40L88 52.60M-44 52.60L88 -55.40M-44 -91.40L88 16.60M-44 88.60L88 -19.40M-44 -127.40L88 -19.40M-44 124.60L88 16.60' stroke='rgba(214,182,118,.24)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 18.00L88 126.00M-44 -18.00L88 -126.00M-44 -18.00L88 90.00M-44 18.00L88 -90.00M-44 -54.00L88 54.00M-44 54.00L88 -54.00M-44 -90.00L88 18.00M-44 90.00L88 -18.00M-44 -126.00L88 -18.00M-44 126.00L88 18.00' stroke='rgba(110,168,150,.17)' stroke-width='.8' fill='none'/%3E%3Cpath d='M-44 19.40L88 127.40M-44 -16.60L88 -124.60M-44 -16.60L88 91.40M-44 19.40L88 -88.60M-44 -52.60L88 55.40M-44 55.40L88 -52.60M-44 -88.60L88 19.40M-44 91.40L88 -16.60M-44 -124.60L88 -16.60M-44 127.40L88 19.40' stroke='rgba(168,74,70,.22)' stroke-width='.8' fill='none'/%3E%3C/svg%3E");
     --slot: #120B06; --fader: #D9CBB0; --fader-lo: #A08A64;
     --knob-hi: #977050; --knob-lo: #7A5638; --knob-cap: #8A6242;
@@ -52,8 +55,8 @@ a { color: var(--primary); }
 .band a { color: var(--on-band); }
 .top { position: sticky; top: 0; z-index: 5; border-bottom: 2px solid var(--band-rule); box-shadow: 0 2px 8px rgba(40,20,5,.14); }
 .bar { display: flex; align-items: center; gap: 14px; height: 60px; max-width: 980px; }
-.band .brand { display: flex; align-items: center; gap: 9px; color: #F6E7C8; text-decoration: none; font-size: 21px;
-  background: #6A4529; padding: 3px 14px 3px 3px; border-radius: 999px; border: 1px solid rgba(227, 194, 122, .5);
+.band .brand { display: flex; align-items: center; gap: 9px; color: #F4ECDC; text-decoration: none; font-size: 21px;
+  background: var(--logo-bg); padding: 3px 14px 3px 3px; border-radius: 999px; border: 1px solid #B08A45;
   box-shadow: inset 0 1px 0 rgba(255, 230, 190, .15); }
 .tabs { display: flex; gap: 4px; margin-left: auto; background: var(--band); padding: 3px; border-radius: 999px; border: 1px solid var(--band-edge); }
 .tabs a { color: var(--band-soft); text-decoration: none; padding: 7px 12px; border-radius: 999px; font-size: 15px; }
@@ -75,9 +78,8 @@ a { color: var(--primary); }
 .cabinet {
   position: relative; border-radius: 20px; padding: 15px;
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='240' preserveAspectRatio='none'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035 0.11' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.05 0 0 0 0 0.01 0.95 0 0 0 -0.36'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 100% 100%,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='240' preserveAspectRatio='none'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.07' numOctaves='4' seed='19'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.72 0 0 0 0 0.45 0.45 0 0 0 -0.28'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 100% 100%,
-    linear-gradient(100deg, rgba(255,220,170,.0) 20%, rgba(255,220,170,.06) 45%, rgba(255,220,170,0) 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='240' preserveAspectRatio='none'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.004 0.045' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.12 0 0 0 0 0.07 0 0 0 0 0.03 0.6 0 0 0 -0.27'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 100% 100%,
+    linear-gradient(100deg, rgba(255,220,170,.0) 20%, rgba(255,220,170,.04) 45%, rgba(255,220,170,0) 70%),
     linear-gradient(180deg, var(--wood-hi), var(--wood) 45%, var(--wood-lo));
   box-shadow:
     inset 0 1.5px 0 rgba(255, 226, 180, .28),
