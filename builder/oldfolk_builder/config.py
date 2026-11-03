@@ -32,6 +32,7 @@ class Rules:
     spoken_tags: frozenset[str]
     synthetic_tags: frozenset[str]
     exclude_collections: frozenset[str]
+    review_collections: frozenset[str]
     restricted_phrases: tuple[str, ...]
     ceremonial_words: tuple[str, ...]
     indigenous_words: tuple[str, ...]
@@ -124,6 +125,7 @@ def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) 
         spoken_tags=_lower_set(cls.get("spoken_tags")),
         synthetic_tags=_lower_set(cls.get("synthetic_tags")),
         exclude_collections=_lower_set(cls.get("exclude_collections")),
+        review_collections=_lower_set(cls.get("review_collections")),
         restricted_phrases=tuple(str(p).lower() for p in cls.get("restricted_phrases") or []),
         ceremonial_words=tuple(str(p).lower() for p in cls.get("ceremonial_words") or []),
         indigenous_words=tuple(str(p).lower() for p in cls.get("indigenous_words") or []),

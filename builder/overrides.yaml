@@ -6,5 +6,9 @@
 #                    (e.g. died 1975 or earlier); their tracks stop being flagged
 
 include: []
-exclude: []
+exclude:
+  # Akai Tori (赤い鳥) 1970 LPs uploaded to Community Audio: covers of
+  # protected pop songs (Bacharach, Beatles, Simon & Garfunkel, Joni Mitchell).
+  - 20250107_20250107_2107
+  - fly-with-the-red-birds
 approved_writers: []

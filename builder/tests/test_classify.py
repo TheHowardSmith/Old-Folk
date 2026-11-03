@@ -426,3 +426,13 @@ def test_jewish_recordings_move_out_of_place_based_genres():
     assert not is_jewish("Degirmenci", "Victoria Hazan")
     assert not is_jewish("Donde Estan Los Carboneros", "Coros Cantores de Madrid")
     assert not is_jewish("Hora Staccato")
+
+
+def test_user_uploads_after_1925_go_to_review():
+    r = classify_item("some-1970-lp-rip", "other",
+                      item({"subject": "folk", "date": "1970-06-10", "collection": "opensource_audio",
+                            "language": "Japanese"}), RULES)
+    assert r.status == FLAG and any("user upload" in x for x in r.reasons), r.reasons
+    old = classify_item("old-upload", "other",
+                        item({"subject": "folk", "date": "1912", "collection": "opensource_audio"}), RULES)
+    assert not any("user upload" in x for x in old.reasons), old.reasons

@@ -411,6 +411,14 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if indigenous:
         flags.append(f"Indigenous recording, check community protocols: {', '.join(indigenous[:3])}")
 
+    # Anyone can upload to these collections, and some uploads are rips of
+    # commercial albums (a 1970 Japanese pop-folk LP of Bacharach and Beatles
+    # covers). Unless the recording is old enough to be out of US copyright,
+    # a person checks it first.
+    community = colls & rules.review_collections
+    if community and not (year and year <= rules.us_public_domain_year):
+        flags.append(f"user upload, may be a commercial release: {', '.join(sorted(community))}")
+
     # 5. Tracks.
     choices = pick_files(files)
     if not choices:

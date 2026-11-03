@@ -449,6 +449,22 @@ exclude_collections:
   - classic_tv
   - classic_tv_1960s
 
+# Collections anyone can upload to. Items in them dated after the US
+# public-domain year (or undated) go to review instead of straight in, since
+# some are rips of commercial records.
+review_collections:
+  - opensource_audio
+  - community
+  - folksoundomy
+  - folksoundomy_music
+  - folksoundomy_music_unsorted
+  - vinyl-archive
+  - the-vinyl-box
+  - roiocollection
+  - recycledrecords
+  - unlockedrecordings
+  - emiliosunforgottenmusic
+
 # Indigenous / ceremonial restrictions. If any phrase appears in the
 # description, notes, rights or subjects, the item is EXCLUDED.
 restricted_phrases:
