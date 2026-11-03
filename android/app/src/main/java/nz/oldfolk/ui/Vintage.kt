@@ -201,3 +201,66 @@ private fun DrawScope.arcText(
         pos += widths[i] + spacing
     }
 }
+
+/**
+ * Screen background: faint paper (light theme) — fine fibres and speckle on
+ * cream — or faint wood grain (dark theme) on the dark walnut colour.
+ */
+fun Modifier.screenTexture(base: Color, dark: Boolean): Modifier = drawWithCache {
+    val w = size.width
+    val h = size.height
+    val rnd = kotlin.random.Random(11)
+    val strokes = mutableListOf<Triple<Path, Color, Float>>()
+    if (dark) {
+        // long, slightly wavy grain lines across the screen
+        val count = (h / 3.dp.toPx()).toInt().coerceIn(40, 400)
+        repeat(count) {
+            val y0 = rnd.nextFloat() * h
+            val amp = (1f + rnd.nextFloat() * 4f).dp.toPx()
+            val freq = (2 * Math.PI / (220 + rnd.nextFloat() * 380).dp.toPx()).toFloat()
+            val phase = rnd.nextFloat() * 6.28f
+            val path = Path()
+            path.moveTo(0f, y0 + amp * kotlin.math.sin(phase))
+            var x = 0f
+            val step = 14.dp.toPx()
+            while (x < w) { x += step; path.lineTo(x, y0 + amp * kotlin.math.sin(x * freq + phase)) }
+            val light = rnd.nextFloat() < 0.35f
+            strokes += Triple(path,
+                if (light) Color(0xFFE8C9A0).copy(alpha = 0.015f + rnd.nextFloat() * 0.025f)
+                else Color.Black.copy(alpha = 0.05f + rnd.nextFloat() * 0.1f),
+                (0.6f + rnd.nextFloat() * 1.8f).dp.toPx())
+        }
+    } else {
+        // short paper fibres in every direction
+        val count = ((w * h) / (18.dp.toPx() * 18.dp.toPx())).toInt().coerceIn(200, 3000)
+        repeat(count) {
+            val x = rnd.nextFloat() * w
+            val y = rnd.nextFloat() * h
+            val len = (3f + rnd.nextFloat() * 9f).dp.toPx()
+            val a = rnd.nextFloat() * 6.28f
+            val path = Path()
+            path.moveTo(x, y)
+            path.quadraticTo(x + len / 2 * kotlin.math.cos(a) + rnd.nextFloat() * 4f, y + len / 2 * kotlin.math.sin(a),
+                x + len * kotlin.math.cos(a), y + len * kotlin.math.sin(a))
+            strokes += Triple(path,
+                if (rnd.nextFloat() < 0.6f) Color(0xFF8A6A40).copy(alpha = 0.035f + rnd.nextFloat() * 0.04f)
+                else Color.White.copy(alpha = 0.18f + rnd.nextFloat() * 0.2f),
+                (0.5f + rnd.nextFloat() * 0.6f).dp.toPx())
+        }
+    }
+    // speckle
+    val specks = List(((w * h) / (9.dp.toPx() * 9.dp.toPx())).toInt().coerceIn(300, 9000)) {
+        Offset(rnd.nextFloat() * w, rnd.nextFloat() * h)
+    }
+    val speckColor = if (dark) Color.Black.copy(alpha = 0.18f) else Color(0xFF6B4E2C).copy(alpha = 0.07f)
+    val shade = Brush.radialGradient(
+        listOf(Color.Transparent, Color.Black.copy(alpha = if (dark) 0.22f else 0.05f)),
+        center = Offset(w / 2, h * 0.4f), radius = kotlin.math.max(w, h) * 0.85f,
+    )
+    onDrawBehind {
+        drawRect(base)
+        for ((p, c, sw) in strokes) drawPath(p, c, style = Stroke(sw))
+        drawPoints(specks, androidx.compose.ui.graphics.PointMode.Points, speckColor, strokeWidth = 1.dp.toPx())
+        drawRect(shade)
+    }
+}

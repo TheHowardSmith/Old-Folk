@@ -1,6 +1,7 @@
 package nz.oldfolk.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -166,7 +167,9 @@ fun AppFrame(
     content: @Composable () -> Unit,
 ) {
     val rc = LocalRadioColors.current
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     Scaffold(
+        modifier = Modifier.screenTexture(MaterialTheme.colorScheme.background, dark),
         topBar = {
             Column(Modifier.decoBand(rc.band, rc.bandLo, rc.bandLine)) {
                 TopAppBar(
@@ -200,7 +203,7 @@ fun AppFrame(
             Column {
                 HorizontalDivider(thickness = 2.dp, color = Color(0xFFB08D4A))   // brass trim rail
                 NavigationBar(containerColor = Color.Transparent, tonalElevation = 0.dp,
-                    modifier = Modifier.decoBand(rc.band, rc.bandLo, rc.bandLine)) {
+                    modifier = Modifier.woodGrain(rc.woodHi, rc.wood, rc.woodLo)) {
                     Tab.entries.forEach { t ->
                         NavigationBarItem(
                             selected = tab == t,
@@ -208,18 +211,18 @@ fun AppFrame(
                             icon = { Icon(t.icon, null) },
                             label = { Text(t.label) },
                             colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = rc.onBand.copy(alpha = 0.16f),
-                                selectedIconColor = rc.onBand,
-                                selectedTextColor = rc.onBand,
-                                unselectedIconColor = rc.onBand.copy(alpha = 0.7f),
-                                unselectedTextColor = rc.onBand.copy(alpha = 0.7f),
+                                indicatorColor = rc.onWalnut.copy(alpha = 0.16f),
+                                selectedIconColor = rc.onWalnut,
+                                selectedTextColor = rc.onWalnut,
+                                unselectedIconColor = rc.onWalnut.copy(alpha = 0.72f),
+                                unselectedTextColor = rc.onWalnut.copy(alpha = 0.72f),
                             ),
                         )
                     }
                 }
             }
         },
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,   // the paper / wood texture shows through
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) { content() }
     }
@@ -566,7 +569,7 @@ fun PlaylistDetailContent(
                 leadingContent = { Text("${index + 1}", style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 trailingContent = { IconButton(onClick = { onRemove(t) }) { Icon(Icons.Filled.Delete, "Remove") } },
-                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 modifier = Modifier.clickable { onPlay(index) },
             )
         }
@@ -692,7 +695,7 @@ private fun HistoryItem(t: Track, label: String?, saved: Boolean, kind: Int, onC
     val fade = if (kind == 0) 0.68f else 1f
     Row(
         Modifier.fillMaxWidth()
-            .background(if (current) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.background)
+            .background(if (current) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
             .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
     ) {
