@@ -111,7 +111,7 @@ fun DrawScope.flutedKnob(primary: Boolean, rc: RadioColors) {
             size = Size(2 * r - 2.dp.toPx(), 2 * r - 2.dp.toPx()), style = Stroke(1.dp.toPx()))
     }
     // dark outer edge so the knob stands clear of the cloth
-    drawCircle(Color(0x8C190E06), r - 1.dp.toPx(), c, style = Stroke(2.dp.toPx()))
+    drawCircle(Color(0x99190E06), r - 0.75.dp.toPx(), c, style = Stroke(1.5.dp.toPx()))
 }
 
 /**
