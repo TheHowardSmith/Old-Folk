@@ -359,7 +359,7 @@ fun RadioContent(ui: RadioUi, actions: RadioActions) {
         Box(
             Modifier.fillMaxWidth().height(112.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .voxCloth(rc.voxBase, rc.voxFawn, rc.voxMid, rc.voxHi)
+                .voxCloth(rc.voxBase, rc.voxGold, rc.voxTeal, rc.voxMaroon)
                 .clothSetIn()
                 .border(1.dp, Color(0x66000000), RoundedCornerShape(8.dp)),
             contentAlignment = Alignment.Center,

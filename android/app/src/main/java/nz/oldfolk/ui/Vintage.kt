@@ -60,53 +60,38 @@ fun Modifier.decoBand(top: Color, bottom: Color, line: Color): Modifier = drawWi
 }
 
 /**
- * Vox-style diamond grille cloth: a checkerboard of diamonds (every other one
- * patterned) outlined by fawn threads, with a fine basket weave over it.
+ * Vox-style grille cloth, kept faded: a plain brown weave crossed by large
+ * diamonds of fine triple threads (gold, teal, maroon).
  */
-fun Modifier.voxCloth(base: Color, fawn: Color, mid: Color, hi: Color, tile: Dp = 26.dp): Modifier = drawWithCache {
-    val t = tile.toPx()
+fun Modifier.voxCloth(base: Color, gold: Color, teal: Color, maroon: Color, tileW: Dp = 40.dp, tileH: Dp = 33.dp): Modifier = drawWithCache {
+    val tw = tileW.toPx()
+    val th = tileH.toPx()
     val w = size.width
     val h = size.height
-    fun diamond(cx: Float, cy: Float, r: Float) = Path().apply {
-        moveTo(cx, cy - r); lineTo(cx + r, cy); lineTo(cx, cy + r); lineTo(cx - r, cy); close()
-    }
-    val outer = Path()
-    val inner = Path()
-    val core = Path()
-    var cy = t / 2
-    while (cy < h + t) {
-        var cx = t / 2
-        while (cx < w + t) {
-            outer.addPath(diamond(cx, cy, t / 2))
-            inner.addPath(diamond(cx, cy, t / 4))
-            core.addPath(diamond(cx, cy, t * 3 / 28))
-            cx += t
+    val gap = 1.3.dp.toPx()
+    // Diagonals through the diamond corners: y = th * (x / tw - k) and y = th * (k - x / tw), k a half-integer.
+    fun threads(dy: Float) = Path().apply {
+        val kMin = -(h / th).toInt() - 2
+        val kMax = (w / tw).toInt() + (h / th).toInt() + 3
+        for (n in kMin..kMax) {
+            val k = n + 0.5f
+            moveTo(0f, th * (0f - k) + dy); lineTo(w, th * (w / tw - k) + dy)
+            moveTo(0f, th * k + dy); lineTo(w, th * (k - w / tw) + dy)
         }
-        cy += t
     }
-    // The fawn threads: two families of diagonals through the diamond corners.
-    val lattice = Path()
-    var k = -h
-    while (k < w + h) {
-        lattice.moveTo(k + t / 2, 0f); lattice.lineTo(k + t / 2 - h, h)
-        lattice.moveTo(k + t / 2, 0f); lattice.lineTo(k + t / 2 + h, h)
-        k += t
-    }
+    val lines = listOf(gold to threads(-gap), teal to threads(0f), maroon to threads(gap))
     val weave = Path()
-    val ws = 2f * t / 28f
+    val ws = 2.dp.toPx()
     var y = 0f
     while (y < h) { weave.moveTo(0f, y); weave.lineTo(w, y); y += ws }
     var x = ws / 2
     while (x < w) { weave.moveTo(x, 0f); weave.lineTo(x, h); x += ws }
-    val thread = Stroke(t * 2.4f / 28f)
-    val fine = Stroke(t * 0.8f / 28f)
+    val fine = Stroke(0.6.dp.toPx())
+    val thread = Stroke(0.75.dp.toPx())
     onDrawBehind {
         drawRect(base)
-        drawPath(outer, mid)
-        drawPath(inner, hi)
-        drawPath(core, base)
-        drawPath(lattice, fawn, style = thread)
-        drawPath(weave, Color.Black.copy(alpha = 0.16f), style = fine)
+        drawPath(weave, Color.Black.copy(alpha = 0.1f), style = fine)
+        clipRect { for ((c, path) in lines) drawPath(path, c, style = thread) }
     }
 }
 
