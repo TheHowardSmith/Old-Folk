@@ -1,0 +1,47 @@
+name: Promote track list
+
+# Makes the reviewed candidate list (release `tracklist-candidate`, built by
+# Build track list with publish=review) the live list used by the app and the
+# website, then refreshes the website's copy.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: build-tracklist
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy the candidate to the live release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir cand && cd cand
+          gh release download tracklist-candidate
+          test -s index.json
+          if ! gh release view tracklist >/dev/null 2>&1; then
+            gh release create tracklist --prerelease --title "Track list" \
+              --notes "Track list data for the Old Folk Air app (CC0)."
+          fi
+          # Shards first, index last, then remove assets that are no longer listed.
+          gh release upload tracklist $(ls | grep -v '^index.json$') --clobber
+          gh release upload tracklist index.json --clobber
+          for a in $(gh release view tracklist --json assets -q '.assets[].name'); do
+            [ -e "$a" ] || gh release delete-asset tracklist "$a" -y
+          done
+          gh release edit tracklist --notes "Track list data for the Old Folk Air app (CC0). Version $(jq .v index.json), $(jq .n index.json) tracks (promoted from the reviewed candidate)."
+          cat review.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Refresh the website's copy of the list
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run pages.yml --ref main
