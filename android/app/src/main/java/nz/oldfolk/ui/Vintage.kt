@@ -221,8 +221,8 @@ fun Modifier.screenTexture(base: Color, dark: Boolean): Modifier = drawWithCache
             while (x < w) { x += step; path.lineTo(x, y0 + amp * kotlin.math.sin(x * freq + phase)) }
             val light = rnd.nextFloat() < 0.35f
             strokes += Triple(path,
-                if (light) Color(0xFFE8C9A0).copy(alpha = 0.015f + rnd.nextFloat() * 0.025f)
-                else Color.Black.copy(alpha = 0.05f + rnd.nextFloat() * 0.1f),
+                if (light) Color(0xFFE8C9A0).copy(alpha = 0.006f + rnd.nextFloat() * 0.012f)
+                else Color.Black.copy(alpha = 0.01f + rnd.nextFloat() * 0.025f),
                 (0.6f + rnd.nextFloat() * 1.8f).dp.toPx())
         }
     } else {
@@ -247,9 +247,9 @@ fun Modifier.screenTexture(base: Color, dark: Boolean): Modifier = drawWithCache
     val specks = List(((w * h) / (9.dp.toPx() * 9.dp.toPx())).toInt().coerceIn(300, 9000)) {
         Offset(rnd.nextFloat() * w, rnd.nextFloat() * h)
     }
-    val speckColor = if (dark) Color.Black.copy(alpha = 0.18f) else Color(0xFF6B4E2C).copy(alpha = 0.07f)
+    val speckColor = if (dark) Color.Black.copy(alpha = 0.1f) else Color(0xFF6B4E2C).copy(alpha = 0.07f)
     val shade = Brush.radialGradient(
-        listOf(Color.Transparent, Color.Black.copy(alpha = if (dark) 0.22f else 0.05f)),
+        listOf(Color.Transparent, Color.Black.copy(alpha = if (dark) 0.14f else 0.04f)),
         center = Offset(w / 2, h * 0.4f), radius = kotlin.math.max(w, h) * 0.85f,
     )
     onDrawBehind {

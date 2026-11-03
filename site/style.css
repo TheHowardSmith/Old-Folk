@@ -53,8 +53,8 @@ a { color: var(--primary); }
 .top { position: sticky; top: 0; z-index: 5; border-bottom: 2px solid var(--band-rule); box-shadow: 0 2px 8px rgba(40,20,5,.14); }
 .bar { display: flex; align-items: center; gap: 14px; height: 60px; max-width: 980px; }
 .brand { display: flex; align-items: center; gap: 9px; color: var(--on-band); text-decoration: none; font-size: 21px;
-  background: var(--band); padding: 4px 14px 4px 4px; border-radius: 999px; }
-.tabs { display: flex; gap: 4px; margin-left: auto; background: var(--band); padding: 3px; border-radius: 999px; }
+  background: var(--band); padding: 3px 14px 3px 3px; border-radius: 999px; border: 1px solid var(--band-edge); }
+.tabs { display: flex; gap: 4px; margin-left: auto; background: var(--band); padding: 3px; border-radius: 999px; border: 1px solid var(--band-edge); }
 .tabs a { color: var(--band-soft); text-decoration: none; padding: 7px 12px; border-radius: 999px; font-size: 15px; }
 .tabs a:hover { color: var(--on-band); }
 .tabs a[aria-current="page"] { background: var(--band-tint); color: var(--on-band); font-weight: 600; box-shadow: inset 0 0 0 1px var(--band-edge); }
@@ -64,8 +64,8 @@ a { color: var(--primary); }
 }
 .foot { border-top: 2px solid var(--band-rule); margin-top: 28px; font-size: 14px; }
 .foot-in { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; padding-top: 18px; padding-bottom: 22px; max-width: 1180px; }
-.foot-brand { display: inline-flex; background: var(--band); padding: 4px 10px; border-radius: 999px; }
-.foot span:not(.foot-brand) { background: var(--band); padding: 2px 8px; border-radius: 6px; }
+.foot-brand { display: inline-flex; background: var(--band); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--band-edge); }
+.foot span:not(.foot-brand) { background: var(--band); padding: 2px 8px; border-radius: 6px; border: 1px solid var(--band-edge); }
 .wordmark { display: block; width: auto; }
 .brand img { filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
 .foot span:not(.foot-brand) { opacity: .85; }
@@ -74,9 +74,9 @@ a { color: var(--primary); }
 .cabinet {
   position: relative; border-radius: 20px; padding: 15px;
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='240' preserveAspectRatio='none'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035 0.11' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.05 0 0 0 0 0.01 2.8 0 0 0 -1.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 100% 100%,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='240' preserveAspectRatio='none'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.07' numOctaves='4' seed='19'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.72 0 0 0 0 0.45 1.3 0 0 0 -0.8'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 100% 100%,
-    linear-gradient(100deg, rgba(255,220,170,.0) 20%, rgba(255,220,170,.10) 45%, rgba(255,220,170,0) 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='240' preserveAspectRatio='none'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035 0.11' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.05 0 0 0 0 0.01 0.95 0 0 0 -0.36'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 100% 100%,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='240' preserveAspectRatio='none'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.07' numOctaves='4' seed='19'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.72 0 0 0 0 0.45 0.45 0 0 0 -0.28'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 100% 100%,
+    linear-gradient(100deg, rgba(255,220,170,.0) 20%, rgba(255,220,170,.06) 45%, rgba(255,220,170,0) 70%),
     linear-gradient(180deg, var(--wood-hi), var(--wood) 45%, var(--wood-lo));
   box-shadow:
     inset 0 1.5px 0 rgba(255, 226, 180, .28),

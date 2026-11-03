@@ -178,21 +178,23 @@ fun AppFrame(
                         if (title == "Old Folk Air") {
                             Row(verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "Old Folk Air" }
-                                    .background(rc.band, CircleShape).padding(start = 3.dp, top = 3.dp, bottom = 3.dp, end = 14.dp)) {
+                                    .background(rc.band, CircleShape).border(1.dp, rc.bandEdge, CircleShape)
+                                    .padding(start = 3.dp, top = 3.dp, bottom = 3.dp, end = 14.dp)) {
                                 Image(painterResource(R.drawable.logo_roundel), null, Modifier.size(34.dp))
                                 Spacer(Modifier.width(10.dp))
                                 Icon(painterResource(R.drawable.logo_wordmark), null, Modifier.height(22.dp), tint = rc.onBand)
                             }
                         } else {
                             Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.background(rc.band, RoundedCornerShape(12.dp)).padding(horizontal = 10.dp, vertical = 2.dp))
+                                modifier = Modifier.background(rc.band, RoundedCornerShape(12.dp)).border(1.dp, rc.bandEdge, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 10.dp, vertical = 2.dp))
                         }
                     },
                     navigationIcon = {
-                        if (showBack) IconButton(onClick = onBack, modifier = Modifier.background(rc.band, CircleShape)) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                        if (showBack) IconButton(onClick = onBack, modifier = Modifier.background(rc.band, CircleShape).border(1.dp, rc.bandEdge, CircleShape)) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
                     },
                     actions = {
-                        if (showAboutButton) IconButton(onClick = onAbout, modifier = Modifier.padding(end = 4.dp).background(rc.band, CircleShape)) {
+                        if (showAboutButton) IconButton(onClick = onAbout, modifier = Modifier.padding(end = 4.dp).background(rc.band, CircleShape).border(1.dp, rc.bandEdge, CircleShape)) {
                             Icon(Icons.Filled.Info, "About", tint = rc.bandAccent)
                         }
                     },

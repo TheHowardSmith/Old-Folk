@@ -46,6 +46,7 @@ data class RadioColors(
     val onBand: Color,
     val bandLine: Color,      // deco scallop lines
     val bandAccent: Color,    // icons on the band
+    val bandEdge: Color,      // outline of the plain patches behind the logo and buttons
     val voxBase: Color,       // grille cloth and its three thread colours
     val voxGold: Color,
     val voxTeal: Color,
@@ -104,6 +105,7 @@ private val LightRadio = RadioColors(
     onBand = Color(0xFF5C1E16),
     bandLine = Color(0x295C1E16),
     bandAccent = Color(0xFF7A5A1E),
+    bandEdge = Color(0x595C1E16),
     voxBase = Color(0xFF56382B),
     voxGold = Color(0x8CD6B676),
     voxTeal = Color(0x6B6EA896),
@@ -162,6 +164,7 @@ private val DarkRadio = RadioColors(
     onBand = Color(0xFFF6E7C8),
     bandLine = Color(0x24E3C27A),
     bandAccent = Color(0xFFE3C27A),
+    bandEdge = Color(0x73E3C27A),
     voxBase = Color(0xFF3A251C),
     voxGold = Color(0x66D6B676),
     voxTeal = Color(0x4D6EA896),
