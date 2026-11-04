@@ -349,7 +349,7 @@ def test_central_asian_tracks_are_not_african_despite_bad_language_tag():
     assert regions["Dombara (Kazakh Folk Song)"] == "Central Asia"
     assert regions["Lezginka (Daghestan Dance)"] == "Middle East & Caucasus"
     genres = {t.title: t.genre for t in r.tracks}
-    assert genres["Amu (Tajik Folk Song)"] == "asia"
+    assert genres["Amu (Tajik Folk Song)"] == "mideast"     # Central Asia goes with the Middle East
     assert genres["Lezginka (Daghestan Dance)"] == "mideast"
 
 
@@ -366,7 +366,7 @@ def test_russian_is_european_and_siberian_is_asian():
     r = classify_item("x", "78rpm", item({"subject": ["Folk"], "title": "Russian Folk Song"}), RULES)
     assert r.genre == "eastern_europe"
     r = classify_item("x", "other", item({"subject": ["Folk"], "title": "Tuvan Throat Singing", "date": "1960"}), RULES)
-    assert (r.region, r.genre) == ("Central Asia", "asia")
+    assert (r.region, r.genre) == ("Siberia", "asia")
     r = classify_item("x", "other", item({"subject": ["Folk"], "title": "Chukchi Songs", "date": "1960"}), RULES)
     assert r.status == FLAG
 

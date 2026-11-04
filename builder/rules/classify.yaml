@@ -231,7 +231,8 @@ region_genre:
   "Southern Europe": mediterranean
   "Middle East & Caucasus": mideast
   "South Asia": southasia
-  "Central Asia": asia
+  "Central Asia": mideast
+  "Siberia": asia
   "East Asia": asia
   "Southeast Asia": asia
   "Africa": african
@@ -704,6 +705,7 @@ traditional_art_words:
 traditional_art_regions:
   - South Asia
   - Central Asia
+  - Siberia
   - East Asia
   - Southeast Asia
   - Middle East & Caucasus
