@@ -242,7 +242,68 @@ JEWISH_TEXT = re.compile(
 JEWISH_PERFORMER = re.compile(
     r"\b(cantor|chazz?an|hazzan|chassidim|hasidim|kol israel|voice of israel|"
     r"israel(i)? (folk |philharmonic |symphony )?(orch|ensemble|choir|singers))\b", re.I)
-JEWISH_MOVABLE = ("asia", "world", "european")
+EUROPEAN = ("european", "nordic", "eastern_europe", "mediterranean")
+JEWISH_MOVABLE = ("asia", "world") + EUROPEAN
+POLKA_MOVABLE = ("world", "american") + EUROPEAN
+
+# Choirs get their own genre when the choir is the performer, not when a singer
+# or band is backed by one ("Orchestra & Chorus", "orkester og kor"). Gospel,
+# Jewish, field and polka records keep their genre.
+CHOIR = re.compile(r"\b(choirs?|chorus|chorale|choral|chor|coro|ch(œ|oe)ur|k[oóö]r|хор\w*|glee club|"
+                   r"m[äa]nnerchor|singverein|liedertafel|cantores)\b", re.I)
+CHOIR_BACKING = re.compile(r"\b(with|and|w/|und|mit|og|och|y|e|et|con|i)\s+(the\s+|his\s+|her\s+|their\s+|"
+                           r"sein(em)?\s+)?(\w+\s+)?(choirs?|chorus|chor|coro|kor|kór)\b|&\s*(\w+\s+)?"
+                           r"(choirs?|chorus|chor|coro|kor|kór)\b", re.I)
+CHORAL_KEEPS = ("gospel", "jewish", "field", "polka")
+
+
+def is_choir(performer: str | None) -> bool:
+    return bool(performer and CHOIR.search(performer) and not CHOIR_BACKING.search(performer))
+
+
+def european_by_region(genre: str, region: str, rules: Rules) -> str:
+    """A European genre follows the region when the region is known."""
+    if genre in EUROPEAN:
+        by_region = rules.region_genre.get(region)
+        if by_region in EUROPEAN:
+            return by_region
+    return genre
+
+
+# Other Traditional (no region found) is re-sorted by what the item's track
+# titles and performers look like: Greek or Cyrillic performer names, hymn
+# albums, and English-language song albums (mostly American folk-revival LPs).
+ENGLISH_WORDS = frozenset("""the a an of and in on to my your you i me we he she it his her our their is are
+was be for with from at by o oh all no not so down up out over away little old new home love song songs
+blues day night time man men woman girl boy lady john mary jesus lord god good come go goin going when
+where who what this that there here will wont dont don't i'm can can't been one two three wind sea river
+mountain town road train sweet pretty fair young way roll ballad""".split())
+HYMN = re.compile(r"\b(hymns?|psalms?|carols?|christmas|noel|nowell|ave maria|alleluia|hallelujah|kyrie|"
+                  r"gloria|agnus dei|magnificat|silent night|holy|jesus|saviou?r|lord|god|heaven(ly)?|glory|"
+                  r"amazing grace|rock of ages)\b", re.I)
+GREEK_NAME = re.compile(r"[\u0370-\u03ff]{3}")
+CYRILLIC_NAME = re.compile(r"[\u0400-\u04ff]{3}")
+
+
+def is_english_title(title: str) -> bool:
+    words = re.findall(r"[a-z']+", title.lower())
+    return bool(words) and any(w in ENGLISH_WORDS for w in words) \
+        and all(ord(c) < 128 or c in "‘’“”–—" for c in title)
+
+
+def resort_other(titles: list[str], performers: str) -> tuple[str, str] | None:
+    """(genre, region) for an Other Traditional item, or None to leave it."""
+    if GREEK_NAME.search(performers):
+        return "mediterranean", "Southern Europe"
+    if CYRILLIC_NAME.search(performers):
+        return "eastern_europe", "Central & Eastern Europe"
+    if not titles:
+        return None
+    if len(titles) >= 3 and sum(bool(HYMN.search(t)) for t in titles) >= len(titles) / 2:
+        return "gospel", "Unknown"
+    if sum(is_english_title(t) for t in titles) >= 0.6 * len(titles):
+        return "american", "Unknown"
+    return None
 
 
 def is_jewish(text: str, performer: str = "") -> bool:
@@ -361,8 +422,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if teaching:
         return exclude(f"folk-dance instruction record: {teaching[0]}")
     genre = specific_genre(tags, kind, rules)
-    # Any rock or psychedelic style ("psychedelic rock", "blues rock", "acid rock") is not folk.
-    excluded = (tags & rules.exclude_tags) | {t for t in tags if has_word(t, "rock") or has_word(t, "psychedelic")}
+    # Any rock, punk or psychedelic style ("psychedelic rock", "blues rock", "folk punk") is not folk.
+    excluded = (tags & rules.exclude_tags) | {t for t in tags if has_word(t, "rock") or has_word(t, "punk")
+                                              or has_word(t, "psychedelic")}
     excluded -= traditional_art_waiver(tags, title, artist, desc, rules)
     if excluded and excluded <= rules.ethnic_waivable_tags and tags & rules.ethnic_record_tags:
         excluded = set()    # LoC/Victor "ethnic music" discs: "popular music" just means secular
@@ -429,6 +491,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     approved = set((rules.overrides or {}).get("approved_uploads") or [])
     if community and ident not in approved and not (year and year <= rules.us_public_domain_year):
         res.checks.append(f"user upload, may be a commercial release: {', '.join(sorted(community))}")
+    licence = as_text(meta.get("licenseurl")).lower()
+    if "creativecommons.org/licenses" in licence:
+        res.checks.append(f"Creative Commons licence from the uploader (a modern self-release?): {licence}")
 
     # 5. Tracks.
     choices = pick_files(files)
@@ -475,12 +540,22 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     genre_from_region = genre is None
     if genre_from_region:
         genre = rules.region_genre.get(region, "world")
+    genre = european_by_region(genre, region, rules)
+    resorted = None
+    if genre == "world":
+        playable = [c for c in choices if not (c.seconds is not None and c.seconds < rules.min_seconds)]
+        resorted = resort_other([c.title or title for c in playable or choices],
+                                " ".join([artist or ""] + [c.artist or "" for c in choices]))
+        if resorted:
+            genre, region = resorted[0], (region if resorted[1] == "Unknown" else resorted[1])
     # Polkas get their own genre (so listeners can leave them out), including
     # untagged discs with "polka" in the title.
-    if genre in ("european", "world", "american") and re.search(r"\bpolka\b", title, re.I):
+    if genre in POLKA_MOVABLE and re.search(r"\bpolka\b", title, re.I):
         genre = "polka"
     if genre in JEWISH_MOVABLE and is_jewish(" ".join([title, desc, " ".join(sorted(tags))]), artist or ""):
         genre = "jewish"
+    if genre not in CHORAL_KEEPS and is_choir(artist):
+        genre = "choral"
     res.genre, res.region = genre, region
     various = (artist or "").strip().lower() in ("various", "various artists")
     picture = pick_image(ident, files)
@@ -508,11 +583,14 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
                 t_region = own
             elif various and region_src == "description":
                 t_region = "Various"
-            if genre_from_region:
+            if genre_from_region and not resorted:
                 t_genre = rules.region_genre.get(t_region, "world")
+            t_genre = european_by_region(t_genre, t_region, rules)
             # Mixed compilations: one track can be Jewish ("Hora - Israel").
             if t_genre in JEWISH_MOVABLE and is_jewish(t_title, c.artist or ""):
                 t_genre = "jewish"
+        if t_genre not in CHORAL_KEEPS and is_choir(c.artist or artist):
+            t_genre = "choral"
         res.tracks.append(Track(
             id=ident, file=c.name, title=t_title,
             artist=(c.artist or artist),
@@ -522,6 +600,12 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
         return exclude(f"recording claimed in the US (pre-1972 schedules): {claimed_tracks[0]}")
     if not res.tracks:
         return exclude("no MP3 of usable length")
+    covers = (rules.load_possible_covers() or {}).get(ident)
+    if covers:
+        listed = {t.title.strip().lower() for t in res.tracks}
+        found = [f"{t} ({w})" for t, w in covers if t.strip().lower() in listed]
+        if found:
+            res.checks.append(f"possible cover of a protected song: {'; '.join(found[:3])}")
     if claimed_tracks:
         # Some songs on the album are claimed and dropped; the rest aren't, so they
         # stay in, but the label is active, so they go on the check list.

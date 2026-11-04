@@ -9,6 +9,8 @@
 
 include: []
 exclude:
+  # Rail Yard Ghosts' 2013 folk-punk album, uploaded with a 1913 date (CC BY-NC-ND).
+  - "rygTU63"
   # User uploads checked by hand on 2026-11-03: commercial LPs, singles and
   # broadcast tapes (still protected), or not folk. Includes two Akai Tori (赤い鳥)
   # 1970 LPs of Bacharach / Beatles / Simon & Garfunkel covers.

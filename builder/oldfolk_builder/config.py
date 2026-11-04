@@ -69,6 +69,20 @@ class Rules:
     writer_deaths_path: Path | None = None
     writer_search: dict | None = None
     writer_search_path: Path | None = None
+    # Songs that MusicBrainz knows as composed by a writer who died after the
+    # cutoff (or is living): item -> [(track title, writers)]. Only a check.
+    possible_covers: dict | None = None
+    possible_covers_path: Path | None = None
+
+    def load_possible_covers(self) -> dict:
+        if self.possible_covers is None:
+            self.possible_covers = {}
+            if self.possible_covers_path and self.possible_covers_path.exists():
+                import csv
+                with open(self.possible_covers_path, newline="", encoding="utf-8") as fh:
+                    for row in csv.DictReader(fh):
+                        self.possible_covers.setdefault(row["item"], []).append((row["title"], row["writers"]))
+        return self.possible_covers
 
     def load_writer_search(self) -> dict:
         """Song-specific writer results (writer_search.py), item -> result."""
@@ -167,4 +181,5 @@ def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) 
         writer_life_plus=int(cls.get("writer_life_plus", 70)),
         writer_deaths_path=BUILDER_DIR / "cache-rights" / "writer_deaths.json",
         writer_search_path=BUILDER_DIR / "cache-rights" / "writer_search.jsonl",
+        possible_covers_path=rules_dir / "possible_covers.csv",
     )

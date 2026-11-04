@@ -14,7 +14,10 @@ genres:
   gospel:       "Gospel & Spirituals"
   american:     "American Folk & Ballads"
   british:      "British Isles & Celtic"
-  european:     "European Folk & Dance"
+  european:     "Western European"
+  nordic:       "Nordic"
+  eastern_europe: "Eastern European"
+  mediterranean: "Mediterranean"
   polka:        "Polka"
   jewish:       "Klezmer & Jewish"
   caribbean:    "Calypso & Caribbean"
@@ -23,6 +26,7 @@ genres:
   asia:         "Asian & Middle Eastern"
   southasia:    "Indian & South Asian"
   pacific:      "Hawaiian & Pacific"
+  choral:       "Choral"
   field:        "Field Recordings & Work Songs"
   world:        "Other Traditional"
 
@@ -162,32 +166,37 @@ genre_tags:
     - korean
   polka:
     - polka
-  european:
+  # The four European genres. An item whose region is known (from its title,
+  # language or description) is filed by region instead: see region_genre.
+  eastern_europe:
     - oberek
     - mazurka
     - mazur
     - krakowiak
     - kujawiak
     - kolomyika
-    - schottische
-    - schottis
-    - landler
-    - rheinlander
     - csárdás
     - csardas
     - gypsy
-    - greek
-    - rebetiko
-    - rembetiko
-    - fado
-    - flamenco
-    - volksmusik
-    - vise
     - polish
     - ukrainian
     - hungarian
     - balkan
     - kolo
+  mediterranean:
+    - greek
+    - rebetiko
+    - rembetiko
+    - fado
+    - flamenco
+  nordic:
+    - vise
+    - schottis
+  european:
+    - schottische
+    - landler
+    - rheinlander
+    - volksmusik
 
 # Tags that mean "this is folk/traditional" without saying which style.
 # Items with only these get a genre from their region (see region_genre).
@@ -215,9 +224,9 @@ region_genre:
   "Canada": american
   "British Isles": british
   "Western Europe": european
-  "Nordic": european
-  "Central & Eastern Europe": european
-  "Southern Europe": european
+  "Nordic": nordic
+  "Central & Eastern Europe": eastern_europe
+  "Southern Europe": mediterranean
   "Middle East & Caucasus": asia
   "South Asia": southasia
   "Central Asia": asia

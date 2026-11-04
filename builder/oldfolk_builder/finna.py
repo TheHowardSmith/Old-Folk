@@ -196,7 +196,7 @@ def classify_record(ident: str, record: dict, rules: Rules, cfg: FinnaConfig) ->
         if t.region == "Unknown":
             t.region = "Nordic"          # Finnish institutions: Finnish/Finnic traditions
             if t.genre == "world":
-                t.genre = rules.region_genre.get("Nordic", "european")
+                t.genre = rules.region_genre.get("Nordic", "nordic")
     if res.region == "Unknown":
         res.region = "Nordic"
     low = {x.lower() for x in subjects(record)}
