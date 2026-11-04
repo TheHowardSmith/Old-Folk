@@ -5,8 +5,11 @@ name: Rights checks
 #    runner, so the list is split into 10 parallel shards).
 # 2. Writer death years: credited songwriters/composers in the metadata cache
 #    are looked up in the Library of Congress, GND and Wikidata.
+# 3. Writer search: songs whose writers the build couldn't trace (checks.csv
+#    in the track-list release) are looked up by title + writer on MusicBrainz
+#    (writer_search.py), 4 parallel shards.
 # Results accumulate in the `rights-data` pre-release (availability.jsonl,
-# writer_deaths.json); each run only checks what's new. The track-list build
+# writer_deaths.json, writer_search.jsonl); each run only checks what's new. The track-list build
 # downloads them and leaves out tracks on sale/streaming and composed songs
 # whose writers aren't confirmed to have died 70+ years ago.
 
@@ -15,7 +18,8 @@ on:
   schedule:
     - cron: "41 4 * * 1"          # weekly, after the list may have changed
   push:
-    paths: [".github/workflows/rights-checks.yml"]
+    branches: [main]
+    paths: [".github/workflows/rights-checks.yml", "builder/oldfolk_builder/writer_search.py"]
 
 permissions:
   contents: write
@@ -86,8 +90,42 @@ jobs:
           name: writer-deaths
           path: builder/writer_deaths.json
 
+  writer-search:
+    # Songs whose writers the build couldn't trace (checks.csv): title + writer
+    # looked up on MusicBrainz (one request a second per runner, 4 runners).
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    defaults:
+      run:
+        working-directory: builder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: The check list and earlier results
+        run: |
+          mkdir -p tl prev
+          gh release download tracklist -p 'checks.csv' -D tl || : > tl/checks.csv
+          gh release download rights-data -p 'writer_search.jsonl' -D prev || touch prev/writer_search.jsonl
+      - name: Search shard ${{ matrix.shard }} of 4
+        run: |
+          [ -s tl/checks.csv ] || { echo "::notice::No checks.csv yet"; touch ws-${{ matrix.shard }}.jsonl; exit 0; }
+          oldfolk-build writer-search --checks tl/checks.csv --previous prev/writer_search.jsonl \
+            --shard ${{ matrix.shard }} --of 4 --out ws-${{ matrix.shard }}.jsonl --minutes 330 || true
+          touch ws-${{ matrix.shard }}.jsonl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: writer-search-${{ matrix.shard }}
+          path: builder/ws-${{ matrix.shard }}.jsonl
+
   publish:
-    needs: [availability, writer-deaths]
+    needs: [availability, writer-deaths, writer-search]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -105,6 +143,8 @@ jobs:
           gh release download rights-data -p 'availability.jsonl' -D prev || touch prev/availability.jsonl
           oldfolk-build availability-merge --out out/availability.jsonl prev/availability.jsonl parts/availability-*/part-*.jsonl
           if [ -s parts/writer-deaths/writer_deaths.json ]; then cp parts/writer-deaths/writer_deaths.json out/; fi
+          gh release download rights-data -p 'writer_search.jsonl' -D prev || touch prev/writer_search.jsonl
+          cat prev/writer_search.jsonl parts/writer-search-*/ws-*.jsonl > out/writer_search.jsonl 2>/dev/null || cp prev/writer_search.jsonl out/
           if ! gh release view rights-data >/dev/null 2>&1; then
             gh release create rights-data --prerelease --title "Rights check data" \
               --notes "Results of the Rights checks workflow (streaming availability, writer death years), read by the track-list build." 
@@ -115,4 +155,9 @@ jobs:
           import json
           rows=[json.loads(l) for l in open('out/availability.jsonl') if l.strip()]
           print(f'- availability: {len(rows)} tracks checked, {sum(1 for r in rows if r.get(\"found\"))} on sale/streaming')
+          ws={}
+          for l in open('out/writer_search.jsonl'):
+              if l.strip(): r=json.loads(l); ws[r['item']]=r['verdict']
+          from collections import Counter
+          print(f'- writer search: {len(ws)} songs looked up: ' + ', '.join(f'{v} {k}' for k, v in Counter(ws.values()).most_common()))
           " >> "$GITHUB_STEP_SUMMARY"

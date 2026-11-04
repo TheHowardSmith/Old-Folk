@@ -447,8 +447,18 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
         # an initial or surname, stay in and go on the check list.
         cutoff = date.today().year - rules.writer_life_plus - 1
         deaths = rules.load_writer_deaths()
+        # Song-specific results (title + writer matched on MusicBrainz) come first.
+        found = ((rules.load_writer_search() or {}).get(ident) or {}).get("writers", {})
         late, unclear = [], []
         for w in unapproved:
+            f = found.get(w) or {}
+            if f.get("status") in ("traditional", "not_a_name"):
+                continue
+            if f.get("status") == "dead_old":
+                continue
+            if f.get("status") in ("dead_recent", "living"):
+                late.append(f"{f.get('mb_name') or w} (" + (f"d. {f['died']}" if f.get("died") else "living") + ")")
+                continue
             d = deaths.get(w) or {}
             if d.get("status") == "dead" and d.get("died") and d["died"] <= cutoff:
                 continue

@@ -6,6 +6,7 @@ from oldfolk_builder.tracks import parse_length, pick_files
 RULES = load_rules()
 RULES.schedules_path = None   # tests never use the real US schedules index
 RULES.writer_deaths = {}      # ... nor real writer death lookups
+RULES.writer_search = {}
 
 
 def mp3(name, original=None, fmt="VBR MP3", length="180.0", **extra):
@@ -458,3 +459,18 @@ def test_approved_upload_lifts_only_the_upload_hold():
     r = classify_item("home-tape-1965", "other",
                       item({"subject": "folk", "date": "1965", "collection": "opensource_audio"}), rules)
     assert not any("user upload" in x for x in r.reasons + r.checks), (r.reasons, r.checks)
+
+
+def test_song_specific_writer_results_come_first():
+    meta = {"genre": "Polka", "description": "<p><b>Writer:</b> Brown; Vejvoda</p>"}
+    rules = load_rules()
+    rules.schedules_path = None
+    rules.writer_deaths = {}
+    rules.writer_search = {"bb": {"writers": {
+        "Brown": {"status": "dead_recent", "died": 1958, "mb_name": "Lew Brown"},
+        "Vejvoda": {"status": "dead_recent", "died": 1988, "mb_name": "Jaromír Vejvoda"}}}}
+    r = classify_item("bb", "78rpm", item(meta), rules)
+    assert r.status == EXCLUDE and "Lew Brown (d. 1958)" in r.reasons[0]
+    rules.writer_search = {"hc": {"writers": {"Adams": {"status": "dead_old", "died": 1913}}}}
+    r = classify_item("hc", "78rpm", item({"genre": "Folk", "description": "<p><b>Writer:</b> Adams</p>"}), rules)
+    assert r.status == INCLUDE and not r.checks
