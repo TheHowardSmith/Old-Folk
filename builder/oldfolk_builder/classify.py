@@ -278,7 +278,7 @@ SACRED_OR_ART = re.compile(
 
 # Church and concert choirs singing the European repertoire (carols, masses,
 # Latin settings, classical) are Choral even when the record is tagged gospel;
-# spirituals and gospel songs by choirs stay in Gospel & Spirituals.
+# spirituals and gospel songs by choirs stay in Spirituals & Gospel.
 CHURCH_REPERTOIRE = re.compile(
     r"\b(carols?|christmas|noel|nowell|advent|mass|missa|kyrie|gloria|credo|sanctus|benedictus|agnus dei|"
     r"ave maria|ave verum|magnificat|requiem|te deum|stabat mater|motet|cantata|oratorio|anthem|vespers|"
@@ -299,7 +299,7 @@ def choral_genre(genre: str, performer: str | None, text: str, tags: set[str] = 
 
 
 # Country, bluegrass and family-band sacred songs (the Rose Family, Art & Larry,
-# the Carter Family) are Old-time & Hillbilly, not Gospel & Spirituals.
+# the Carter Family) are Old-time & Hillbilly, not Spirituals & Gospel.
 HILLBILLY_TAGS = frozenset({"bluegrass", "hillbilly", "country", "old time", "old-time", "appalachian",
                             "country gospel", "bluegrass gospel", "mountain music", "old time music"})
 
