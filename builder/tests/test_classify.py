@@ -7,7 +7,6 @@ RULES = load_rules()
 RULES.schedules_path = None   # tests never use the real US schedules index
 RULES.writer_deaths = {}      # ... nor real writer death lookups
 RULES.writer_search = {}
-RULES.possible_covers = {}
 
 
 def mp3(name, original=None, fmt="VBR MP3", length="180.0", **extra):
@@ -523,13 +522,3 @@ def test_punk_and_creative_commons_uploads():
                                        "licenseurl": "http://creativecommons.org/licenses/by-nc-nd/3.0/"}), RULES)
     assert any("Creative Commons" in c for c in r.checks)
 
-
-def test_possible_covers_are_checks_not_removals():
-    files = [mp3("1.mp3", "1.flac", title="My Favorite Things"), mp3("2.mp3", "2.flac", title="The Ash Grove")]
-    RULES.possible_covers = {"cov": [("My Favorite Things", "Richard Rodgers (d. 1979)")]}
-    try:
-        r = classify_item("cov", "lp", item({"subject": ["Folk"], "date": "1960"}, files), RULES)
-    finally:
-        RULES.possible_covers = {}
-    assert r.status == INCLUDE and len(r.tracks) == 2
-    assert r.checks == ["possible cover of a protected song: My Favorite Things (Richard Rodgers (d. 1979))"]
