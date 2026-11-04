@@ -602,8 +602,8 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
         return exclude("no MP3 of usable length")
     covers = (rules.load_possible_covers() or {}).get(ident)
     if covers:
-        listed = {t.title.strip().lower() for t in res.tracks}
-        found = [f"{t} ({w})" for t, w in covers if t.strip().lower() in listed]
+        listed = [t.title.strip().lower() for t in res.tracks]
+        found = [f"{t} ({w})" for t, w in covers if any(t.strip().lower() in x for x in listed)]
         if found:
             res.checks.append(f"possible cover of a protected song: {'; '.join(found[:3])}")
     if claimed_tracks:
