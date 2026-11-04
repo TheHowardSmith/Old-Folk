@@ -69,7 +69,6 @@ class Rules:
     writer_deaths_path: Path | None = None
     writer_search: dict | None = None
     writer_search_path: Path | None = None
-
     def load_writer_search(self) -> dict:
         """Song-specific writer results (writer_search.py), item -> result."""
         if self.writer_search is None:

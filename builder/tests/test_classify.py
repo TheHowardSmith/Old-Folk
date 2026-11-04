@@ -243,8 +243,8 @@ def test_polka_is_its_own_genre():
     # untagged polka by title, generic folk tag
     r = classify_item("q", "78rpm", item({"genre": "Ethnic", "title": "Clarinet Polka", "language": "Polish"}), RULES)
     assert r.genre == "polka"
-    # oberek stays European folk; a hillbilly "polka" stays old-time
-    assert classify_item("o", "78rpm", item({"genre": "Oberek", "language": "Polish"}), RULES).genre == "european"
+    # oberek stays Eastern European; a hillbilly "polka" stays old-time
+    assert classify_item("o", "78rpm", item({"genre": "Oberek", "language": "Polish"}), RULES).genre == "eastern_europe"
     assert classify_item("h", "78rpm", item({"genre": "Hillbilly", "title": "Hillbilly Polka"}), RULES).genre == "oldtime"
 
 
@@ -358,9 +358,9 @@ def test_indian_music_has_its_own_genre():
 
 def test_russian_is_european_and_siberian_is_asian():
     r = classify_item("x", "78rpm", item({"subject": ["Folk"], "title": "Don Cossack Song"}), RULES)
-    assert (r.region, r.genre) == ("Central & Eastern Europe", "european")
+    assert (r.region, r.genre) == ("Central & Eastern Europe", "eastern_europe")
     r = classify_item("x", "78rpm", item({"subject": ["Folk"], "title": "Russian Folk Song"}), RULES)
-    assert r.genre == "european"
+    assert r.genre == "eastern_europe"
     r = classify_item("x", "other", item({"subject": ["Folk"], "title": "Tuvan Throat Singing", "date": "1960"}), RULES)
     assert (r.region, r.genre) == ("Central Asia", "asia")
     r = classify_item("x", "other", item({"subject": ["Folk"], "title": "Chukchi Songs", "date": "1960"}), RULES)
@@ -474,3 +474,51 @@ def test_song_specific_writer_results_come_first():
     rules.writer_search = {"hc": {"writers": {"Adams": {"status": "dead_old", "died": 1913}}}}
     r = classify_item("hc", "78rpm", item({"genre": "Folk", "description": "<p><b>Writer:</b> Adams</p>"}), rules)
     assert r.status == INCLUDE and not r.checks
+
+
+def test_european_split_four_ways_by_region():
+    def g(meta):
+        return classify_item("e", "78rpm", item(dict({"subject": ["Folk"]}, **meta)), RULES).genre
+    assert g({"title": "Swedish Hambo"}) == "nordic"
+    assert g({"title": "Greek Dance"}) == "mediterranean"
+    assert g({"title": "Tyrolean Yodel"}) == "european"
+    assert g({"title": "Ukrainian Song"}) == "eastern_europe"
+    # style tags alone
+    assert g({"genre": "Schottis"}) == "nordic"
+    assert g({"genre": "Gypsy"}) == "eastern_europe"
+
+
+def test_choirs_get_their_own_genre():
+    def g(creator, **meta):
+        return classify_item("c", "78rpm", item(dict({"subject": ["Folk"], "creator": creator}, **meta)), RULES).genre
+    assert g("Ukrainian Bandurist Chorus") == "choral"
+    assert g("Хор села Варзуги") == "choral"
+    assert g("Roger Wagner Chorale") == "choral"
+    # backed by a choir is not a choir record
+    assert g("Will Glahé Und Sein Orchester Mit Chor", title="Swedish Song") == "nordic"
+    assert g("Buddy Lucas Orchestra & Chorus", title="Swedish Song") == "nordic"
+    assert g("Klaus Alzner's orkester og kor", title="Swedish Song") == "nordic"
+    # gospel and polka keep theirs
+    assert g("Tuskegee Institute Choir", genre="Spirituals") == "gospel"
+    assert g("Chor Dana", genre="Polka") == "polka"
+
+
+def test_other_traditional_is_resorted():
+    def files(*titles):
+        return [mp3(f"{i}.mp3", f"{i}.flac") | {"title": t} for i, t in enumerate(titles)]
+    def g(meta, *titles):
+        r = classify_item("w", "lp", item(dict({"subject": ["Folk"], "date": "1958"}, **meta), files(*titles)), RULES)
+        return r.genre, {t.genre for t in r.tracks}
+    assert g({}, "The Ash Grove", "Down In The Valley", "Kisses Sweeter Than Wine") == ("american", {"american"})
+    assert g({}, "Rock Of Ages", "Silent Night", "Holy, Holy, Holy") == ("gospel", {"gospel"})
+    assert g({"creator": "Σούλα Μπιρμπίλη"}, "Ta Dilina", "Epipoleos") == ("mediterranean", {"mediterranean"})
+    assert g({}, "Hora Mamtera", "Kizba", "Avelina") == ("world", {"world"})
+
+
+def test_punk_and_creative_commons_uploads():
+    r = classify_item("p", "lp", item({"subject": ["folk", "punk"], "date": "1913"}), RULES)
+    assert r.status == FLAG and "punk" in r.reasons[0]
+    r = classify_item("q", "lp", item({"subject": ["folk"], "date": "1958",
+                                       "licenseurl": "http://creativecommons.org/licenses/by-nc-nd/3.0/"}), RULES)
+    assert any("Creative Commons" in c for c in r.checks)
+

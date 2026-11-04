@@ -9,7 +9,15 @@ import kotlinx.coroutines.flow.asStateFlow
 class Settings(context: Context) {
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
-    private val _genres = MutableStateFlow(prefs.getStringSet("genres", emptySet())!!.toSet())
+    private val _genres = MutableStateFlow(splitEuropean(prefs.getStringSet("genres", emptySet())!!.toSet()))
+
+    /** European was split four ways (Nov 2026): a saved choice of it keeps all four. */
+    private fun splitEuropean(keys: Set<String>): Set<String> {
+        if (prefs.getBoolean("euro_split", false)) return keys
+        val out = if ("european" in keys) keys + setOf("nordic", "eastern_europe", "mediterranean") else keys
+        prefs.edit().putStringSet("genres", out).putBoolean("euro_split", true).apply()
+        return out
+    }
     /** Selected genre keys; empty means all genres. */
     val genres: StateFlow<Set<String>> = _genres.asStateFlow()
 

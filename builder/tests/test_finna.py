@@ -41,7 +41,7 @@ def test_field_recording_included_once_with_credit():
     assert j["w"] == "https://www.finna.fi/Record/sks.1_2"
     assert j["s"] == "Finnish Literature Society"
     assert t.artist == "Paraske Mitrune"
-    assert t.region == "Nordic" and t.genre == "european"
+    assert t.region == "Nordic" and t.genre == "nordic"
 
 
 def test_speech_and_unlisted_holders_excluded():

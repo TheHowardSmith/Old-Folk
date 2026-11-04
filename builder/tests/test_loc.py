@@ -69,7 +69,7 @@ def test_county_names_are_not_indigenous_content():
     r = classify(rec)
     assert r.status == INCLUDE, r.reasons
     assert r.tracks[0].title == "Ej lúcka, lúcka siroká"     # loc.gov mojibake repaired
-    assert r.tracks[0].genre == "european"
+    assert r.tracks[0].genre == "eastern_europe"
 
 
 def test_item_json_segments_become_tracks():
