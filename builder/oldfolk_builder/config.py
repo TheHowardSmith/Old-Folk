@@ -67,6 +67,15 @@ class Rules:
     writer_life_plus: int = 70
     writer_deaths: dict | None = None
     writer_deaths_path: Path | None = None
+    writer_search: dict | None = None
+    writer_search_path: Path | None = None
+
+    def load_writer_search(self) -> dict:
+        """Song-specific writer results (writer_search.py), item -> result."""
+        if self.writer_search is None:
+            from .writer_search import load
+            self.writer_search = load(self.writer_search_path)
+        return self.writer_search
 
     def load_writer_deaths(self) -> dict:
         if self.writer_deaths is None:
@@ -157,4 +166,5 @@ def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) 
         writer_rule=bool(cls.get("require_writers_died", False)),
         writer_life_plus=int(cls.get("writer_life_plus", 70)),
         writer_deaths_path=BUILDER_DIR / "cache-rights" / "writer_deaths.json",
+        writer_search_path=BUILDER_DIR / "cache-rights" / "writer_search.jsonl",
     )

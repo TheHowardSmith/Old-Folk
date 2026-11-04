@@ -132,6 +132,15 @@ def cmd_availability_merge(args, rules, store):
     print(json.dumps(availability.merge([Path(p) for p in args.parts], Path(args.out))))
 
 
+def cmd_writer_search(args, rules, store):
+    from datetime import date
+    from . import writer_search
+    cutoff = date.today().year - rules.writer_life_plus - 1
+    print(json.dumps(writer_search.run(Path(args.checks), Path(args.out), cutoff, date.today().year,
+                                       args.minutes, args.shard, args.of,
+                                       Path(args.previous) if args.previous else None)))
+
+
 def cmd_writer_deaths(args, rules, store):
     from . import deaths
     names = deaths.collect(store, rules)
@@ -221,6 +230,14 @@ def main(argv=None):
     s.add_argument("--previous")
     s.add_argument("--minutes", type=float)
 
+    s = sub.add_parser("writer-search", help="look up unconfirmed writers' songs on MusicBrainz (checks.csv)")
+    s.add_argument("--checks", required=True, help="checks.csv from a build")
+    s.add_argument("--out", required=True)
+    s.add_argument("--previous")
+    s.add_argument("--shard", type=int, default=0)
+    s.add_argument("--of", type=int, default=1)
+    s.add_argument("--minutes", type=float)
+
     s = sub.add_parser("ext-fetch", help="harvest other archives (loc.gov, finna.fi) into the cache")
     s.add_argument("--source", choices=("all", "loc", "finna", "dsal", "ims"), default="all",
                    help="'all' = loc + finna + dsal; 'ims' (Discografia Brasileira) runs on its own, slowly")
@@ -243,7 +260,7 @@ def main(argv=None):
     {"search": cmd_search, "sample": cmd_sample, "fetch": cmd_fetch,
      "build": cmd_build, "status": cmd_status, "ext-fetch": cmd_ext_fetch,
      "availability": cmd_availability, "availability-merge": cmd_availability_merge,
-     "writer-deaths": cmd_writer_deaths}[args.cmd](args, rules, store)
+     "writer-deaths": cmd_writer_deaths, "writer-search": cmd_writer_search}[args.cmd](args, rules, store)
 
 
 if __name__ == "__main__":

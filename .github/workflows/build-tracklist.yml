@@ -138,7 +138,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p cache-rights
-          gh release download rights-data -p 'availability.jsonl' -p 'writer_deaths.json' -D cache-rights --clobber \
+          gh release download rights-data -p 'availability.jsonl' -p 'writer_deaths.json' -p 'writer_search.jsonl' -D cache-rights --clobber \
             || echo "::notice::No rights-check data yet: composed songs stay in review, no streaming filter."
 
       - name: Build
