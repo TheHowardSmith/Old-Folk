@@ -23,7 +23,8 @@ genres:
   caribbean:    "Calypso & Caribbean"
   latin:        "Latin American Folk"
   african:      "African"
-  asia:         "Asian & Middle Eastern"
+  mideast:      "Middle Eastern"
+  asia:         "Asian"
   southasia:    "Indian & South Asian"
   pacific:      "Hawaiian & Pacific"
   choral:       "Choral"
@@ -150,16 +151,17 @@ genre_tags:
     - bengali
     - punjabi
     - tamil
-  asia:
-    - japanese
-    - minyo
-    - min'yo
-    - min'yō
+  mideast:
     - arabian
     - arabic
     - turkish
     - armenian
     - persian
+  asia:
+    - japanese
+    - minyo
+    - min'yo
+    - min'yō
     - java
     - gamelan
     - chinese
@@ -227,7 +229,7 @@ region_genre:
   "Nordic": nordic
   "Central & Eastern Europe": eastern_europe
   "Southern Europe": mediterranean
-  "Middle East & Caucasus": asia
+  "Middle East & Caucasus": mideast
   "South Asia": southasia
   "Central Asia": asia
   "East Asia": asia

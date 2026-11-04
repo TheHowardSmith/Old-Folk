@@ -243,7 +243,8 @@ JEWISH_PERFORMER = re.compile(
     r"\b(cantor|chazz?an|hazzan|chassidim|hasidim|kol israel|voice of israel|"
     r"israel(i)? (folk |philharmonic |symphony )?(orch|ensemble|choir|singers))\b", re.I)
 EUROPEAN = ("european", "nordic", "eastern_europe", "mediterranean")
-JEWISH_MOVABLE = ("asia", "world") + EUROPEAN
+ASIAN = ("asia", "mideast")
+JEWISH_MOVABLE = ("world",) + ASIAN + EUROPEAN
 POLKA_MOVABLE = ("world", "american") + EUROPEAN
 
 # Choirs get their own genre when the choir is the performer, not when a singer
@@ -262,11 +263,14 @@ def is_choir(performer: str | None) -> bool:
 
 
 def european_by_region(genre: str, region: str, rules: Rules) -> str:
-    """A European genre follows the region when the region is known."""
-    if genre in EUROPEAN:
-        by_region = rules.region_genre.get(region)
-        if by_region in EUROPEAN:
-            return by_region
+    """A European (or Asian / Middle Eastern) genre follows the region when the
+    region is known: a 'mazurka' from Sweden is Nordic, a 'Turkish' tag on a
+    Japanese disc stays Asian."""
+    for family in (EUROPEAN, ASIAN):
+        if genre in family:
+            by_region = rules.region_genre.get(region)
+            if by_region in family:
+                return by_region
     return genre
 
 
@@ -531,8 +535,13 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
                 late.append(f"{w} (d. {d['died']})")
             else:
                 unclear.append(w)
+        checked = rules.load_llm_checks()
+        if not late and checked and ident in checked.protected:
+            late.append(checked.protected[ident] + ", checked")
         if late:
             return exclude(f"writer died less than 70 years ago: {'; '.join(late[:3])}")
+        if checked and ident in checked.cleared:
+            unclear = []
         if unclear:
             res.checks.append(f"writer not confirmed died by {cutoff}: {'; '.join(unclear[:4])}")
 
@@ -562,6 +571,8 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     multi = len(choices) > 1
 
     claimed_tracks = []
+    covered_tracks = []
+    covers = (rules.load_llm_checks().covers or None) if rules.load_llm_checks() else None
     for c in choices:
         if c.seconds is not None and c.seconds < rules.min_seconds:
             continue
@@ -575,6 +586,10 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
             if claimed == "yes":
                 claimed_tracks.append(f"{t_title} ({owner})")
                 continue
+        cover = covers.get((ident, t_title.strip().lower())) if covers else None
+        if cover:
+            covered_tracks.append(f"{t_title} ({cover})")
+            continue
         t_region, t_genre = region, genre
         if multi:
             # Compilations: a track title like "Music Of Panama" beats the item's region.
@@ -583,7 +598,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
                 t_region = own
             elif various and region_src == "description":
                 t_region = "Various"
-            if genre_from_region and not resorted:
+            # Only a track with its own region gets a new genre; the rest keep
+            # the item's (an Israeli dance album stays Jewish track by track).
+            if genre_from_region and not resorted and t_region != region:
                 t_genre = rules.region_genre.get(t_region, "world")
             t_genre = european_by_region(t_genre, t_region, rules)
             # Mixed compilations: one track can be Jewish ("Hora - Israel").
@@ -596,6 +613,8 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
             artist=(c.artist or artist),
             year=year, region=t_region, genre=t_genre, seconds=c.seconds, picture=picture,
         ))
+    if not res.tracks and covered_tracks:
+        return exclude(f"cover of a protected song: {covered_tracks[0]}")
     if not res.tracks and claimed_tracks:
         return exclude(f"recording claimed in the US (pre-1972 schedules): {claimed_tracks[0]}")
     if not res.tracks:
