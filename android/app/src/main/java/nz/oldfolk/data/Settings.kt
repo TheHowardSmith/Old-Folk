@@ -18,6 +18,8 @@ class Settings(context: Context) {
         for ((flag, from, to) in listOf(
             Triple("euro_split", "european", setOf("nordic", "eastern_europe", "mediterranean")),
             Triple("asia_split", "asia", setOf("mideast")),
+            Triple("country_split", "oldtime", setOf("country")),
+            Triple("country_split2", "american", setOf("country")),
         )) {
             if (!prefs.getBoolean(flag, false) && from in out) out = out + to
             edit.putBoolean(flag, true)

@@ -10,6 +10,7 @@
 # Genres shown in the app's genre picker. Order = display order.
 genres:
   oldtime:      "Old-time & Hillbilly"
+  country:      "Country & Western"
   blues:        "Country Blues"
   gospel:       "Gospel & Spirituals"
   american:     "American Folk & Ballads"
@@ -78,6 +79,17 @@ genre_tags:
     - appalachian
     - country
     - yodeling
+  # Post-war country is Country & Western: these tags, or 'country' / 'cowboy' /
+  # 'yodeling' on a record from 1946 on without string-band tags (see classify.py).
+  country:
+    - country & western
+    - country and western
+    - c&w
+    - honky tonk
+    - honky-tonk
+    - nashville sound
+    - western
+    - country gospel
   caribbean:
     - calypso
     - mento

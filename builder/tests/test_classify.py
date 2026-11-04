@@ -574,12 +574,41 @@ def test_hillbilly_gospel_childrens_records_and_church_choirs():
 
 
 def test_gospel_78s_by_old_time_performers_move_to_old_time():
-    from oldfolk_builder.classify import hillbilly_gospel_by_performer
+    from oldfolk_builder.classify import country_by_performer
     def disc(i, subject, title):
         return classify_item(f"78_{i}", "78rpm", item({"subject": [subject], "title": title,
                                                        "creator": "MADDOX BROS. & ROSE;Somebody"}), RULES)
     results = [disc(1, "Hillbilly", "Honky Tonkin'"), disc(2, "Hillbilly", "Philadelphia Lawyer"),
                disc(3, "Hillbilly", "Sally Let Your Bangs Hang Down"), disc(4, "Gospel", "Take Me In The Lifeboat")]
     assert results[3].genre == "gospel"
-    assert hillbilly_gospel_by_performer(results) == 1
+    assert country_by_performer(results) == 1
     assert results[3].genre == "oldtime" and results[3].tracks[0].genre == "oldtime"
+
+
+def test_country_and_western():
+    def g(meta, kind="lp"):
+        return classify_item("c", kind, item(dict({"date": "1965"}, **meta)), RULES).genre
+    # post-war country LPs (Discogs "Country" style) are Country & Western
+    assert g({"subject": ["Folk, World, & Country", "Country"], "creator": "Webb Pierce"}) == "country"
+    assert g({"subject": ["Honky Tonk"], "creator": "Faron Young"}) == "country"
+    # country gospel goes with them; bluegrass gospel stays Old-time
+    assert g({"subject": ["Gospel", "Country"], "creator": "Eddy Arnold"}) == "country"
+    assert g({"subject": ["gospel", "bluegrass"], "creator": "The Rose Family"}) == "oldtime"
+    # pre-war country and cowboy 78s are Old-time & Hillbilly
+    assert g({"subject": ["Country"], "date": "1931"}, kind="78rpm") == "oldtime"
+    assert g({"subject": ["Cowboy"], "date": "1950"}, kind="78rpm") == "country"
+    assert g({"subject": ["Hillbilly"], "date": "1952"}, kind="78rpm") == "oldtime"
+
+
+def test_untagged_lps_follow_their_country_performer():
+    from oldfolk_builder.classify import country_by_performer
+    def rec(i, subject, date, title):
+        return classify_item(f"x{i}", "lp", item({"subject": subject, "date": date, "title": title,
+                                                  "creator": "Bonnie Guitar"}), RULES)
+    fwc = ["Folk, World, & Country", "Country"]
+    results = [rec(1, fwc, "1957", "Dark Moon"), rec(2, fwc, "1958", "Mister Fire Eyes"),
+               rec(3, fwc, "1959", "Candy Apple Red"),
+               rec(4, ["Folk, World, & Country"], "1966", "The Tender Love And Care Of You")]
+    assert results[3].genre == "american"
+    country_by_performer(results)
+    assert results[3].genre == "country"

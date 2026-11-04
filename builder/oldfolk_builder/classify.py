@@ -298,14 +298,28 @@ def choral_genre(genre: str, performer: str | None, text: str, tags: set[str] = 
     return genre
 
 
-# Country, bluegrass and family-band sacred songs (the Rose Family, Art & Larry,
-# the Carter Family) are Old-time & Hillbilly, not Gospel & Spirituals.
-HILLBILLY_TAGS = frozenset({"bluegrass", "hillbilly", "country", "old time", "old-time", "appalachian",
-                            "country gospel", "bluegrass gospel", "mountain music", "old time music"})
+# Country music splits by era and style. Bluegrass, string-band and family-band
+# records (and their sacred songs: the Rose Family, Art & Larry) are Old-time &
+# Hillbilly; post-war commercial country, honky-tonk, Nashville and western
+# records (and country gospel: Eddy Arnold, Hank Locklin) are Country & Western.
+COUNTRY_ERA = 1946
+STRING_BAND_TAGS = frozenset({"bluegrass", "hillbilly", "old time", "old-time", "appalachian", "banjo", "fiddle",
+                              "fiddle tunes", "square dance", "hoedown", "string band", "contra dance",
+                              "circle dance", "country dance", "mountain music", "old time music",
+                              "bluegrass gospel"})
+COUNTRY_TAGS = frozenset({"country", "country & western", "country and western", "c&w", "honky tonk",
+                          "honky-tonk", "nashville sound", "western", "cowboy", "yodeling", "country gospel"})
 
 
-def gospel_or_hillbilly(genre: str | None, tags: set[str]) -> str | None:
-    return "oldtime" if genre == "gospel" and tags & HILLBILLY_TAGS else genre
+def country_genre(genre: str | None, tags: set[str], year: int | None) -> str | None:
+    """Old-time, Country & Western or Gospel & Spirituals for a country-ish record."""
+    if genre not in ("gospel", "oldtime", "country"):
+        return genre
+    if tags & STRING_BAND_TAGS:
+        return "oldtime"
+    if tags & COUNTRY_TAGS:
+        return "country" if (year or 0) >= COUNTRY_ERA else "oldtime"
+    return genre
 
 
 def performer_key(artist: str | None) -> str:
@@ -314,28 +328,40 @@ def performer_key(artist: str | None) -> str:
     return re.sub(r"[^a-z0-9 ]+", "", first).strip()
 
 
-def hillbilly_gospel_by_performer(results: list) -> int:
-    """Gospel 78s tagged only 'Gospel' by performers whose other records are old-time
-    (Maddox Bros. & Rose, the Blue Sky Boys...) go to Old-time & Hillbilly too."""
+def country_by_performer(results: list) -> int:
+    """Records tagged only 'Gospel' or only 'Folk, World, & Country' by performers whose
+    other records are old-time or country (Maddox Bros. & Rose, Roy Acuff, Bonnie
+    Guitar...) follow them: Country & Western from 1946 on, Old-time before."""
     counts: dict[str, Counter] = {}
     for r in results:
         if r.status == EXCLUDE:
             continue
         for t in r.tracks:
-            if t.genre != "gospel":
+            if t.genre in ("oldtime", "country", "american", "world", "gospel"):
                 counts.setdefault(performer_key(t.artist), Counter())[t.genre] += 1
-    hillbilly = {k for k, c in counts.items()
-                 if k and sum(c.values()) >= 3 and c["oldtime"] >= 0.7 * sum(c.values())}
     moved = 0
     for r in results:
         if r.status == EXCLUDE:
             continue
         for t in r.tracks:
-            if t.genre == "gospel" and performer_key(t.artist) in hillbilly:
-                t.genre = "oldtime"
-                moved += 1
-        if r.genre == "gospel" and r.tracks and all(t.genre == "oldtime" for t in r.tracks):
-            r.genre = "oldtime"
+            if t.genre not in ("american", "world", "gospel"):
+                continue
+            c = counts.get(performer_key(t.artist))
+            if not c:
+                continue
+            rural = c["oldtime"] + c["country"]
+            others = sum(c.values()) - c[t.genre]
+            if others < 3 or rural < 0.7 * others:
+                continue
+            if t.year:
+                t.genre = "country" if t.year >= COUNTRY_ERA else "oldtime"
+            else:
+                t.genre = "country" if c["country"] > c["oldtime"] else "oldtime"
+            moved += 1
+        if r.tracks and r.genre in ("american", "world", "gospel"):
+            genres = {t.genre for t in r.tracks}
+            if len(genres) == 1 and genres <= {"oldtime", "country"}:
+                r.genre = genres.pop()
     return moved
 
 
@@ -511,7 +537,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
                           rules.instruction_ensembles)
     if teaching:
         return exclude(f"folk-dance instruction record: {teaching[0]}")
-    genre = gospel_or_hillbilly(specific_genre(tags, kind, rules), tags)
+    genre = specific_genre(tags, kind, rules)
+    if genre is None and kind != "78rpm" and tags & COUNTRY_TAGS and is_generic_folk(tags, rules):
+        genre = "country"     # a country LP also tagged folk ("Folk, World, & Country" + "Country")
     # Any rock, punk or psychedelic style ("psychedelic rock", "blues rock", "folk punk") is not folk.
     excluded = (tags & rules.exclude_tags) | {t for t in tags if has_word(t, "rock") or has_word(t, "punk")
                                               or has_word(t, "psychedelic")}
@@ -536,6 +564,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     # 3. Date / rights.
     year, year_note = parse_year(meta)
     res.year, res.year_note = year, year_note
+    genre = country_genre(genre, tags, year)
     if year is not None and year > rules.year_max:
         return exclude(f"dated {year} (after {rules.year_max})")
     index = rules.load_schedules() if rules.exclude_us_claimed else None

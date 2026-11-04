@@ -64,7 +64,8 @@
   let selected = new Set(store.get("genres", []));        // empty = all genres
   // Genres that were split (Nov 2026): a saved choice of the old one keeps the new ones.
   for (const [flag, from, to] of [["euroSplit", "european", ["nordic", "eastern_europe", "mediterranean"]],
-                                  ["asiaSplit", "asia", ["mideast"]]]) {
+                                  ["asiaSplit", "asia", ["mideast"]],
+                                  ["countrySplit", "oldtime", ["country"]], ["countrySplit2", "american", ["country"]]]) {
     if (selected.has(from) && !store.get(flag, false)) {
       to.forEach((k) => selected.add(k));
       store.set("genres", [...selected]);
