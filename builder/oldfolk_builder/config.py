@@ -100,7 +100,8 @@ class Rules:
         return self.schedules
 
     # Tags that only count as folk evidence on 78rpm discs (on later LPs they
-    # usually mean commercial country/pop).
+    # usually mean commercial country/pop; with a folk tag as well they file the
+    # record under Country & Western, see classify.py).
     tags_78_only: frozenset[str] = frozenset({"country", "yodeling", "old time"})
 
 

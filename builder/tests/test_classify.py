@@ -349,7 +349,7 @@ def test_central_asian_tracks_are_not_african_despite_bad_language_tag():
     assert regions["Dombara (Kazakh Folk Song)"] == "Central Asia"
     assert regions["Lezginka (Daghestan Dance)"] == "Middle East & Caucasus"
     genres = {t.title: t.genre for t in r.tracks}
-    assert genres["Amu (Tajik Folk Song)"] == "asia"
+    assert genres["Amu (Tajik Folk Song)"] == "mideast"     # Central Asia goes with the Middle East
     assert genres["Lezginka (Daghestan Dance)"] == "mideast"
 
 
@@ -366,7 +366,7 @@ def test_russian_is_european_and_siberian_is_asian():
     r = classify_item("x", "78rpm", item({"subject": ["Folk"], "title": "Russian Folk Song"}), RULES)
     assert r.genre == "eastern_europe"
     r = classify_item("x", "other", item({"subject": ["Folk"], "title": "Tuvan Throat Singing", "date": "1960"}), RULES)
-    assert (r.region, r.genre) == ("Central Asia", "asia")
+    assert (r.region, r.genre) == ("Siberia", "asia")
     r = classify_item("x", "other", item({"subject": ["Folk"], "title": "Chukchi Songs", "date": "1960"}), RULES)
     assert r.status == FLAG
 
@@ -495,9 +495,15 @@ def test_european_split_four_ways_by_region():
 def test_choirs_get_their_own_genre():
     def g(creator, **meta):
         return classify_item("c", "78rpm", item(dict({"subject": ["Folk"], "creator": creator}, **meta)), RULES).genre
-    assert g("Ukrainian Bandurist Chorus") == "choral"
-    assert g("Хор села Варзуги") == "choral"
-    assert g("Roger Wagner Chorale") == "choral"
+    # choirs whose region is unknown, and sacred or art choir music
+    assert g("Bandurist Chorus", title="Kolyskova") == "choral"
+    assert g("Roger Wagner Chorale", title="Gesu Bambino") == "choral"
+    assert g("Don Cossack Choir", title="Russian Easter Hymn") == "choral"
+    # folk songs sung by a choir stay in their folk genre
+    assert g("The Roger Wagner Chorale", title="O, Bury Me Not On The Lone Prairie", genre="Cowboy") == "oldtime"
+    assert g("Don Cossack Choir", title="Russian Folk Song") == "eastern_europe"
+    assert g("Хор села Варзуги", title="Zoryushka") == "eastern_europe"   # a village choir
+    assert g("Glyndwr Mountain Ash Welsh Male Choir", title="Welsh Folk Song") == "british"
     # backed by a choir is not a choir record
     assert g("Will Glahé Und Sein Orchester Mit Chor", title="Swedish Song") == "nordic"
     assert g("Buddy Lucas Orchestra & Chorus", title="Swedish Song") == "nordic"
@@ -505,6 +511,9 @@ def test_choirs_get_their_own_genre():
     # gospel and polka keep theirs
     assert g("Tuskegee Institute Choir", genre="Spirituals") == "gospel"
     assert g("Chor Dana", genre="Polka") == "polka"
+    # choirs from outside Europe and North America keep their region's genre
+    assert g("The De Paur Chorus", title="Nigeria - Ake (Traditional Work Chant)") == "african"
+    assert g("Korean Folk Choir", title="Korean Folk Song") == "asia"
 
 
 def test_other_traditional_is_resorted():
@@ -544,3 +553,62 @@ def test_middle_eastern_and_asian_are_separate():
     assert g({"genre": "Arabic"}) == "mideast"
     assert g({"genre": "Japanese"}) == "asia"
     assert g({"title": "Korean Folk Song"}) == "asia"
+
+
+def test_hillbilly_gospel_childrens_records_and_church_choirs():
+    def r(meta, **kw):
+        return classify_item("g", kw.get("kind", "lp"), item(dict({"date": "1960"}, **meta)), RULES)
+    # bluegrass / country gospel is Old-time & Hillbilly
+    assert r({"subject": ["gospel", "bluegrass"], "creator": "The Rose Family", "title": "I'll See God"}).genre == "oldtime"
+    # Black gospel stays Gospel, Mahalia Jackson included
+    assert r({"subject": ["Gospel"], "creator": "Mahalia Jackson", "title": "Get Away Jordan"}).genre == "gospel"
+    # made-for-children studio records are left out
+    res = r({"subject": ["Children's", "Folk, World, & Country", "Nursery Rhymes", "Folk"],
+             "creator": "Happy Time Chorus", "title": "Mother Goose Favorites"})
+    assert res.status == EXCLUDE and "children" in res.reasons[0]
+    # ...but children's songs in field recordings stay
+    assert r({"subject": ["field recordings", "children's"], "title": "Children's Game Songs"}).status != EXCLUDE
+    # a church choir's carols are Choral even when tagged gospel; a choir's spirituals stay Gospel
+    assert r({"subject": ["Gospel"], "creator": "Jesus & Mary Choral Group", "title": "Christmas Carols"}).genre == "choral"
+    assert r({"subject": ["Spirituals"], "creator": "Tuskegee Institute Choir", "title": "Christmas Spirituals"}).genre == "gospel"
+
+
+def test_gospel_78s_by_old_time_performers_move_to_old_time():
+    from oldfolk_builder.classify import country_by_performer
+    def disc(i, subject, title):
+        return classify_item(f"78_{i}", "78rpm", item({"subject": [subject], "title": title,
+                                                       "creator": "MADDOX BROS. & ROSE;Somebody"}), RULES)
+    results = [disc(1, "Hillbilly", "Honky Tonkin'"), disc(2, "Hillbilly", "Philadelphia Lawyer"),
+               disc(3, "Hillbilly", "Sally Let Your Bangs Hang Down"), disc(4, "Gospel", "Take Me In The Lifeboat")]
+    assert results[3].genre == "gospel"
+    assert country_by_performer(results) == 1
+    assert results[3].genre == "oldtime" and results[3].tracks[0].genre == "oldtime"
+
+
+def test_country_and_western():
+    def g(meta, kind="lp"):
+        return classify_item("c", kind, item(dict({"date": "1965"}, **meta)), RULES).genre
+    # post-war country LPs (Discogs "Country" style) are Country & Western
+    assert g({"subject": ["Folk, World, & Country", "Country"], "creator": "Webb Pierce"}) == "country"
+    assert g({"subject": ["Honky Tonk"], "creator": "Faron Young"}) == "country"
+    # country gospel goes with them; bluegrass gospel stays Old-time
+    assert g({"subject": ["Gospel", "Country"], "creator": "Eddy Arnold"}) == "country"
+    assert g({"subject": ["gospel", "bluegrass"], "creator": "The Rose Family"}) == "oldtime"
+    # pre-war country and cowboy 78s are Old-time & Hillbilly
+    assert g({"subject": ["Country"], "date": "1931"}, kind="78rpm") == "oldtime"
+    assert g({"subject": ["Cowboy"], "date": "1950"}, kind="78rpm") == "country"
+    assert g({"subject": ["Hillbilly"], "date": "1952"}, kind="78rpm") == "oldtime"
+
+
+def test_untagged_lps_follow_their_country_performer():
+    from oldfolk_builder.classify import country_by_performer
+    def rec(i, subject, date, title):
+        return classify_item(f"x{i}", "lp", item({"subject": subject, "date": date, "title": title,
+                                                  "creator": "Bonnie Guitar"}), RULES)
+    fwc = ["Folk, World, & Country", "Country"]
+    results = [rec(1, fwc, "1957", "Dark Moon"), rec(2, fwc, "1958", "Mister Fire Eyes"),
+               rec(3, fwc, "1959", "Candy Apple Red"),
+               rec(4, ["Folk, World, & Country"], "1966", "The Tender Love And Care Of You")]
+    assert results[3].genre == "american"
+    country_by_performer(results)
+    assert results[3].genre == "country"

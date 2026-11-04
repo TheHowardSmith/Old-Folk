@@ -64,7 +64,8 @@
   let selected = new Set(store.get("genres", []));        // empty = all genres
   // Genres that were split (Nov 2026): a saved choice of the old one keeps the new ones.
   for (const [flag, from, to] of [["euroSplit", "european", ["nordic", "eastern_europe", "mediterranean"]],
-                                  ["asiaSplit", "asia", ["mideast"]]]) {
+                                  ["asiaSplit", "asia", ["mideast"]],
+                                  ["countrySplit", "oldtime", ["country"]], ["countrySplit2", "american", ["country"]]]) {
     if (selected.has(from) && !store.get(flag, false)) {
       to.forEach((k) => selected.add(k));
       store.set("genres", [...selected]);
@@ -149,11 +150,32 @@
   }
 
   // ------------------------------------------------------------------ picking
+  // An album (archive item) is chosen first, then a song on it, so a 300-track compilation doesn't
+  // crowd out single 78s: an album's chance grows only with the square root of its unplayed tracks.
+  // Albums heard in the last 30 plays, or already queued, are skipped while there are others.
+  const RECENT_ALBUMS = 30;
   function pick() {
     const taken = new Set(queue.map(keyOf));
     if (current) taken.add(keyOf(current));
-    const candidates = tracks.filter((t) => inSelection(t) && !played.has(keyOf(t)) && !taken.has(keyOf(t)));
-    if (candidates.length) return candidates[Math.floor(Math.random() * candidates.length)];
+    const avoid = new Set(history.slice(-RECENT_ALBUMS).map((h) => h.t && h.t.i));
+    for (const q of queue) avoid.add(q.i);
+    if (current) avoid.add(current.i);
+    const byItem = new Map();
+    for (const t of tracks) {
+      if (!inSelection(t) || played.has(keyOf(t)) || taken.has(keyOf(t))) continue;
+      let list = byItem.get(t.i);
+      if (!list) byItem.set(t.i, (list = []));
+      list.push(t);
+    }
+    if (byItem.size) {
+      let albums = [...byItem.entries()].filter(([i]) => !avoid.has(i)).map(([, l]) => l);
+      if (!albums.length) albums = [...byItem.values()];
+      const weights = albums.map((l) => Math.sqrt(l.length));
+      let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+      let album = albums[albums.length - 1];
+      for (let k = 0; k < albums.length; k++) { r -= weights[k]; if (r <= 0) { album = albums[k]; break; } }
+      return album[Math.floor(Math.random() * album.length)];
+    }
     if (shardsLeft > 0) return null;
     // Heard everything in the selection: start again (except what's queued).
     let cleared = 0;
@@ -380,8 +402,14 @@
     } else { img.hidden = true; img.removeAttribute("src"); }
     const a = $("link-archive"), r = $("link-report");
     a.hidden = r.hidden = !t;
-    if (t) { a.href = pageUrl(t); a.querySelector("span").textContent = `${sourceName(t)} page`; r.href = reportUrl(t); }
+    if (t) {
+      a.href = pageUrl(t); r.href = reportUrl(t);
+      a.title = `${sourceName(t)} page`;
+      // On phones the links share one row with the app link, so the label is short.
+      a.querySelector("span").textContent = matchMedia("(max-width: 640px)").matches ? "Archive page" : `${sourceName(t)} page`;
+    }
     renderDial(t);
+    queueFit();
     document.title = t ? `${t.t} · Old Folk Air` : "Old Folk Air: endless old folk radio";
     if ("mediaSession" in navigator && t) {
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -470,6 +498,54 @@
   // ------------------------------------------------------------------ tabs
   const TABS = ["radio", "genres", "history", "about"];
   // On a wide screen the radio, genres and history share one page.
+  // Fit the radio to the screen: the dial, cover, track details, knobs and links must all be
+  // visible without scrolling. The cover gives way first (down to three quarters of its size), then the
+  // dial and knobs get smaller (fit-compact, fit-tight), and as a last resort the cover is hidden.
+  function fitRadio() {
+    const tabEl = $("tab-radio");
+    if (!tabEl || tabEl.hidden) return;
+    const art = $("art"), links = tabEl.querySelector(".actions"), knobs = tabEl.querySelector(".grille-cab");
+    const bar = document.querySelector(".tabs");
+    const barTop = bar && getComputedStyle(bar).position === "fixed" ? bar.getBoundingClientRect().top : innerHeight;
+    const limit = barTop - 8;                                     // viewport y everything must end above
+    const bottom = (el) => el.getBoundingClientRect().bottom + scrollY;
+    const body = document.body;
+    const levels = [[], ["fit-compact"], ["fit-compact", "fit-tight"]];
+    for (let i = 0; i < levels.length; i++) {
+      body.classList.remove("fit-compact", "fit-tight");
+      body.classList.add(...levels[i]);
+      art.classList.remove("gone");
+      art.style.width = "";
+      const natural = art.getBoundingClientRect().width;
+      const stacked = art.getBoundingClientRect().bottom <= knobs.getBoundingClientRect().top + 1;
+      const ends = Math.max(bottom(links), bottom(art));
+      const over = ends - limit;
+      if (over <= 0) return;
+      const width = stacked ? natural - over : natural - (bottom(art) - limit);
+      const controlsFit = stacked || bottom(links) <= limit;
+      const last = i === levels.length - 1;
+      if (controlsFit && (width >= natural * 0.75 || (last && width >= 72))) {
+        art.style.width = Math.floor(width) + "px";
+        return;
+      }
+      if (last) {
+        if (width >= 72) art.style.width = Math.floor(width) + "px";
+        else art.classList.add("gone");
+        return;
+      }
+    }
+  }
+  var fitQueued = false;   // var/function: renderNow may call queueFit before this line runs
+  function queueFit() { if (!fitQueued) { fitQueued = true; requestAnimationFrame(() => { fitQueued = false; fitRadio(); }); } }
+  window.addEventListener("resize", queueFit);
+  window.addEventListener("orientationchange", queueFit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueFit);
+  // Track details, status lines and links change height as tracks load: refit when they do.
+  if ("ResizeObserver" in window) {
+    const ro = new ResizeObserver(queueFit);
+    document.querySelectorAll("#tab-radio .now, #tab-radio .actions").forEach((el) => ro.observe(el));
+  }
+
   const wide = window.matchMedia("(min-width: 1000px)");
   let tab = "radio";
   function showTab(name) {
@@ -482,6 +558,7 @@
       if (a.dataset.tab === name) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
     if (shown.includes("history")) renderHistory();
+    if (shown.includes("radio")) queueFit();
     if (location.hash.slice(1) !== name) history_replace(name);
   }
   wide.addEventListener("change", () => showTab(tab));

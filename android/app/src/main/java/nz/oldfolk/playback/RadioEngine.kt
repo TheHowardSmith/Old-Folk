@@ -361,7 +361,8 @@ class RadioEngine(
         val needed = { if (player.mediaItemCount == 0) targetAhead() + 1 else targetAhead() - aheadCount() }
         while (needed() > 0) {
             val exclude = queuedKeys()
-            when (val r = Picker.pick(list.tracks, genres, history::contains, exclude)) {
+            val recent = streamHistory.entries.value.takeLast(Picker.RECENT_ALBUMS).map { it.track.id }
+            when (val r = Picker.pick(list.tracks, genres, history::contains, exclude, recentItems = recent)) {
                 is Picker.Result.Picked -> {
                     player.addMediaItem(mediaItem(r.track))
                     added = true

@@ -336,3 +336,75 @@ h3 { font-size: 19px; margin: 20px 0 8px; }
   .scale { margin-top: 24px; }
   .scale span { font-size: 10.5px; }
 }
+
+/* ---------------------------------------------------------------- fitting the radio to the screen
+   app.js fitRadio() shrinks the cover to the space left so the dial, knobs and links are always
+   on screen, and adds fit-compact / fit-tight when the screen is too short even for that:
+   a thinner dial, smaller knobs, tighter spacing, shorter track details. */
+.phone-only { display: none !important; }
+body.fit-compact .dial-cab { margin: 10px 0 10px; }
+body.fit-compact .cabinet.dial-cab { padding: 9px; }
+body.fit-compact .dial { padding: 7px 16px 24px; }
+body.fit-compact .scale { height: 28px; margin-top: 18px; }
+body.fit-compact .player { gap: 8px; padding-bottom: 10px; }
+body.fit-compact .now { min-height: 0; }
+body.fit-compact .now h1 { font-size: clamp(19px, 4.6vw, 26px); margin: 2px 0 4px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+body.fit-compact .artist { font-size: 16px; margin: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92vw; }
+body.fit-compact .status { margin-top: 2px; min-height: 0; }
+body.fit-compact .grille { padding: 8px; gap: 18px; }
+body.fit-compact .knob { width: 56px; height: 56px; }
+body.fit-compact .knob svg { width: 30px; height: 30px; }
+body.fit-compact .knob.big { width: 80px; height: 80px; }
+body.fit-compact .knob.big svg { width: 42px; height: 42px; }
+body.fit-tight .dial-cab { margin: 6px 0 6px; }
+body.fit-tight .cabinet.dial-cab { padding: 6px; }
+body.fit-tight .dial { padding: 5px 14px 21px; }
+body.fit-tight .scale { height: 22px; margin-top: 15px; }
+body.fit-tight .scale span { font-size: 10px; bottom: -17px; }
+body.fit-tight .player { gap: 5px; padding-bottom: 6px; }
+body.fit-tight .now h1 { font-size: 18px; -webkit-line-clamp: 1; }
+body.fit-tight .artist { font-size: 14px; }
+body.fit-tight .meta { font-size: 13px; margin: 0; }
+body.fit-tight #genre, body.fit-tight #source { display: none; }
+body.fit-tight .grille { padding: 5px; gap: 14px; }
+body.fit-tight .cabinet.thin { padding: 4px; }
+body.fit-tight .knob { width: 48px; height: 48px; }
+body.fit-tight .knob svg { width: 26px; height: 26px; }
+body.fit-tight .knob.big { width: 66px; height: 66px; }
+body.fit-tight .knob.big svg { width: 36px; height: 36px; }
+body.fit-tight .actions a { font-size: 14px; }
+.art.gone { display: none; }
+
+/* Phones: no header (the radio gets the whole screen); the app link joins the links under the knobs. */
+@media (max-width: 640px) {
+  .top { position: static; box-shadow: none; border-bottom: none; background: none; }
+  .top .brand, .top .get-app { display: none; }
+  .top .bar { height: 0; padding-top: 0; padding-bottom: 0; }   /* the tabs inside are fixed at the bottom */
+  .phone-only { display: inline-flex !important; }
+  .actions { gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .dial-cab { margin-top: 12px; }
+}
+/* Short screens with tabs at the top (landscape phones, small laptop windows): slimmer header. */
+@media (min-width: 641px) and (max-height: 760px) {
+  .bar { height: 48px; }
+  .brand img { width: 30px; height: 30px; }
+  .brand .wordmark { height: 19px; }
+}
+/* Landscape phones: no logo in the header either, just the tabs and the app link. */
+@media (min-width: 641px) and (max-height: 520px) {
+  .top .brand { display: none; }
+  .tabs { margin-left: 0; }
+  .get-app { margin-left: auto; }
+}
+/* Short landscape screens: dial and cover on the left, track details and controls on the right (as in the app). */
+@media (min-width: 560px) and (max-height: 520px) and (orientation: landscape) {
+  #tab-radio { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr auto auto;
+    column-gap: 22px; align-items: center; }
+  #tab-radio .player { display: contents; }
+  #tab-radio .dial-cab { grid-column: 1; grid-row: 1; }
+  #tab-radio .art { grid-column: 1; grid-row: 2 / span 3; justify-self: center; align-self: start; }
+  #tab-radio .now { grid-column: 2; grid-row: 1 / span 2; justify-self: center; align-self: center; }
+  #tab-radio .grille-cab { grid-column: 2; grid-row: 3; justify-self: center; }
+  #tab-radio .actions { grid-column: 2; grid-row: 4; justify-self: center; padding-bottom: 8px; }
+}

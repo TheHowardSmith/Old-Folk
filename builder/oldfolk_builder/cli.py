@@ -166,6 +166,9 @@ def cmd_build(args, rules, store):
             ext = ims.classify_all(Store(Path(args.ims_db)), rules)
             log.info("discografia brasileira: %d items in the cache", len(ext))
             results += ext
+    from .classify import country_by_performer
+    moved = country_by_performer(results)
+    log.info("moved %d gospel / folk-revival-bucket tracks by old-time and country performers", moved)
     dropped = apply_availability(results, BUILDER_DIR / "cache-rights" / "availability.jsonl")
     if dropped:
         log.info("dropped %d tracks that are on sale or streaming today", dropped)

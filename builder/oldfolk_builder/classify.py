@@ -14,6 +14,7 @@ can be tuned and re-run without touching the network.
 from __future__ import annotations
 
 import html
+from collections import Counter
 from datetime import date
 import re
 from dataclasses import dataclass, field
@@ -249,17 +250,125 @@ POLKA_MOVABLE = ("world", "american") + EUROPEAN
 
 # Choirs get their own genre when the choir is the performer, not when a singer
 # or band is backed by one ("Orchestra & Chorus", "orkester og kor"). Gospel,
-# Jewish, field and polka records keep their genre.
+# Jewish, field and polka records keep their genre, and so do choirs from
+# outside Europe and North America (the De Paur Chorus's Nigerian songs stay African).
 CHOIR = re.compile(r"\b(choirs?|chorus|chorale|choral|chor|coro|ch(œ|oe)ur|k[oóö]r|хор\w*|glee club|"
                    r"m[äa]nnerchor|singverein|liedertafel|cantores)\b", re.I)
 CHOIR_BACKING = re.compile(r"\b(with|and|w/|und|mit|og|och|y|e|et|con|i)\s+(the\s+|his\s+|her\s+|their\s+|"
                            r"sein(em)?\s+)?(\w+\s+)?(choirs?|chorus|chor|coro|kor|kór)\b|&\s*(\w+\s+)?"
                            r"(choirs?|chorus|chor|coro|kor|kór)\b", re.I)
-CHORAL_KEEPS = ("gospel", "jewish", "field", "polka")
+CHORAL_KEEPS = ("gospel", "jewish", "field", "polka",
+                "african", "asia", "mideast", "southasia", "pacific", "latin", "caribbean")
 
 
 def is_choir(performer: str | None) -> bool:
     return bool(performer and CHOIR.search(performer) and not CHOIR_BACKING.search(performer))
+
+
+# Folk songs sung by a choir stay in their folk genre ("O, Bury Me Not on the
+# Lone Prairie" by the Roger Wagner Chorale is American folk). Choral is for
+# sacred and art choir music, and for choirs whose region is unknown.
+SACRED_OR_ART = re.compile(
+    r"\b(mass|missa|kyrie|gloria|credo|sanctus|benedictus|agnus dei|ave maria|ave verum|magnificat|"
+    r"nunc dimittis|requiem|te deum|stabat mater|psalms?|hymns?|carols?|christmas|noel|nowell|advent|"
+    r"easter|alleluia|hallelujah|cantata|oratorio|motet|madrigal|anthem|liturgy|liturgical|vespers|"
+    r"matins|creed|pater noster|our father|lord's prayer|cherubic|antiphon|sacred|religious|church|"
+    r"cathedral|chant|chorale prelude|choral music|classical)\b", re.I)
+
+
+# Church and concert choirs singing the European repertoire (carols, masses,
+# Latin settings, classical) are Choral even when the record is tagged gospel;
+# spirituals and gospel songs by choirs stay in Gospel & Spirituals.
+CHURCH_REPERTOIRE = re.compile(
+    r"\b(carols?|christmas|noel|nowell|advent|mass|missa|kyrie|gloria|credo|sanctus|benedictus|agnus dei|"
+    r"ave maria|ave verum|magnificat|requiem|te deum|stabat mater|motet|cantata|oratorio|anthem|vespers|"
+    r"liturgy|liturgical|chorale|cathedral|bach|handel|mozart|palestrina|bortniansky)\b", re.I)
+SPIRITUAL_TAGS = frozenset({"spiritual", "spirituals", "negro spirituals", "negro spiritual", "jubilee"})
+
+
+def choral_genre(genre: str, performer: str | None, text: str, tags: set[str] = frozenset()) -> str:
+    if not is_choir(performer):
+        return genre
+    if genre == "gospel":
+        return "choral" if CHURCH_REPERTOIRE.search(text or "") and not tags & SPIRITUAL_TAGS else genre
+    if genre in CHORAL_KEEPS:
+        return genre
+    if genre == "world" or SACRED_OR_ART.search(text or ""):
+        return "choral"
+    return genre
+
+
+# Country music splits by era and style. Bluegrass, string-band and family-band
+# records (and their sacred songs: the Rose Family, Art & Larry) are Old-time &
+# Hillbilly; post-war commercial country, honky-tonk, Nashville and western
+# records (and country gospel: Eddy Arnold, Hank Locklin) are Country & Western.
+COUNTRY_ERA = 1946
+STRING_BAND_TAGS = frozenset({"bluegrass", "hillbilly", "old time", "old-time", "appalachian", "banjo", "fiddle",
+                              "fiddle tunes", "square dance", "hoedown", "string band", "contra dance",
+                              "circle dance", "country dance", "mountain music", "old time music",
+                              "bluegrass gospel"})
+COUNTRY_TAGS = frozenset({"country", "country & western", "country and western", "c&w", "honky tonk",
+                          "honky-tonk", "nashville sound", "western", "cowboy", "yodeling", "country gospel"})
+
+
+def country_genre(genre: str | None, tags: set[str], year: int | None) -> str | None:
+    """Old-time, Country & Western or Gospel & Spirituals for a country-ish record."""
+    if genre not in ("gospel", "oldtime", "country"):
+        return genre
+    if tags & STRING_BAND_TAGS:
+        return "oldtime"
+    if tags & COUNTRY_TAGS:
+        return "country" if (year or 0) >= COUNTRY_ERA else "oldtime"
+    return genre
+
+
+def performer_key(artist: str | None) -> str:
+    """The lead performer of a credit like 'MADDOX BROS. & ROSE;THE WILBURN FAMILY;...'."""
+    first = re.split(r"[;,]| with | and his | & his ", (artist or "").lower())[0]
+    return re.sub(r"[^a-z0-9 ]+", "", first).strip()
+
+
+def country_by_performer(results: list) -> int:
+    """Records tagged only 'Gospel' or only 'Folk, World, & Country' by performers whose
+    other records are old-time or country (Maddox Bros. & Rose, Roy Acuff, Bonnie
+    Guitar...) follow them: Country & Western from 1946 on, Old-time before."""
+    counts: dict[str, Counter] = {}
+    for r in results:
+        if r.status == EXCLUDE:
+            continue
+        for t in r.tracks:
+            if t.genre in ("oldtime", "country", "american", "world", "gospel"):
+                counts.setdefault(performer_key(t.artist), Counter())[t.genre] += 1
+    moved = 0
+    for r in results:
+        if r.status == EXCLUDE:
+            continue
+        for t in r.tracks:
+            if t.genre not in ("american", "world", "gospel"):
+                continue
+            c = counts.get(performer_key(t.artist))
+            if not c:
+                continue
+            rural = c["oldtime"] + c["country"]
+            others = sum(c.values()) - c[t.genre]
+            if others < 3 or rural < 0.7 * others:
+                continue
+            if t.year:
+                t.genre = "country" if t.year >= COUNTRY_ERA else "oldtime"
+            else:
+                t.genre = "country" if c["country"] > c["oldtime"] else "oldtime"
+            moved += 1
+        if r.tracks and r.genre in ("american", "world", "gospel"):
+            genres = {t.genre for t in r.tracks}
+            if len(genres) == 1 and genres <= {"oldtime", "country"}:
+                r.genre = genres.pop()
+    return moved
+
+
+# Made-for-children studio records (Mother Goose LPs and the like) are left out;
+# children's songs in field recordings stay.
+CHILDRENS_TAGS = frozenset({"children's", "childrens", "children's music", "children", "nursery rhymes",
+                            "nursery rhyme", "kids", "for children"})
 
 
 def european_by_region(genre: str, region: str, rules: Rules) -> str:
@@ -418,6 +527,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     spoken = tags & rules.spoken_tags
     if spoken:
         return exclude(f"spoken word / non-music: {', '.join(sorted(spoken))}")
+    childrens = tags & CHILDRENS_TAGS
+    if childrens and not tags & rules.genre_tags.get("field", frozenset()):
+        return exclude(f"children's record: {', '.join(sorted(childrens))}")
     bands = sorted(tags & rules.band_tags) + find_words(f"{title} | {artist or ''}".lower(), rules.band_words)
     if bands:
         return exclude(f"military/regimental band: {', '.join(bands[:3])}")
@@ -426,6 +538,8 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if teaching:
         return exclude(f"folk-dance instruction record: {teaching[0]}")
     genre = specific_genre(tags, kind, rules)
+    if genre is None and kind != "78rpm" and tags & COUNTRY_TAGS and is_generic_folk(tags, rules):
+        genre = "country"     # a country LP also tagged folk ("Folk, World, & Country" + "Country")
     # Any rock, punk or psychedelic style ("psychedelic rock", "blues rock", "folk punk") is not folk.
     excluded = (tags & rules.exclude_tags) | {t for t in tags if has_word(t, "rock") or has_word(t, "punk")
                                               or has_word(t, "psychedelic")}
@@ -450,6 +564,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     # 3. Date / rights.
     year, year_note = parse_year(meta)
     res.year, res.year_note = year, year_note
+    genre = country_genre(genre, tags, year)
     if year is not None and year > rules.year_max:
         return exclude(f"dated {year} (after {rules.year_max})")
     index = rules.load_schedules() if rules.exclude_us_claimed else None
@@ -563,8 +678,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
         genre = "polka"
     if genre in JEWISH_MOVABLE and is_jewish(" ".join([title, desc, " ".join(sorted(tags))]), artist or ""):
         genre = "jewish"
-    if genre not in CHORAL_KEEPS and is_choir(artist):
-        genre = "choral"
+    genre = choral_genre(genre, artist, " | ".join([title, " | ".join(sorted(tags))]), tags)
     res.genre, res.region = genre, region
     various = (artist or "").strip().lower() in ("various", "various artists")
     picture = pick_image(ident, files)
@@ -606,8 +720,8 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
             # Mixed compilations: one track can be Jewish ("Hora - Israel").
             if t_genre in JEWISH_MOVABLE and is_jewish(t_title, c.artist or ""):
                 t_genre = "jewish"
-        if t_genre not in CHORAL_KEEPS and is_choir(c.artist or artist):
-            t_genre = "choral"
+        if t_genre != "choral":
+            t_genre = choral_genre(t_genre, c.artist or artist, " | ".join([t_title, title, " | ".join(sorted(tags))]), tags)
         res.tracks.append(Track(
             id=ident, file=c.name, title=t_title,
             artist=(c.artist or artist),

@@ -16,10 +16,15 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -88,6 +93,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -108,6 +118,7 @@ import nz.oldfolk.BuildConfig
 import nz.oldfolk.data.Genre
 import nz.oldfolk.data.Playlist
 import nz.oldfolk.data.Track
+import nz.oldfolk.data.Updates
 import nz.oldfolk.playback.MediaCache
 import nz.oldfolk.playback.RadioEngine
 
@@ -145,7 +156,8 @@ fun OldFolkAppUi(graph: AppGraph, onBeforePlay: () -> Unit) {
     ) {
         if (showAbout) AboutScreen(graph)
         else when (tab) {
-            Tab.RADIO -> RadioScreen(graph, onBeforePlay, onSave = { addTrack = it }, onChooseGenres = { tab = Tab.GENRES })
+            Tab.RADIO -> RadioScreen(graph, onBeforePlay, onSave = { addTrack = it }, onChooseGenres = { tab = Tab.GENRES },
+                onAbout = { showAbout = true })
             Tab.GENRES -> GenresScreen(graph)
             Tab.PLAYLISTS -> openPlaylist?.let { id ->
                 PlaylistDetailScreen(graph, id, onBeforePlay, onPlayed = { tab = Tab.RADIO }, onGone = { openPlaylist = null })
@@ -173,7 +185,14 @@ fun AppFrame(
     Scaffold(
         modifier = Modifier.screenTexture(MaterialTheme.colorScheme.background, dark),
         topBar = {
-            Column(Modifier.decoBand(rc.band, rc.bandLo, rc.bandLine)) {
+            if (title == "Old Folk Air") {
+                // The radio screen has no title bar (every pixel goes to the radio):
+                // just the band behind the status bar and the brass rule.
+                Column(Modifier.decoBand(rc.band, rc.bandLo, rc.bandLine)) {
+                    Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
+                    HorizontalDivider(thickness = 2.dp, color = Color(0xFFB08D4A))
+                }
+            } else Column(Modifier.decoBand(rc.band, rc.bandLo, rc.bandLine)) {
                 TopAppBar(
                     title = {
                         if (title == "Old Folk Air") {
@@ -265,7 +284,8 @@ class RadioActions(
 )
 
 @Composable
-private fun RadioScreen(graph: AppGraph, onBeforePlay: () -> Unit, onSave: (Track) -> Unit, onChooseGenres: () -> Unit) {
+private fun RadioScreen(graph: AppGraph, onBeforePlay: () -> Unit, onSave: (Track) -> Unit, onChooseGenres: () -> Unit,
+                        onAbout: () -> Unit) {
     val state by graph.engine.state.collectAsState()
     val list by graph.trackList.state.collectAsState()
     val genres by graph.settings.genres.collectAsState()
@@ -302,118 +322,183 @@ private fun RadioScreen(graph: AppGraph, onBeforePlay: () -> Unit, onSave: (Trac
             onRetry = { graph.trackList.retry { graph.settings.genres.value } },
             onChooseGenres = onChooseGenres,
         ),
+        onAbout = onAbout,
     )
 }
 
+/**
+ * The radio screen fits any phone without scrolling: the dial, cover, track
+ * details, knobs and action buttons are all on screen. On short screens the
+ * dial is thinner, the knobs smaller and the cover shrinks to the space left;
+ * in landscape the cover and dial sit beside the controls.
+ */
 @Composable
-fun RadioContent(ui: RadioUi, actions: RadioActions) {
+fun RadioContent(ui: RadioUi, actions: RadioActions, onAbout: () -> Unit = {}) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val wide = maxWidth > maxHeight && maxWidth >= 560.dp
+        val h = maxHeight
+        val size = when {
+            wide -> if (h < 420.dp) RadioSize.Tight else RadioSize.Compact
+            h < 560.dp -> RadioSize.Tight
+            h < 700.dp -> RadioSize.Compact
+            else -> RadioSize.Roomy
+        }
+        if (wide) {
+            Row(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    TuningDial(year = ui.track?.year, station = ui.station, playing = ui.isPlaying, thin = true)
+                    Spacer(Modifier.height(8.dp))
+                    ArtSlot(ui.track?.artUrl, Modifier.weight(1f).fillMaxWidth())
+                }
+                Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceEvenly) {
+                    NowPlaying(ui, actions, size)
+                    Controls(ui, actions, size)
+                    ActionRow(ui, actions, onAbout)
+                }
+            }
+        } else {
+            Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = if (size == RadioSize.Roomy) 12.dp else 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                TuningDial(year = ui.track?.year, station = ui.station, playing = ui.isPlaying,
+                    thin = size != RadioSize.Roomy)
+                Spacer(Modifier.height(if (size == RadioSize.Roomy) 14.dp else 8.dp))
+                ArtSlot(ui.track?.artUrl, Modifier.weight(1f).fillMaxWidth())
+                Spacer(Modifier.height(if (size == RadioSize.Tight) 4.dp else 10.dp))
+                NowPlaying(ui, actions, size)
+                Spacer(Modifier.height(if (size == RadioSize.Tight) 4.dp else 10.dp))
+                Controls(ui, actions, size)
+                ActionRow(ui, actions, onAbout)
+            }
+        }
+    }
+}
+
+enum class RadioSize { Roomy, Compact, Tight }
+
+/** The cover (or the drawn 78), as large as the space left allows, up to 300 dp; hidden if under 56 dp. */
+@Composable
+private fun ArtSlot(url: String?, modifier: Modifier) {
+    BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
+        val side = minOf(maxWidth, maxHeight, 300.dp)
+        if (side >= 56.dp) AlbumArt(url, Modifier.size(side))
+    }
+}
+
+@Composable
+private fun NowPlaying(ui: RadioUi, actions: RadioActions, size: RadioSize) {
     val rc = LocalRadioColors.current
     val track = ui.track
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        TuningDial(year = track?.year, station = ui.station, playing = ui.isPlaying)
-        Spacer(Modifier.height(16.dp))
-        AlbumArt(track?.artUrl, Modifier.size(268.dp))
-        Spacer(Modifier.height(12.dp))
-
-        // Now playing.
-        Column(Modifier.fillMaxWidth().heightIn(min = 112.dp), horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center) {
-            if (track == null) {
-                Text(ui.message ?: "Press play to tune in", style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center)
-                if (ui.listLoading) {
-                    Spacer(Modifier.height(14.dp))
-                    LinearProgressIndicator(Modifier.width(160.dp), color = rc.glow)
-                }
-                if (ui.showRetry) {
-                    Spacer(Modifier.height(12.dp))
-                    Button(onClick = actions.onRetry) { Text("Retry") }
-                } else {
-                    Spacer(Modifier.height(14.dp))
-                    OutlinedButton(onClick = actions.onChooseGenres, modifier = Modifier.height(48.dp)) {
-                        Icon(Icons.Filled.Tune, null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp)); Text("Choose genres")
-                    }
-                }
-            } else {
-                Text(track.title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center,
-                    maxLines = 3, overflow = TextOverflow.Ellipsis)
-                Spacer(Modifier.height(6.dp))
-                Text(track.artist ?: "Unknown performer", style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+    val tight = size == RadioSize.Tight
+    Column(Modifier.fillMaxWidth().heightIn(min = if (tight) 64.dp else 96.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center) {
+        if (track == null) {
+            Text(ui.message ?: "Press play to tune in", style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center)
+            if (ui.listLoading) {
                 Spacer(Modifier.height(10.dp))
-                Text("${track.yearLabel}  ·  ${track.region}", style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                ui.genreName?.let {
+                LinearProgressIndicator(Modifier.width(160.dp), color = rc.glow)
+            }
+            if (ui.showRetry) {
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = actions.onRetry) { Text("Retry") }
+            } else {
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(onClick = actions.onChooseGenres, modifier = Modifier.height(44.dp)) {
+                    Icon(Icons.Filled.Tune, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp)); Text("Choose genres")
+                }
+            }
+        } else {
+            Text(track.title, style = if (tight) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
+                textAlign = TextAlign.Center, maxLines = if (tight) 2 else 3, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(if (tight) 2.dp else 6.dp))
+            Text(track.artist ?: "Unknown performer", style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center,
+                maxLines = if (tight) 1 else 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(if (tight) 2.dp else 8.dp))
+            val details = listOfNotNull("${track.yearLabel}  ·  ${track.region}", ui.genreName)
+            if (size == RadioSize.Roomy) {
+                details.forEach {
                     Text(it, style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                 }
-                if (!track.onArchiveOrg) {
-                    Text("from the ${track.sourceName}", style = MaterialTheme.typography.bodySmall,
-                        fontStyle = FontStyle.Italic,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                }
+            } else {
+                Text(details.joinToString("  ·  "), style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            if (!track.onArchiveOrg) {
+                Text("from the ${track.sourceName}", style = MaterialTheme.typography.bodySmall,
+                    fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            }
+            val note = ui.message ?: ui.listProgress
+            if (note != null) {
+                Text(note, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
             }
         }
+    }
+}
 
-        if (track != null && ui.message != null) {
-            Text(ui.message, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-        }
-
-        // Controls on a faint speaker grille.
-        Spacer(Modifier.height(12.dp))
-        WoodCabinet(Modifier.fillMaxWidth(), frame = 5.dp) {
+/** The three knobs on the grille cloth, smaller on short screens. */
+@Composable
+private fun Controls(ui: RadioUi, actions: RadioActions, size: RadioSize) {
+    val rc = LocalRadioColors.current
+    val (panel, small, big) = when (size) {
+        RadioSize.Roomy -> Triple(124.dp, 66.dp, 96.dp)
+        RadioSize.Compact -> Triple(106.dp, 58.dp, 84.dp)
+        RadioSize.Tight -> Triple(88.dp, 50.dp, 72.dp)
+    }
+    WoodCabinet(Modifier.fillMaxWidth(), frame = 5.dp) {
         Box(
-            Modifier.fillMaxWidth().height(124.dp)
+            Modifier.fillMaxWidth().height(panel)
                 .clip(RoundedCornerShape(16.dp))
                 .voxCloth(rc.voxBase, rc.voxGold, rc.voxTeal, rc.voxMaroon)
                 .border(1.dp, Color(0x40000000), RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-                Knob(actions.onPrevious, "Previous track", 66.dp) { Icon(Icons.Filled.SkipPrevious, null, Modifier.size(38.dp)) }
-                Knob(actions.onPlayPause, if (ui.isPlaying) "Pause" else "Play", 96.dp, primary = true) {
-                    if (ui.isBuffering) CircularProgressIndicator(Modifier.size(40.dp), strokeWidth = 3.dp,
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (size == RadioSize.Tight) 16.dp else 22.dp)) {
+                Knob(actions.onPrevious, "Previous track", small) { Icon(Icons.Filled.SkipPrevious, null, Modifier.size(small * 0.58f)) }
+                Knob(actions.onPlayPause, if (ui.isPlaying) "Pause" else "Play", big, primary = true) {
+                    if (ui.isBuffering) CircularProgressIndicator(Modifier.size(big * 0.42f), strokeWidth = 3.dp,
                         color = MaterialTheme.colorScheme.onPrimary)
-                    else Icon(if (ui.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, Modifier.size(54.dp))
+                    else Icon(if (ui.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, Modifier.size(big * 0.56f))
                 }
-                Knob(actions.onNext, "Next track", 66.dp) { Icon(Icons.Filled.SkipNext, null, Modifier.size(38.dp)) }
+                Knob(actions.onNext, "Next track", small) { Icon(Icons.Filled.SkipNext, null, Modifier.size(small * 0.58f)) }
             }
-        }
-        }
-
-        if (track != null) {
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-                SmallAction(Icons.AutoMirrored.Filled.OpenInNew, "Archive", actions.onArchive)
-                SmallAction(Icons.AutoMirrored.Filled.PlaylistAdd, "Save", actions.onSave)
-                SmallAction(Icons.Outlined.Flag, "Report", actions.onReport)
-            }
-        }
-        if (ui.inPlaylist) {
-            OutlinedButton(onClick = actions.onBackToRadio) {
-                Icon(Icons.Filled.Radio, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Back to radio")
-            }
-        }
-
-        ui.listProgress?.let {
-            Spacer(Modifier.height(14.dp))
-            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
+/** Archive, Save, Report (for the current track), Back to radio (in a playlist) and About: always on screen. */
 @Composable
-private fun SmallAction(icon: ImageVector, label: String, onClick: () -> Unit) {
-    TextButton(onClick = onClick) {
-        Icon(icon, null, Modifier.size(18.dp), tint = LocalRadioColors.current.brass)
-        Spacer(Modifier.width(6.dp))
-        Text(label, color = MaterialTheme.colorScheme.onSurface)
+private fun ActionRow(ui: RadioUi, actions: RadioActions, onAbout: () -> Unit) {
+    val hasTrack = ui.track != null
+    Row(horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(top = 2.dp)) {
+        if (ui.inPlaylist) SmallAction(Icons.Filled.Radio, "Radio", actions.onBackToRadio)
+        SmallAction(Icons.AutoMirrored.Filled.OpenInNew, "Archive", actions.onArchive, enabled = hasTrack)
+        SmallAction(Icons.AutoMirrored.Filled.PlaylistAdd, "Save", actions.onSave, enabled = hasTrack)
+        SmallAction(Icons.Outlined.Flag, "Report", actions.onReport, enabled = hasTrack)
+        SmallAction(Icons.Filled.Info, "About", onAbout)
+    }
+}
+
+/** Icon over a short label, sharing the row equally, so all of them fit even with large fonts. */
+@Composable
+private fun RowScope.SmallAction(icon: ImageVector, label: String, onClick: () -> Unit, enabled: Boolean = true) {
+    val alpha = if (enabled) 1f else 0.4f
+    TextButton(onClick = onClick, enabled = enabled, modifier = Modifier.weight(1f),
+        contentPadding = PaddingValues(horizontal = 2.dp, vertical = 2.dp)) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(icon, null, Modifier.size(20.dp), tint = LocalRadioColors.current.brass.copy(alpha = alpha))
+            Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha))
+        }
     }
 }
 
@@ -759,7 +844,16 @@ data class AboutInfo(
     val appVersion: String,
     val skipNoisy: Boolean = true,
     val noisySkipped: Int = 0,
+    val update: UpdateUi = UpdateUi.Idle,
 )
+
+sealed interface UpdateUi {
+    data object Idle : UpdateUi
+    data object Checking : UpdateUi
+    data object UpToDate : UpdateUi
+    data class Available(val version: String) : UpdateUi
+    data class Failed(val reason: String) : UpdateUi
+}
 
 @Composable
 private fun AboutScreen(graph: AppGraph) {
@@ -769,8 +863,11 @@ private fun AboutScreen(graph: AppGraph) {
     val list by graph.trackList.state.collectAsState()
     var confirmReset by remember { mutableStateOf(false) }
     val skipNoisy by graph.settings.skipNoisy.collectAsState()
+    var update by remember { mutableStateOf<UpdateUi>(UpdateUi.Idle) }
+    val scope = rememberCoroutineScope()
     AboutContent(
         AboutInfo(
+            update = update,
             skipNoisy = skipNoisy,
             noisySkipped = graph.levels.noisyCount(),
             listVersion = list.index?.version?.toString() ?: "-",
@@ -788,6 +885,17 @@ private fun AboutScreen(graph: AppGraph) {
         onGitHub = { Links.open(context, Links.repoUrl) },
         onSkipNoisy = { graph.settings.setSkipNoisy(it) },
         onEmail = { Links.open(context, "mailto:$CONTACT_EMAIL?subject=" + Uri.encode("Old Folk Air: our recordings")) },
+        onCheckUpdate = {
+            update = UpdateUi.Checking
+            scope.launch {
+                update = when (val r = withContext(Dispatchers.IO) { Updates.check() }) {
+                    is Updates.Result.Available -> UpdateUi.Available(r.version)
+                    Updates.Result.UpToDate -> UpdateUi.UpToDate
+                    is Updates.Result.Failed -> UpdateUi.Failed(r.reason)
+                }
+            }
+        },
+        onDownloadUpdate = { Links.open(context, Updates.apkUrl) },
     )
     if (confirmReset) {
         AlertDialog(
@@ -805,11 +913,45 @@ fun AboutContent(
     info: AboutInfo, onReset: () -> Unit, onSendReport: () -> Unit, onClearFailures: () -> Unit, onGitHub: () -> Unit,
     onSkipNoisy: (Boolean) -> Unit = {},
     onEmail: () -> Unit = {},
+    onCheckUpdate: () -> Unit = {},
+    onDownloadUpdate: () -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Old Folk Air plays public-domain folk and field recordings from around the world, streamed straight from the archives that hold them: the Internet Archive, the Library of Congress, Finnish archives via Finna, the Instituto Moreira Salles and the Digital South Asia Library.",
             style = MaterialTheme.typography.bodyLarge)
+        AboutCard("App updates") {
+            Text("You have version ${info.appVersion}.", style = MaterialTheme.typography.bodyMedium)
+            when (val u = info.update) {
+                UpdateUi.Idle -> OutlinedButton(onClick = onCheckUpdate) { Text("Check for updates") }
+                UpdateUi.Checking -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(10.dp)); Text("Checking…")
+                }
+                UpdateUi.UpToDate -> {
+                    Text("This is the latest version.", style = MaterialTheme.typography.bodyMedium)
+                    TextButton(onClick = onCheckUpdate) { Text("Check again") }
+                }
+                is UpdateUi.Available -> {
+                    Text("Version ${u.version} is available.", style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold)
+                    Button(onClick = onDownloadUpdate) {
+                        Icon(Icons.Filled.Download, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp))
+                        Text("Download update")
+                    }
+                    Text("Your browser downloads it; open the file to install it over this version. " +
+                        "Your history and playlists are kept.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                is UpdateUi.Failed -> {
+                    Text("Couldn't check for updates (${u.reason}).", style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = onCheckUpdate) { Text("Try again") }
+                        TextButton(onClick = onDownloadUpdate) { Text("Download latest") }
+                    }
+                }
+            }
+        }
         AboutCard("Rights") {
             Text("The recordings are hosted by those archives and aren't covered by this app's license. " +
                 "Every track was recorded or released in 1970 or earlier, isn't claimed by a rights holder in the " +

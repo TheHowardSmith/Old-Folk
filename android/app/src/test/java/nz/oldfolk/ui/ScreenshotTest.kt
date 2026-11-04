@@ -67,6 +67,7 @@ class ScreenshotTest {
         PlaylistsContent(listOf(Playlist("1", "Kitchen dances", upNext), Playlist("2", "Sunday blues", listOf(track))), {}, {})
     }
     @Test fun aboutDark() = shot(true, Tab.RADIO, "About") {
-        AboutContent(AboutInfo("202611011030", 24870, "9/9", 312, 2, "210 MB of 600 MB", "0.1.7"), {}, {}, {}, {})
+        AboutContent(AboutInfo("202611011030", 24870, "9/9", 312, 2, "210 MB of 600 MB", "0.1.9",
+            update = UpdateUi.Available("0.2.0")), {}, {}, {}, {})
     }
 }

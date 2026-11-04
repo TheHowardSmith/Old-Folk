@@ -63,13 +63,15 @@ private const val DIAL_SPAN = 80f   // 1895..1975
  * riding above it); undated 78s show a soft band across the 78 rpm era.
  */
 @Composable
-fun TuningDial(year: Int?, station: String, playing: Boolean, modifier: Modifier = Modifier) {
+fun TuningDial(year: Int?, station: String, playing: Boolean, modifier: Modifier = Modifier, thin: Boolean = false) {
     val rc = LocalRadioColors.current
     val target = year?.let { ((it.coerceIn(1895, 1975) - DIAL_START) / DIAL_SPAN) }
     val pos by animateFloatAsState(target ?: 0.5f, tween(900, easing = FastOutSlowInEasing), label = "needle")
     val measurer = rememberTextMeasurer()
-    val labelStyle = TextStyle(fontSize = 11.sp, color = rc.dialInk.copy(alpha = 0.92f), fontFamily = androidx.compose.ui.text.font.FontFamily.Serif)
-    val yearStyle = TextStyle(fontSize = 13.sp, color = rc.needle, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+    // The dial's printing doesn't grow with the system font size (it would crowd the scale).
+    val fixed = androidx.compose.ui.platform.LocalDensity.current   // dp -> sp undoes the font scale
+    val labelStyle = TextStyle(fontSize = with(fixed) { 11.dp.toSp() }, color = rc.dialInk.copy(alpha = 0.92f), fontFamily = androidx.compose.ui.text.font.FontFamily.Serif)
+    val yearStyle = TextStyle(fontSize = with(fixed) { 13.dp.toSp() }, color = rc.needle, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
         fontFamily = androidx.compose.ui.text.font.FontFamily.Serif)
     val lit by animateFloatAsState(if (playing) 1f else 0f, tween(800), label = "backlight")
     val shape = RoundedCornerShape(8.dp)
@@ -81,7 +83,7 @@ fun TuningDial(year: Int?, station: String, playing: Boolean, modifier: Modifier
             .background(Brush.verticalGradient(listOf(rc.dialFace, rc.dialFaceBottom)))
             .glassSetIn()
             .border(1.5.dp, Brush.horizontalGradient(listOf(Color(0xFF8C6B33), Color(0xFFD9B872), Color(0xFF8C6B33))), shape)
-            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .padding(horizontal = 16.dp, vertical = if (thin) 5.dp else 10.dp)
             .semantics { contentDescription = (year?.let { "Recorded around $it" } ?: "78 rpm era, date unknown") + ". $station" },
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -90,11 +92,12 @@ fun TuningDial(year: Int?, station: String, playing: Boolean, modifier: Modifier
             Text(station.uppercase(), style = PlateLabel, color = rc.dialInk, maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         }
-        Canvas(Modifier.fillMaxWidth().height(66.dp)) {
+        // On short screens the dial is squeezed thinner: same scale, less glass.
+        Canvas(Modifier.fillMaxWidth().height(if (thin) 50.dp else 66.dp)) {
             val w = size.width
             val h = size.height
-            val cordY = 19.dp.toPx()
-            val baseY = h * 0.72f
+            val cordY = (if (thin) 16.dp else 19.dp).toPx()
+            val baseY = h - 18.5.dp.toPx()
             // Backlight glowing up through the glass, brighter while playing.
             drawRect(Brush.radialGradient(
                 listOf(Color(0xFFFFA848).copy(alpha = 0.12f + 0.16f * lit), Color.Transparent),
