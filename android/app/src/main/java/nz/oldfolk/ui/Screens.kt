@@ -93,6 +93,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -113,6 +118,7 @@ import nz.oldfolk.BuildConfig
 import nz.oldfolk.data.Genre
 import nz.oldfolk.data.Playlist
 import nz.oldfolk.data.Track
+import nz.oldfolk.data.Updates
 import nz.oldfolk.playback.MediaCache
 import nz.oldfolk.playback.RadioEngine
 
@@ -838,7 +844,16 @@ data class AboutInfo(
     val appVersion: String,
     val skipNoisy: Boolean = true,
     val noisySkipped: Int = 0,
+    val update: UpdateUi = UpdateUi.Idle,
 )
+
+sealed interface UpdateUi {
+    data object Idle : UpdateUi
+    data object Checking : UpdateUi
+    data object UpToDate : UpdateUi
+    data class Available(val version: String) : UpdateUi
+    data class Failed(val reason: String) : UpdateUi
+}
 
 @Composable
 private fun AboutScreen(graph: AppGraph) {
@@ -848,8 +863,11 @@ private fun AboutScreen(graph: AppGraph) {
     val list by graph.trackList.state.collectAsState()
     var confirmReset by remember { mutableStateOf(false) }
     val skipNoisy by graph.settings.skipNoisy.collectAsState()
+    var update by remember { mutableStateOf<UpdateUi>(UpdateUi.Idle) }
+    val scope = rememberCoroutineScope()
     AboutContent(
         AboutInfo(
+            update = update,
             skipNoisy = skipNoisy,
             noisySkipped = graph.levels.noisyCount(),
             listVersion = list.index?.version?.toString() ?: "-",
@@ -867,6 +885,17 @@ private fun AboutScreen(graph: AppGraph) {
         onGitHub = { Links.open(context, Links.repoUrl) },
         onSkipNoisy = { graph.settings.setSkipNoisy(it) },
         onEmail = { Links.open(context, "mailto:$CONTACT_EMAIL?subject=" + Uri.encode("Old Folk Air: our recordings")) },
+        onCheckUpdate = {
+            update = UpdateUi.Checking
+            scope.launch {
+                update = when (val r = withContext(Dispatchers.IO) { Updates.check() }) {
+                    is Updates.Result.Available -> UpdateUi.Available(r.version)
+                    Updates.Result.UpToDate -> UpdateUi.UpToDate
+                    is Updates.Result.Failed -> UpdateUi.Failed(r.reason)
+                }
+            }
+        },
+        onDownloadUpdate = { Links.open(context, Updates.apkUrl) },
     )
     if (confirmReset) {
         AlertDialog(
@@ -884,11 +913,45 @@ fun AboutContent(
     info: AboutInfo, onReset: () -> Unit, onSendReport: () -> Unit, onClearFailures: () -> Unit, onGitHub: () -> Unit,
     onSkipNoisy: (Boolean) -> Unit = {},
     onEmail: () -> Unit = {},
+    onCheckUpdate: () -> Unit = {},
+    onDownloadUpdate: () -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Old Folk Air plays public-domain folk and field recordings from around the world, streamed straight from the archives that hold them: the Internet Archive, the Library of Congress, Finnish archives via Finna, the Instituto Moreira Salles and the Digital South Asia Library.",
             style = MaterialTheme.typography.bodyLarge)
+        AboutCard("App updates") {
+            Text("You have version ${info.appVersion}.", style = MaterialTheme.typography.bodyMedium)
+            when (val u = info.update) {
+                UpdateUi.Idle -> OutlinedButton(onClick = onCheckUpdate) { Text("Check for updates") }
+                UpdateUi.Checking -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(10.dp)); Text("Checking…")
+                }
+                UpdateUi.UpToDate -> {
+                    Text("This is the latest version.", style = MaterialTheme.typography.bodyMedium)
+                    TextButton(onClick = onCheckUpdate) { Text("Check again") }
+                }
+                is UpdateUi.Available -> {
+                    Text("Version ${u.version} is available.", style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold)
+                    Button(onClick = onDownloadUpdate) {
+                        Icon(Icons.Filled.Download, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp))
+                        Text("Download update")
+                    }
+                    Text("Your browser downloads it; open the file to install it over this version. " +
+                        "Your history and playlists are kept.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                is UpdateUi.Failed -> {
+                    Text("Couldn't check for updates (${u.reason}).", style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = onCheckUpdate) { Text("Try again") }
+                        TextButton(onClick = onDownloadUpdate) { Text("Download latest") }
+                    }
+                }
+            }
+        }
         AboutCard("Rights") {
             Text("The recordings are hosted by those archives and aren't covered by this app's license. " +
                 "Every track was recorded or released in 1970 or earlier, isn't claimed by a rights holder in the " +
