@@ -11,11 +11,18 @@ class Settings(context: Context) {
 
     private val _genres = MutableStateFlow(splitEuropean(prefs.getStringSet("genres", emptySet())!!.toSet()))
 
-    /** European was split four ways (Nov 2026): a saved choice of it keeps all four. */
+    /** Genres that were split (Nov 2026): a saved choice of the old one keeps the new ones. */
     private fun splitEuropean(keys: Set<String>): Set<String> {
-        if (prefs.getBoolean("euro_split", false)) return keys
-        val out = if ("european" in keys) keys + setOf("nordic", "eastern_europe", "mediterranean") else keys
-        prefs.edit().putStringSet("genres", out).putBoolean("euro_split", true).apply()
+        var out = keys
+        val edit = prefs.edit()
+        for ((flag, from, to) in listOf(
+            Triple("euro_split", "european", setOf("nordic", "eastern_europe", "mediterranean")),
+            Triple("asia_split", "asia", setOf("mideast")),
+        )) {
+            if (!prefs.getBoolean(flag, false) && from in out) out = out + to
+            edit.putBoolean(flag, true)
+        }
+        edit.putStringSet("genres", out).apply()
         return out
     }
     /** Selected genre keys; empty means all genres. */

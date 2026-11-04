@@ -62,12 +62,15 @@
   const tracks = [];
   let shardsLeft = 0;
   let selected = new Set(store.get("genres", []));        // empty = all genres
-  // European was split four ways (Nov 2026): a saved choice of it keeps all four.
-  if (selected.has("european") && !store.get("euroSplit", false)) {
-    ["nordic", "eastern_europe", "mediterranean"].forEach((k) => selected.add(k));
-    store.set("genres", [...selected]);
+  // Genres that were split (Nov 2026): a saved choice of the old one keeps the new ones.
+  for (const [flag, from, to] of [["euroSplit", "european", ["nordic", "eastern_europe", "mediterranean"]],
+                                  ["asiaSplit", "asia", ["mideast"]]]) {
+    if (selected.has(from) && !store.get(flag, false)) {
+      to.forEach((k) => selected.add(k));
+      store.set("genres", [...selected]);
+    }
+    store.set(flag, true);
   }
-  store.set("euroSplit", true);
   const played = new Set(store.get("played", []));
   let history = store.get("history", []);                  // [{t, at}], oldest first
   let queue = [];

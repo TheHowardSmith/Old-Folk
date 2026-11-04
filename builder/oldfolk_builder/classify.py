@@ -243,7 +243,8 @@ JEWISH_PERFORMER = re.compile(
     r"\b(cantor|chazz?an|hazzan|chassidim|hasidim|kol israel|voice of israel|"
     r"israel(i)? (folk |philharmonic |symphony )?(orch|ensemble|choir|singers))\b", re.I)
 EUROPEAN = ("european", "nordic", "eastern_europe", "mediterranean")
-JEWISH_MOVABLE = ("asia", "world") + EUROPEAN
+ASIAN = ("asia", "mideast")
+JEWISH_MOVABLE = ("world",) + ASIAN + EUROPEAN
 POLKA_MOVABLE = ("world", "american") + EUROPEAN
 
 # Choirs get their own genre when the choir is the performer, not when a singer
@@ -262,11 +263,14 @@ def is_choir(performer: str | None) -> bool:
 
 
 def european_by_region(genre: str, region: str, rules: Rules) -> str:
-    """A European genre follows the region when the region is known."""
-    if genre in EUROPEAN:
-        by_region = rules.region_genre.get(region)
-        if by_region in EUROPEAN:
-            return by_region
+    """A European (or Asian / Middle Eastern) genre follows the region when the
+    region is known: a 'mazurka' from Sweden is Nordic, a 'Turkish' tag on a
+    Japanese disc stays Asian."""
+    for family in (EUROPEAN, ASIAN):
+        if genre in family:
+            by_region = rules.region_genre.get(region)
+            if by_region in family:
+                return by_region
     return genre
 
 
@@ -594,7 +598,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
                 t_region = own
             elif various and region_src == "description":
                 t_region = "Various"
-            if genre_from_region and not resorted:
+            # Only a track with its own region gets a new genre; the rest keep
+            # the item's (an Israeli dance album stays Jewish track by track).
+            if genre_from_region and not resorted and t_region != region:
                 t_genre = rules.region_genre.get(t_region, "world")
             t_genre = european_by_region(t_genre, t_region, rules)
             # Mixed compilations: one track can be Jewish ("Hora - Israel").

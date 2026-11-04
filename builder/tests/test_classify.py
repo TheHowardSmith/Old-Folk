@@ -59,7 +59,7 @@ def test_undated_78_folk_is_included_with_region_from_language():
                             "description": "<p><b>Performer:</b> Sam Haidostian</p>"}), RULES)
     assert r.status == INCLUDE, r.reasons
     assert r.region == "Middle East & Caucasus"
-    assert r.genre == "asia"
+    assert r.genre == "mideast"
     assert r.year is None and len(r.tracks) == 1
 
 
@@ -348,7 +348,9 @@ def test_central_asian_tracks_are_not_african_despite_bad_language_tag():
     assert regions["Amu (Tajik Folk Song)"] == "Central Asia"
     assert regions["Dombara (Kazakh Folk Song)"] == "Central Asia"
     assert regions["Lezginka (Daghestan Dance)"] == "Middle East & Caucasus"
-    assert {t.genre for t in r.tracks} == {"asia"}
+    genres = {t.title: t.genre for t in r.tracks}
+    assert genres["Amu (Tajik Folk Song)"] == "asia"
+    assert genres["Lezginka (Daghestan Dance)"] == "mideast"
 
 
 def test_indian_music_has_its_own_genre():
@@ -524,3 +526,21 @@ def test_punk_and_creative_commons_uploads():
                                        "licenseurl": "http://creativecommons.org/licenses/by-nc-nd/3.0/"}), RULES)
     assert any("Creative Commons" in c for c in r.checks)
 
+
+
+def test_album_tracks_keep_the_items_jewish_genre():
+    files = [mp3("01.mp3", title="Ma Avarech"), mp3("02.mp3", title="Debka Skayo")]
+    r = classify_item("lp_new-folk-dances-of-israel", "lp",
+                      item({"title": "New Folk Dances Of Israel", "subject": ["Folk, World, & Country"],
+                            "genre": "Folk, World, & Country", "date": "1970", "creator": "Uri Hodorov"},
+                           files), RULES)
+    assert r.genre == "jewish" and {t.genre for t in r.tracks} == {"jewish"}
+
+
+def test_middle_eastern_and_asian_are_separate():
+    def g(meta):
+        return classify_item("m", "78rpm", item(dict({"subject": ["Folk"]}, **meta)), RULES).genre
+    assert g({"genre": "Turkish"}) == "mideast"
+    assert g({"genre": "Arabic"}) == "mideast"
+    assert g({"genre": "Japanese"}) == "asia"
+    assert g({"title": "Korean Folk Song"}) == "asia"
