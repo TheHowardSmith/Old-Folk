@@ -380,8 +380,14 @@
     } else { img.hidden = true; img.removeAttribute("src"); }
     const a = $("link-archive"), r = $("link-report");
     a.hidden = r.hidden = !t;
-    if (t) { a.href = pageUrl(t); a.querySelector("span").textContent = `${sourceName(t)} page`; r.href = reportUrl(t); }
+    if (t) {
+      a.href = pageUrl(t); r.href = reportUrl(t);
+      a.title = `${sourceName(t)} page`;
+      // On phones the links share one row with the app link, so the label is short.
+      a.querySelector("span").textContent = matchMedia("(max-width: 640px)").matches ? "Archive page" : `${sourceName(t)} page`;
+    }
     renderDial(t);
+    queueFit();
     document.title = t ? `${t.t} · Old Folk Air` : "Old Folk Air: endless old folk radio";
     if ("mediaSession" in navigator && t) {
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -470,6 +476,54 @@
   // ------------------------------------------------------------------ tabs
   const TABS = ["radio", "genres", "history", "about"];
   // On a wide screen the radio, genres and history share one page.
+  // Fit the radio to the screen: the dial, cover, track details, knobs and links must all be
+  // visible without scrolling. The cover gives way first (down to three quarters of its size), then the
+  // dial and knobs get smaller (fit-compact, fit-tight), and as a last resort the cover is hidden.
+  function fitRadio() {
+    const tabEl = $("tab-radio");
+    if (!tabEl || tabEl.hidden) return;
+    const art = $("art"), links = tabEl.querySelector(".actions"), knobs = tabEl.querySelector(".grille-cab");
+    const bar = document.querySelector(".tabs");
+    const barTop = bar && getComputedStyle(bar).position === "fixed" ? bar.getBoundingClientRect().top : innerHeight;
+    const limit = barTop - 8;                                     // viewport y everything must end above
+    const bottom = (el) => el.getBoundingClientRect().bottom + scrollY;
+    const body = document.body;
+    const levels = [[], ["fit-compact"], ["fit-compact", "fit-tight"]];
+    for (let i = 0; i < levels.length; i++) {
+      body.classList.remove("fit-compact", "fit-tight");
+      body.classList.add(...levels[i]);
+      art.classList.remove("gone");
+      art.style.width = "";
+      const natural = art.getBoundingClientRect().width;
+      const stacked = art.getBoundingClientRect().bottom <= knobs.getBoundingClientRect().top + 1;
+      const ends = Math.max(bottom(links), bottom(art));
+      const over = ends - limit;
+      if (over <= 0) return;
+      const width = stacked ? natural - over : natural - (bottom(art) - limit);
+      const controlsFit = stacked || bottom(links) <= limit;
+      const last = i === levels.length - 1;
+      if (controlsFit && (width >= natural * 0.75 || (last && width >= 72))) {
+        art.style.width = Math.floor(width) + "px";
+        return;
+      }
+      if (last) {
+        if (width >= 72) art.style.width = Math.floor(width) + "px";
+        else art.classList.add("gone");
+        return;
+      }
+    }
+  }
+  var fitQueued = false;   // var/function: renderNow may call queueFit before this line runs
+  function queueFit() { if (!fitQueued) { fitQueued = true; requestAnimationFrame(() => { fitQueued = false; fitRadio(); }); } }
+  window.addEventListener("resize", queueFit);
+  window.addEventListener("orientationchange", queueFit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueFit);
+  // Track details, status lines and links change height as tracks load: refit when they do.
+  if ("ResizeObserver" in window) {
+    const ro = new ResizeObserver(queueFit);
+    document.querySelectorAll("#tab-radio .now, #tab-radio .actions").forEach((el) => ro.observe(el));
+  }
+
   const wide = window.matchMedia("(min-width: 1000px)");
   let tab = "radio";
   function showTab(name) {
@@ -482,6 +536,7 @@
       if (a.dataset.tab === name) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
     if (shown.includes("history")) renderHistory();
+    if (shown.includes("radio")) queueFit();
     if (location.hash.slice(1) !== name) history_replace(name);
   }
   wide.addEventListener("change", () => showTab(tab));
