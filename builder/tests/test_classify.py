@@ -553,3 +553,33 @@ def test_middle_eastern_and_asian_are_separate():
     assert g({"genre": "Arabic"}) == "mideast"
     assert g({"genre": "Japanese"}) == "asia"
     assert g({"title": "Korean Folk Song"}) == "asia"
+
+
+def test_hillbilly_gospel_childrens_records_and_church_choirs():
+    def r(meta, **kw):
+        return classify_item("g", kw.get("kind", "lp"), item(dict({"date": "1960"}, **meta)), RULES)
+    # bluegrass / country gospel is Old-time & Hillbilly
+    assert r({"subject": ["gospel", "bluegrass"], "creator": "The Rose Family", "title": "I'll See God"}).genre == "oldtime"
+    # Black gospel stays Gospel, Mahalia Jackson included
+    assert r({"subject": ["Gospel"], "creator": "Mahalia Jackson", "title": "Get Away Jordan"}).genre == "gospel"
+    # made-for-children studio records are left out
+    res = r({"subject": ["Children's", "Folk, World, & Country", "Nursery Rhymes", "Folk"],
+             "creator": "Happy Time Chorus", "title": "Mother Goose Favorites"})
+    assert res.status == EXCLUDE and "children" in res.reasons[0]
+    # ...but children's songs in field recordings stay
+    assert r({"subject": ["field recordings", "children's"], "title": "Children's Game Songs"}).status != EXCLUDE
+    # a church choir's carols are Choral even when tagged gospel; a choir's spirituals stay Gospel
+    assert r({"subject": ["Gospel"], "creator": "Jesus & Mary Choral Group", "title": "Christmas Carols"}).genre == "choral"
+    assert r({"subject": ["Spirituals"], "creator": "Tuskegee Institute Choir", "title": "Christmas Spirituals"}).genre == "gospel"
+
+
+def test_gospel_78s_by_old_time_performers_move_to_old_time():
+    from oldfolk_builder.classify import hillbilly_gospel_by_performer
+    def disc(i, subject, title):
+        return classify_item(f"78_{i}", "78rpm", item({"subject": [subject], "title": title,
+                                                       "creator": "MADDOX BROS. & ROSE;Somebody"}), RULES)
+    results = [disc(1, "Hillbilly", "Honky Tonkin'"), disc(2, "Hillbilly", "Philadelphia Lawyer"),
+               disc(3, "Hillbilly", "Sally Let Your Bangs Hang Down"), disc(4, "Gospel", "Take Me In The Lifeboat")]
+    assert results[3].genre == "gospel"
+    assert hillbilly_gospel_by_performer(results) == 1
+    assert results[3].genre == "oldtime" and results[3].tracks[0].genre == "oldtime"

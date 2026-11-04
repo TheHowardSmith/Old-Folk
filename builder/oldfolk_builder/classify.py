@@ -14,6 +14,7 @@ can be tuned and re-run without touching the network.
 from __future__ import annotations
 
 import html
+from collections import Counter
 from datetime import date
 import re
 from dataclasses import dataclass, field
@@ -275,12 +276,73 @@ SACRED_OR_ART = re.compile(
     r"cathedral|chant|chorale prelude|choral music|classical)\b", re.I)
 
 
-def choral_genre(genre: str, performer: str | None, text: str) -> str:
-    if genre in CHORAL_KEEPS or not is_choir(performer):
+# Church and concert choirs singing the European repertoire (carols, masses,
+# Latin settings, classical) are Choral even when the record is tagged gospel;
+# spirituals and gospel songs by choirs stay in Gospel & Spirituals.
+CHURCH_REPERTOIRE = re.compile(
+    r"\b(carols?|christmas|noel|nowell|advent|mass|missa|kyrie|gloria|credo|sanctus|benedictus|agnus dei|"
+    r"ave maria|ave verum|magnificat|requiem|te deum|stabat mater|motet|cantata|oratorio|anthem|vespers|"
+    r"liturgy|liturgical|chorale|cathedral|bach|handel|mozart|palestrina|bortniansky)\b", re.I)
+SPIRITUAL_TAGS = frozenset({"spiritual", "spirituals", "negro spirituals", "negro spiritual", "jubilee"})
+
+
+def choral_genre(genre: str, performer: str | None, text: str, tags: set[str] = frozenset()) -> str:
+    if not is_choir(performer):
+        return genre
+    if genre == "gospel":
+        return "choral" if CHURCH_REPERTOIRE.search(text or "") and not tags & SPIRITUAL_TAGS else genre
+    if genre in CHORAL_KEEPS:
         return genre
     if genre == "world" or SACRED_OR_ART.search(text or ""):
         return "choral"
     return genre
+
+
+# Country, bluegrass and family-band sacred songs (the Rose Family, Art & Larry,
+# the Carter Family) are Old-time & Hillbilly, not Gospel & Spirituals.
+HILLBILLY_TAGS = frozenset({"bluegrass", "hillbilly", "country", "old time", "old-time", "appalachian",
+                            "country gospel", "bluegrass gospel", "mountain music", "old time music"})
+
+
+def gospel_or_hillbilly(genre: str | None, tags: set[str]) -> str | None:
+    return "oldtime" if genre == "gospel" and tags & HILLBILLY_TAGS else genre
+
+
+def performer_key(artist: str | None) -> str:
+    """The lead performer of a credit like 'MADDOX BROS. & ROSE;THE WILBURN FAMILY;...'."""
+    first = re.split(r"[;,]| with | and his | & his ", (artist or "").lower())[0]
+    return re.sub(r"[^a-z0-9 ]+", "", first).strip()
+
+
+def hillbilly_gospel_by_performer(results: list) -> int:
+    """Gospel 78s tagged only 'Gospel' by performers whose other records are old-time
+    (Maddox Bros. & Rose, the Blue Sky Boys...) go to Old-time & Hillbilly too."""
+    counts: dict[str, Counter] = {}
+    for r in results:
+        if r.status == EXCLUDE:
+            continue
+        for t in r.tracks:
+            if t.genre != "gospel":
+                counts.setdefault(performer_key(t.artist), Counter())[t.genre] += 1
+    hillbilly = {k for k, c in counts.items()
+                 if k and sum(c.values()) >= 3 and c["oldtime"] >= 0.7 * sum(c.values())}
+    moved = 0
+    for r in results:
+        if r.status == EXCLUDE:
+            continue
+        for t in r.tracks:
+            if t.genre == "gospel" and performer_key(t.artist) in hillbilly:
+                t.genre = "oldtime"
+                moved += 1
+        if r.genre == "gospel" and r.tracks and all(t.genre == "oldtime" for t in r.tracks):
+            r.genre = "oldtime"
+    return moved
+
+
+# Made-for-children studio records (Mother Goose LPs and the like) are left out;
+# children's songs in field recordings stay.
+CHILDRENS_TAGS = frozenset({"children's", "childrens", "children's music", "children", "nursery rhymes",
+                            "nursery rhyme", "kids", "for children"})
 
 
 def european_by_region(genre: str, region: str, rules: Rules) -> str:
@@ -439,6 +501,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     spoken = tags & rules.spoken_tags
     if spoken:
         return exclude(f"spoken word / non-music: {', '.join(sorted(spoken))}")
+    childrens = tags & CHILDRENS_TAGS
+    if childrens and not tags & rules.genre_tags.get("field", frozenset()):
+        return exclude(f"children's record: {', '.join(sorted(childrens))}")
     bands = sorted(tags & rules.band_tags) + find_words(f"{title} | {artist or ''}".lower(), rules.band_words)
     if bands:
         return exclude(f"military/regimental band: {', '.join(bands[:3])}")
@@ -446,7 +511,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
                           rules.instruction_ensembles)
     if teaching:
         return exclude(f"folk-dance instruction record: {teaching[0]}")
-    genre = specific_genre(tags, kind, rules)
+    genre = gospel_or_hillbilly(specific_genre(tags, kind, rules), tags)
     # Any rock, punk or psychedelic style ("psychedelic rock", "blues rock", "folk punk") is not folk.
     excluded = (tags & rules.exclude_tags) | {t for t in tags if has_word(t, "rock") or has_word(t, "punk")
                                               or has_word(t, "psychedelic")}
@@ -584,7 +649,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
         genre = "polka"
     if genre in JEWISH_MOVABLE and is_jewish(" ".join([title, desc, " ".join(sorted(tags))]), artist or ""):
         genre = "jewish"
-    genre = choral_genre(genre, artist, " | ".join([title, " | ".join(sorted(tags))]))
+    genre = choral_genre(genre, artist, " | ".join([title, " | ".join(sorted(tags))]), tags)
     res.genre, res.region = genre, region
     various = (artist or "").strip().lower() in ("various", "various artists")
     picture = pick_image(ident, files)
@@ -627,7 +692,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
             if t_genre in JEWISH_MOVABLE and is_jewish(t_title, c.artist or ""):
                 t_genre = "jewish"
         if t_genre != "choral":
-            t_genre = choral_genre(t_genre, c.artist or artist, " | ".join([t_title, title, " | ".join(sorted(tags))]))
+            t_genre = choral_genre(t_genre, c.artist or artist, " | ".join([t_title, title, " | ".join(sorted(tags))]), tags)
         res.tracks.append(Track(
             id=ident, file=c.name, title=t_title,
             artist=(c.artist or artist),
