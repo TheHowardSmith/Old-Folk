@@ -249,13 +249,15 @@ POLKA_MOVABLE = ("world", "american") + EUROPEAN
 
 # Choirs get their own genre when the choir is the performer, not when a singer
 # or band is backed by one ("Orchestra & Chorus", "orkester og kor"). Gospel,
-# Jewish, field and polka records keep their genre.
+# Jewish, field and polka records keep their genre, and so do choirs from
+# outside Europe and North America (the De Paur Chorus's Nigerian songs stay African).
 CHOIR = re.compile(r"\b(choirs?|chorus|chorale|choral|chor|coro|ch(œ|oe)ur|k[oóö]r|хор\w*|glee club|"
                    r"m[äa]nnerchor|singverein|liedertafel|cantores)\b", re.I)
 CHOIR_BACKING = re.compile(r"\b(with|and|w/|und|mit|og|och|y|e|et|con|i)\s+(the\s+|his\s+|her\s+|their\s+|"
                            r"sein(em)?\s+)?(\w+\s+)?(choirs?|chorus|chor|coro|kor|kór)\b|&\s*(\w+\s+)?"
                            r"(choirs?|chorus|chor|coro|kor|kór)\b", re.I)
-CHORAL_KEEPS = ("gospel", "jewish", "field", "polka")
+CHORAL_KEEPS = ("gospel", "jewish", "field", "polka",
+                "african", "asia", "mideast", "southasia", "pacific", "latin", "caribbean")
 
 
 def is_choir(performer: str | None) -> bool:

@@ -505,6 +505,9 @@ def test_choirs_get_their_own_genre():
     # gospel and polka keep theirs
     assert g("Tuskegee Institute Choir", genre="Spirituals") == "gospel"
     assert g("Chor Dana", genre="Polka") == "polka"
+    # choirs from outside Europe and North America keep their region's genre
+    assert g("The De Paur Chorus", title="Nigeria - Ake (Traditional Work Chant)") == "african"
+    assert g("Korean Folk Choir", title="Korean Folk Song") == "asia"
 
 
 def test_other_traditional_is_resorted():
