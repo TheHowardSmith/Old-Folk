@@ -149,11 +149,32 @@
   }
 
   // ------------------------------------------------------------------ picking
+  // An album (archive item) is chosen first, then a song on it, so a 300-track compilation doesn't
+  // crowd out single 78s: an album's chance grows only with the square root of its unplayed tracks.
+  // Albums heard in the last 30 plays, or already queued, are skipped while there are others.
+  const RECENT_ALBUMS = 30;
   function pick() {
     const taken = new Set(queue.map(keyOf));
     if (current) taken.add(keyOf(current));
-    const candidates = tracks.filter((t) => inSelection(t) && !played.has(keyOf(t)) && !taken.has(keyOf(t)));
-    if (candidates.length) return candidates[Math.floor(Math.random() * candidates.length)];
+    const avoid = new Set(history.slice(-RECENT_ALBUMS).map((h) => h.t && h.t.i));
+    for (const q of queue) avoid.add(q.i);
+    if (current) avoid.add(current.i);
+    const byItem = new Map();
+    for (const t of tracks) {
+      if (!inSelection(t) || played.has(keyOf(t)) || taken.has(keyOf(t))) continue;
+      let list = byItem.get(t.i);
+      if (!list) byItem.set(t.i, (list = []));
+      list.push(t);
+    }
+    if (byItem.size) {
+      let albums = [...byItem.entries()].filter(([i]) => !avoid.has(i)).map(([, l]) => l);
+      if (!albums.length) albums = [...byItem.values()];
+      const weights = albums.map((l) => Math.sqrt(l.length));
+      let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+      let album = albums[albums.length - 1];
+      for (let k = 0; k < albums.length; k++) { r -= weights[k]; if (r <= 0) { album = albums[k]; break; } }
+      return album[Math.floor(Math.random() * album.length)];
+    }
     if (shardsLeft > 0) return null;
     // Heard everything in the selection: start again (except what's queued).
     let cleared = 0;
