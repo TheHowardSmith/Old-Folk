@@ -69,6 +69,16 @@ class Rules:
     writer_deaths_path: Path | None = None
     writer_search: dict | None = None
     writer_search_path: Path | None = None
+    # Model-checked rights results (rights/sonnet, rights/opus): see llm_checks.py.
+    llm_checks: object = None
+    llm_checks_dir: Path | None = None
+
+    def load_llm_checks(self):
+        if self.llm_checks is None:
+            from .llm_checks import load
+            self.llm_checks = load(self.llm_checks_dir)
+        return self.llm_checks
+
     def load_writer_search(self) -> dict:
         """Song-specific writer results (writer_search.py), item -> result."""
         if self.writer_search is None:
@@ -166,4 +176,5 @@ def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) 
         writer_life_plus=int(cls.get("writer_life_plus", 70)),
         writer_deaths_path=BUILDER_DIR / "cache-rights" / "writer_deaths.json",
         writer_search_path=BUILDER_DIR / "cache-rights" / "writer_search.jsonl",
+        llm_checks_dir=BUILDER_DIR / "rights",
     )

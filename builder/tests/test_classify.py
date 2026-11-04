@@ -7,6 +7,8 @@ RULES = load_rules()
 RULES.schedules_path = None   # tests never use the real US schedules index
 RULES.writer_deaths = {}      # ... nor real writer death lookups
 RULES.writer_search = {}
+from oldfolk_builder.llm_checks import LlmChecks
+RULES.llm_checks = LlmChecks()
 
 
 def mp3(name, original=None, fmt="VBR MP3", length="180.0", **extra):
