@@ -495,9 +495,15 @@ def test_european_split_four_ways_by_region():
 def test_choirs_get_their_own_genre():
     def g(creator, **meta):
         return classify_item("c", "78rpm", item(dict({"subject": ["Folk"], "creator": creator}, **meta)), RULES).genre
-    assert g("Ukrainian Bandurist Chorus") == "choral"
-    assert g("Хор села Варзуги") == "choral"
-    assert g("Roger Wagner Chorale") == "choral"
+    # choirs whose region is unknown, and sacred or art choir music
+    assert g("Bandurist Chorus", title="Kolyskova") == "choral"
+    assert g("Roger Wagner Chorale", title="Gesu Bambino") == "choral"
+    assert g("Don Cossack Choir", title="Russian Easter Hymn") == "choral"
+    # folk songs sung by a choir stay in their folk genre
+    assert g("The Roger Wagner Chorale", title="O, Bury Me Not On The Lone Prairie", genre="Cowboy") == "oldtime"
+    assert g("Don Cossack Choir", title="Russian Folk Song") == "eastern_europe"
+    assert g("Хор села Варзуги", title="Zoryushka") == "eastern_europe"   # a village choir
+    assert g("Glyndwr Mountain Ash Welsh Male Choir", title="Welsh Folk Song") == "british"
     # backed by a choir is not a choir record
     assert g("Will Glahé Und Sein Orchester Mit Chor", title="Swedish Song") == "nordic"
     assert g("Buddy Lucas Orchestra & Chorus", title="Swedish Song") == "nordic"

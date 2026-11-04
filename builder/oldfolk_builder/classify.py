@@ -264,6 +264,25 @@ def is_choir(performer: str | None) -> bool:
     return bool(performer and CHOIR.search(performer) and not CHOIR_BACKING.search(performer))
 
 
+# Folk songs sung by a choir stay in their folk genre ("O, Bury Me Not on the
+# Lone Prairie" by the Roger Wagner Chorale is American folk). Choral is for
+# sacred and art choir music, and for choirs whose region is unknown.
+SACRED_OR_ART = re.compile(
+    r"\b(mass|missa|kyrie|gloria|credo|sanctus|benedictus|agnus dei|ave maria|ave verum|magnificat|"
+    r"nunc dimittis|requiem|te deum|stabat mater|psalms?|hymns?|carols?|christmas|noel|nowell|advent|"
+    r"easter|alleluia|hallelujah|cantata|oratorio|motet|madrigal|anthem|liturgy|liturgical|vespers|"
+    r"matins|creed|pater noster|our father|lord's prayer|cherubic|antiphon|sacred|religious|church|"
+    r"cathedral|chant|chorale prelude|choral music|classical)\b", re.I)
+
+
+def choral_genre(genre: str, performer: str | None, text: str) -> str:
+    if genre in CHORAL_KEEPS or not is_choir(performer):
+        return genre
+    if genre == "world" or SACRED_OR_ART.search(text or ""):
+        return "choral"
+    return genre
+
+
 def european_by_region(genre: str, region: str, rules: Rules) -> str:
     """A European (or Asian / Middle Eastern) genre follows the region when the
     region is known: a 'mazurka' from Sweden is Nordic, a 'Turkish' tag on a
@@ -565,8 +584,7 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
         genre = "polka"
     if genre in JEWISH_MOVABLE and is_jewish(" ".join([title, desc, " ".join(sorted(tags))]), artist or ""):
         genre = "jewish"
-    if genre not in CHORAL_KEEPS and is_choir(artist):
-        genre = "choral"
+    genre = choral_genre(genre, artist, " | ".join([title, " | ".join(sorted(tags))]))
     res.genre, res.region = genre, region
     various = (artist or "").strip().lower() in ("various", "various artists")
     picture = pick_image(ident, files)
@@ -608,8 +626,8 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
             # Mixed compilations: one track can be Jewish ("Hora - Israel").
             if t_genre in JEWISH_MOVABLE and is_jewish(t_title, c.artist or ""):
                 t_genre = "jewish"
-        if t_genre not in CHORAL_KEEPS and is_choir(c.artist or artist):
-            t_genre = "choral"
+        if t_genre != "choral":
+            t_genre = choral_genre(t_genre, c.artist or artist, " | ".join([t_title, title, " | ".join(sorted(tags))]))
         res.tracks.append(Track(
             id=ident, file=c.name, title=t_title,
             artist=(c.artist or artist),
