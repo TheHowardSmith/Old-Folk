@@ -18,8 +18,8 @@ class ScreenshotTest {
         1927, "USA", "oldtime")
     private val undated = Track("78_y", "y.mp3", "Halay", "Sam Haidostian", null, "Middle East & Caucasus", "asia")
     private val upNext = listOf(
-        Track("a", "a.mp3", "Sally Goodin", "Eck Robertson", 1922, "USA", "oldtime"),
-        Track("b", "b.mp3", "Kerry Polka", "Patrick Killoran", 1937, "British Isles", "british"),
+        Track("a", "a.mp3", "Sally Goodin", "Eck Robertson", 1922, "USA", "oldtime", seconds = 166),
+        Track("b", "b.mp3", "Kerry Polka", "Patrick Killoran", 1937, "British Isles", "british", seconds = 194),
         Track("c", "c.mp3", "Mamele", "Abe Schwartz Orchestra", null, "Central & Eastern Europe", "jewish"),
     )
     private val genres = listOf(
@@ -30,7 +30,7 @@ class ScreenshotTest {
         Genre("field", "Field Recordings & Work Songs", 120),
     )
 
-    private fun radio(t: Track?, playing: Boolean, msg: String? = null) = RadioUi(
+    private fun radio(t: Track?, playing: Boolean, msg: String? = null) = RadioUi(positionMs = 74_000, durationMs = 185_000,
         station = "Radio · all genres", track = t, genreName = t?.let { "Old-time & Hillbilly" },
         isPlaying = playing, isBuffering = false, message = msg,
         inPlaylist = false, listLoading = false, listProgress = null, showRetry = false,
@@ -68,6 +68,6 @@ class ScreenshotTest {
     }
     @Test fun aboutDark() = shot(true, Tab.RADIO, "About") {
         AboutContent(AboutInfo("202611011030", 24870, "9/9", 312, 2, "210 MB of 600 MB", "0.1.9",
-            update = UpdateUi.Available("0.2.0")), {}, {}, {}, {})
+            update = UpdateUi.Available("0.2.0"), theme = "dark"), {}, {}, {}, {})
     }
 }

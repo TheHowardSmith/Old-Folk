@@ -44,6 +44,15 @@ class Settings(context: Context) {
         _skipNoisy.value = on
     }
 
+    private val _theme = MutableStateFlow(prefs.getString("theme", "system") ?: "system")
+    /** "system" (follow the phone), "light" or "dark". */
+    val theme: StateFlow<String> = _theme.asStateFlow()
+
+    fun setTheme(mode: String) {
+        prefs.edit().putString("theme", mode).apply()
+        _theme.value = mode
+    }
+
     var askedNotificationPermission: Boolean
         get() = prefs.getBoolean("asked_notifications", false)
         set(v) = prefs.edit().putBoolean("asked_notifications", v).apply()

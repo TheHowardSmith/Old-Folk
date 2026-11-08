@@ -22,7 +22,7 @@ class ScreenSizeTest {
                 AppFrame(Tab.RADIO, "Old Folk Air", showBack = false, showAboutButton = true,
                     onBack = {}, onAbout = {}, onTab = {}) {
                     RadioContent(RadioUi("Radio · all genres", track, "Old-time & Hillbilly", true, false, null,
-                        false, false, null, false), RadioActions())
+                        false, false, null, false, positionMs = 74_000, durationMs = 185_000), RadioActions())
                 }
             }
         }

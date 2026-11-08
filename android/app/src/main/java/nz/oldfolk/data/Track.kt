@@ -21,6 +21,8 @@ data class Track(
     val page: String? = null,
     /** Holding institution to credit, for recordings outside the Internet Archive. */
     val source: String? = null,
+    /** Length in seconds, when the archive gives it. */
+    val seconds: Int? = null,
 ) {
     /** Stable identity across list versions: used for "never repeat" and downloads. */
     val key: Long = keyOf(id, file)
@@ -30,6 +32,9 @@ data class Track(
             file.split('/').joinToString("/") { Uri.encode(it) })
 
     val detailsUrl: String get() = page ?: ("https://archive.org/details/" + Uri.encode(id))
+
+    /** "3:05", or null when the length isn't known. */
+    val lengthLabel: String? get() = seconds?.takeIf { it > 0 }?.let { formatClock(it * 1000L) }
 
     /** True for recordings on the Internet Archive; others come from smaller archives. */
     val onArchiveOrg: Boolean get() = url == null
@@ -66,6 +71,7 @@ data class Track(
         url?.let { put("u", it) }
         page?.let { put("w", it) }
         source?.let { put("s", it) }
+        seconds?.let { put("d", it) }
     }
 
     companion object {
@@ -91,6 +97,7 @@ data class Track(
             url = o.optString("u").ifBlank { null },
             page = o.optString("w").ifBlank { null },
             source = o.optString("s").ifBlank { null },
+            seconds = if (o.has("d")) o.optInt("d").takeIf { it > 0 } else null,
         )
 
         fun parseShard(json: String): List<Track> {
@@ -130,4 +137,11 @@ data class TrackIndex(
             )
         }
     }
+}
+
+/** 65_000 -> "1:05", 3_725_000 -> "1:02:05". */
+fun formatClock(ms: Long): String {
+    val total = (ms.coerceAtLeast(0) / 1000).toInt()
+    val h = total / 3600; val m = (total % 3600) / 60; val s = total % 60
+    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
 }
