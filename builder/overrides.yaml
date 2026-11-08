@@ -2,6 +2,9 @@
 #
 # include:           item ids to include even though they were flagged
 # exclude:           item ids to always exclude (also use for removal requests)
+# approved_childrens: children's records checked by hand and found to be folk
+#                    (traditional children's songs, singing games, lullabies);
+#                    other children's records are left out
 # approved_uploads:  user-uploaded items checked by hand and found fine (only the
 #                    'user upload' hold is lifted; every other rule still applies)
 # approved_writers:  composer/writer names whose works are out of copyright
@@ -221,3 +224,15 @@ approved_uploads:
   - "eyletoyldesnoyakh"   # Eyle Toyldes Noyakh (1950)
   - "grup-folk-sicoris-temes-per-al-festival-folk-del-dia-6-de-gener-1970"   # Grup Folk Sicoris Temes Per Al Festival Folk Del Dia 6 De Ge (1970)
   - "sounds-of-the-watussi-from-ruanda-urundi"   # Sounds of the Watussi from Belgian Ruanda-Urundi (1952)
+
+approved_childrens:
+  # Checked 2026-11-08: traditional children's songs and singing games.
+  - "lp_oats-and-beans-and-barley_patrick-shuldham-shaw-esme-lewis-the-choir"   # English singing games
+  - "lp_hi-neighbor-record-3_unknown-artist"                                     # UNICEF folk songs of many lands
+  - "lp_hi-neighbor-record-3_unknown-artist_0"
+  - "lp_camp-songs-with-6-to-11-year-olds_unknown-artist-pete-seeger-erik-darling"
+  - "lp_childrens-concert-at-town-hall_oscar-brand"
+  - "lp_french-songs-for-children_catherine-clouzot-jacques-rousseau"           # traditional French children's songs
+  - "lp_songs-children-sing-israel_tom-glazer"
+  - "lp_moscow-pioneer-ensemble_ansambll-moskovskogo-gorodskogo-dvorca"
+  - "lp_dogwood-soup_shep-ginandes"

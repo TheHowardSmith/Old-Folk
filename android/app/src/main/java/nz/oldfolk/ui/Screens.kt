@@ -93,6 +93,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.Canvas
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import nz.oldfolk.data.formatClock
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Slider
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.withContext
@@ -269,6 +278,8 @@ data class RadioUi(
     val listLoading: Boolean,
     val listProgress: String?,
     val showRetry: Boolean,
+    val positionMs: Long = 0,
+    val durationMs: Long = 0,
 )
 
 class RadioActions(
@@ -281,6 +292,7 @@ class RadioActions(
     val onBackToRadio: () -> Unit = {},
     val onRetry: () -> Unit = {},
     val onChooseGenres: () -> Unit = {},
+    val onSeek: (Long) -> Unit = {},
 )
 
 @Composable
@@ -291,6 +303,10 @@ private fun RadioScreen(graph: AppGraph, onBeforePlay: () -> Unit, onSave: (Trac
     val genres by graph.settings.genres.collectAsState()
     val context = LocalContext.current
     val track = state.current
+    var position by remember { mutableStateOf(0L to 0L) }
+    LaunchedEffect(Unit) {
+        while (true) { position = graph.engine.position(); kotlinx.coroutines.delay(500) }
+    }
     val station = when {
         state.mode == RadioEngine.Mode.PLAYLIST -> "Playlist · ${state.playlistName}"
         genres.isEmpty() -> "Radio · all genres"
@@ -310,6 +326,8 @@ private fun RadioScreen(graph: AppGraph, onBeforePlay: () -> Unit, onSave: (Trac
             listProgress = if (list.loading && list.tracks.isNotEmpty() && !list.complete)
                 "Fetching the track list in the background (${list.shardsLoaded}/${list.shardsTotal})" else null,
             showRetry = list.error != null && list.tracks.isEmpty(),
+            positionMs = position.first,
+            durationMs = position.second,
         ),
         RadioActions(
             onPlayPause = { onBeforePlay(); graph.engine.togglePlay() },
@@ -321,6 +339,7 @@ private fun RadioScreen(graph: AppGraph, onBeforePlay: () -> Unit, onSave: (Trac
             onBackToRadio = { onBeforePlay(); graph.engine.startRadio() },
             onRetry = { graph.trackList.retry { graph.settings.genres.value } },
             onChooseGenres = onChooseGenres,
+            onSeek = { graph.engine.seekTo(it); position = it to position.second },
         ),
         onAbout = onAbout,
     )
@@ -354,6 +373,7 @@ fun RadioContent(ui: RadioUi, actions: RadioActions, onAbout: () -> Unit = {}) {
                 Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceEvenly) {
                     NowPlaying(ui, actions, size)
+                    PlayHead(ui, actions)
                     Controls(ui, actions, size)
                     ActionRow(ui, actions, onAbout)
                 }
@@ -367,7 +387,7 @@ fun RadioContent(ui: RadioUi, actions: RadioActions, onAbout: () -> Unit = {}) {
                 ArtSlot(ui.track?.artUrl, Modifier.weight(1f).fillMaxWidth())
                 Spacer(Modifier.height(if (size == RadioSize.Tight) 4.dp else 10.dp))
                 NowPlaying(ui, actions, size)
-                Spacer(Modifier.height(if (size == RadioSize.Tight) 4.dp else 10.dp))
+                PlayHead(ui, actions)
                 Controls(ui, actions, size)
                 ActionRow(ui, actions, onAbout)
             }
@@ -441,6 +461,49 @@ private fun NowPlaying(ui: RadioUi, actions: RadioActions, size: RadioSize) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
             }
         }
+    }
+}
+
+/** How far into the track we are: drag the brass pointer to jump; elapsed time left, length right. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PlayHead(ui: RadioUi, actions: RadioActions) {
+    val rc = LocalRadioColors.current
+    var dragging by remember { mutableStateOf<Float?>(null) }
+    val dur = ui.durationMs
+    val frac = if (dur > 0) (ui.positionMs.toFloat() / dur).coerceIn(0f, 1f) else 0f
+    val shown = dragging ?: frac
+    val labelStyle = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum")
+    Row(Modifier.fillMaxWidth().height(36.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(if (ui.track == null) "" else formatClock(if (dur > 0) (shown * dur).toLong() else ui.positionMs),
+            style = labelStyle, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(48.dp),
+            textAlign = TextAlign.Start)
+        val enabled = ui.track != null && dur > 0
+        val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+        Slider(
+            value = shown,
+            onValueChange = { dragging = it },
+            onValueChangeFinished = { dragging?.let { if (dur > 0) actions.onSeek((it * dur).toLong()) }; dragging = null },
+            enabled = enabled,
+            modifier = Modifier.weight(1f).semantics { contentDescription = "Position in track" },
+            interactionSource = interaction,
+            // A thin brass line with a small round pointer, like a dial cord, not Material's thick bar.
+            thumb = {
+                Box(Modifier.size(if (dragging != null) 18.dp else 14.dp)
+                    .background(if (enabled) rc.brass else rc.brass.copy(alpha = 0.4f), CircleShape)
+                    .border(1.dp, Color(0x40000000), CircleShape))
+            },
+            track = {
+                Canvas(Modifier.fillMaxWidth().height(4.dp)) {
+                    val y = size.height / 2
+                    drawLine(rc.brass.copy(alpha = 0.25f), Offset(0f, y), Offset(size.width, y), size.height, StrokeCap.Round)
+                    if (enabled) drawLine(rc.brass, Offset(0f, y), Offset(size.width * shown, y), size.height, StrokeCap.Round)
+                }
+            },
+        )
+        Text(if (ui.track == null || dur <= 0) "" else formatClock(dur),
+            style = labelStyle, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(48.dp),
+            textAlign = TextAlign.End)
     }
 }
 
@@ -730,8 +793,12 @@ private fun HistoryScreen(graph: AppGraph, onBeforePlay: () -> Unit) {
     val fmt = { ms: Long -> val d = java.util.Date(ms); if (dayFmt.format(d) == today) timeFmt.format(d) else dayFmt.format(d) }
     val current = state.current
     val past = if (current != null && entries.lastOrNull()?.track?.key == current.key) entries.dropLast(1) else entries
+    // Entries saved before track lengths were in the list: take the length from the current list.
+    val list by graph.trackList.state.collectAsState()
+    val lengths = remember(list.tracks.size) { list.tracks.associate { it.key to it.seconds } }
+    val withLength = { t: Track -> if (t.seconds != null) t else t.copy(seconds = lengths[t.key]) }
     val rows = buildList {
-        past.forEach { add(HistoryRow.Past(it.track, fmt(it.time))) }
+        past.forEach { add(HistoryRow.Past(withLength(it.track), fmt(it.time))) }
         current?.let { add(HistoryRow.Now(it)) }
         if (state.currentIndex >= 0) state.queue.forEachIndexed { i, t -> if (i > state.currentIndex) add(HistoryRow.Ahead(t, i)) }
     }
@@ -801,10 +868,11 @@ private fun HistoryItem(t: Track, label: String?, saved: Boolean, kind: Int, onC
             },
             supportingContent = {
                 Column {
-                    Text(listOfNotNull(t.artist ?: "Unknown performer", t.yearLabel.takeIf { !current }).joinToString(" · "),
+                    Text(listOfNotNull(t.artist ?: "Unknown performer", t.yearLabel.takeIf { !current },
+                        t.lengthLabel.takeIf { !current }).joinToString(" · "),
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = fade))
-                    if (current) Text("${t.yearLabel} · $label", maxLines = 1, style = MaterialTheme.typography.bodySmall,
+                    if (current) Text(listOfNotNull(t.yearLabel, label, t.lengthLabel).joinToString(" · "), maxLines = 1, style = MaterialTheme.typography.bodySmall,
                         color = rc.liveText, fontWeight = FontWeight.Medium)
                 }
             },
@@ -845,6 +913,7 @@ data class AboutInfo(
     val skipNoisy: Boolean = true,
     val noisySkipped: Int = 0,
     val update: UpdateUi = UpdateUi.Idle,
+    val theme: String = "system",
 )
 
 sealed interface UpdateUi {
@@ -863,11 +932,13 @@ private fun AboutScreen(graph: AppGraph) {
     val list by graph.trackList.state.collectAsState()
     var confirmReset by remember { mutableStateOf(false) }
     val skipNoisy by graph.settings.skipNoisy.collectAsState()
+    val theme by graph.settings.theme.collectAsState()
     var update by remember { mutableStateOf<UpdateUi>(UpdateUi.Idle) }
     val scope = rememberCoroutineScope()
     AboutContent(
         AboutInfo(
             update = update,
+            theme = theme,
             skipNoisy = skipNoisy,
             noisySkipped = graph.levels.noisyCount(),
             listVersion = list.index?.version?.toString() ?: "-",
@@ -896,6 +967,7 @@ private fun AboutScreen(graph: AppGraph) {
             }
         },
         onDownloadUpdate = { Links.open(context, Updates.apkUrl) },
+        onTheme = { graph.settings.setTheme(it) },
     )
     if (confirmReset) {
         AlertDialog(
@@ -915,6 +987,7 @@ fun AboutContent(
     onEmail: () -> Unit = {},
     onCheckUpdate: () -> Unit = {},
     onDownloadUpdate: () -> Unit = {},
+    onTheme: (String) -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -951,6 +1024,21 @@ fun AboutContent(
                     }
                 }
             }
+        }
+        AboutCard("Appearance") {
+            val options = listOf("light" to "Light", "dark" to "Dark", "system" to "Auto")
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                options.forEachIndexed { i, (key, label) ->
+                    SegmentedButton(
+                        selected = info.theme == key,
+                        onClick = { onTheme(key) },
+                        shape = SegmentedButtonDefaults.itemShape(i, options.size),
+                        icon = {},
+                    ) { Text(label, maxLines = 1) }
+                }
+            }
+            Text("Auto follows your phone's light or dark setting.", style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         AboutCard("Rights") {
             Text("The recordings are hosted by those archives and aren't covered by this app's license. " +

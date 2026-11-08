@@ -6,6 +6,8 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.media3.session.MediaController
@@ -25,7 +27,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val graph = (application as OldFolkApp).graph
         setContent {
-            OldFolkTheme {
+            val theme by graph.settings.theme.collectAsState()
+            val dark = when (theme) { "light" -> false; "dark" -> true; else -> androidx.compose.foundation.isSystemInDarkTheme() }
+            // Status and navigation bar icons follow the app's light/dark choice, not just the phone's.
+            androidx.compose.runtime.LaunchedEffect(dark) {
+                val clear = android.graphics.Color.TRANSPARENT
+                val style = if (dark) androidx.activity.SystemBarStyle.dark(clear)
+                    else androidx.activity.SystemBarStyle.light(clear, clear)
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+            }
+            OldFolkTheme(dark = dark) {
                 OldFolkAppUi(graph, onBeforePlay = ::askNotificationPermissionOnce)
             }
         }

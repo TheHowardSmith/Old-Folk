@@ -65,7 +65,9 @@
   // Genres that were split (Nov 2026): a saved choice of the old one keeps the new ones.
   for (const [flag, from, to] of [["euroSplit", "european", ["nordic", "eastern_europe", "mediterranean"]],
                                   ["asiaSplit", "asia", ["mideast"]],
-                                  ["countrySplit", "oldtime", ["country"]], ["countrySplit2", "american", ["country"]]]) {
+                                  ["countrySplit", "oldtime", ["country"]], ["countrySplit2", "american", ["country"]],
+                                  ["classicalSplit", "southasia", ["classical"]], ["classicalSplit2", "asia", ["classical"]],
+                                  ["classicalSplit3", "mideast", ["classical"]]]) {
     if (selected.has(from) && !store.get(flag, false)) {
       to.forEach((k) => selected.add(k));
       store.set("genres", [...selected]);
@@ -409,6 +411,7 @@
       a.querySelector("span").textContent = matchMedia("(max-width: 640px)").matches ? "Archive page" : `${sourceName(t)} page`;
     }
     renderDial(t);
+    renderPlayhead();
     queueFit();
     document.title = t ? `${t.t} · Old Folk Air` : "Old Folk Air: endless old folk radio";
     if ("mediaSession" in navigator && t) {
@@ -431,11 +434,28 @@
     return li;
   }
 
+  // "3:05" from seconds (or "1:02:05").
+  function clock(sec) {
+    sec = Math.max(0, Math.floor(sec || 0));
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), x = String(sec % 60).padStart(2, "0");
+    return h ? `${h}:${String(m).padStart(2, "0")}:${x}` : `${m}:${x}`;
+  }
+  // Track lengths for history entries saved before the list carried them.
+  var lengthByKey = null;
+  function lengthOf(t) {
+    if (t.d) return t.d;
+    if (!lengthByKey || lengthByKey.size < tracks.length) {
+      lengthByKey = new Map();
+      for (const x of tracks) if (x.d) lengthByKey.set(keyOf(x), x.d);
+    }
+    return lengthByKey.get(keyOf(t)) || 0;
+  }
+
   function renderHistory() {
     const ol = $("played");
     const fmt = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     const rows = history.slice(-300).reverse().map(({ t, at }, n) =>
-      trackRow(t, `${t.a || "Unknown"} · ${yearLabel(t)} · ${fmt.format(at)}`, () => {
+      trackRow(t, [t.a || "Unknown", yearLabel(t), lengthOf(t) ? clock(lengthOf(t)) : null, fmt.format(at)].filter(Boolean).join(" · "), () => {
         if (current) back.push(current);
         playTrack(t, { record: false, fromRadio: false });
         showTab("radio");
@@ -567,6 +587,45 @@
   document.querySelectorAll("[data-tab]").forEach((a) => a.addEventListener("click", (e) => {
     e.preventDefault(); showTab(a.dataset.tab);
   }));
+
+  // ------------------------------------------------------------------ play head
+  // Shows how far into the track the radio is; drag to jump. Uses whichever player is playing.
+  var seeking = false;   // var / function: renderNow can call renderPlayhead before this line runs
+  function trackLength() {
+    const d = player.duration;
+    return Number.isFinite(d) && d > 0 ? d : (current && current.d) || 0;
+  }
+  function renderPlayhead() {
+    const bar = $("ph-bar");
+    const dur = trackLength();
+    const pos = seeking ? (bar.value / 1000) * dur : player.currentTime || 0;
+    bar.disabled = !current || !dur;
+    if (!seeking) bar.value = dur ? Math.round((pos / dur) * 1000) : 0;
+    bar.style.setProperty("--pct", `${bar.value / 10}%`);
+    $("ph-pos").textContent = current ? clock(pos) : "";
+    $("ph-dur").textContent = current && dur ? clock(dur) : "";
+  }
+  $("ph-bar").addEventListener("input", () => { seeking = true; renderPlayhead(); });
+  $("ph-bar").addEventListener("change", () => {
+    const bar = $("ph-bar"), dur = trackLength();
+    if (dur) player.currentTime = (bar.value / 1000) * dur;
+    seeking = false; renderPlayhead();
+  });
+  for (const el of [audio, plain]) for (const ev of ["timeupdate", "durationchange", "loadedmetadata", "emptied"]) el.addEventListener(ev, renderPlayhead);
+  setInterval(renderPlayhead, 1000);
+
+  // ------------------------------------------------------------------ appearance
+  // Light, Dark, or Auto (follows the device); applied before paint by a line in index.html.
+  function applyTheme(mode) {
+    if (mode === "light" || mode === "dark") document.documentElement.dataset.theme = mode;
+    else delete document.documentElement.dataset.theme;
+  }
+  const themeNow = store.get("theme", "system");
+  document.querySelectorAll('input[name="theme"]').forEach((r) => {
+    r.checked = r.value === themeNow;
+    r.addEventListener("change", () => { if (r.checked) { store.set("theme", r.value); applyTheme(r.value); } });
+  });
+  applyTheme(themeNow);
 
   // ------------------------------------------------------------------ controls
   $("play").addEventListener("click", togglePlay);

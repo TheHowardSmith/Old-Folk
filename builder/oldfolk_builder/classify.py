@@ -369,6 +369,24 @@ def country_by_performer(results: list) -> int:
 # children's songs in field recordings stay.
 CHILDRENS_TAGS = frozenset({"children's", "childrens", "children's music", "children", "nursery rhymes",
                             "nursery rhyme", "kids", "for children"})
+# ... unless something marks them as traditional: these words in the title or
+# description, a field recording, a Library of Congress item, or a hand check
+# (approved_childrens in overrides.yaml).
+TRADITIONAL_HINT = re.compile(r"\b(folk\w*|traditional|game songs?|singing games?|play ?songs?|lullab\w*|"
+                              r"field recordings?|ethnic|folkways)\b", re.I)
+
+
+def is_classical_tradition(tags: set[str], title: str, artist: str | None, desc: str, rules: Rules) -> bool:
+    """A classical or court tradition outside Europe (raga, maqam, dastgah, gagaku,
+    gamelan, Peking opera...): named in the tags, title or performer, or tagged
+    'classical' on a record from such a region."""
+    if find_words(f"{title} | {desc}".lower(), rules.western_art_words):
+        return False
+    if tags & rules.traditional_art_tags or find_words(f"{title} | {artist or ''}".lower(), rules.traditional_art_words):
+        return True
+    if "classical" in tags:
+        return region_from_text(" | ".join(sorted(tags)) + " | " + title, rules) in rules.traditional_art_regions
+    return False
 
 
 def european_by_region(genre: str, region: str, rules: Rules) -> str:
@@ -528,7 +546,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if spoken:
         return exclude(f"spoken word / non-music: {', '.join(sorted(spoken))}")
     childrens = tags & CHILDRENS_TAGS
-    if childrens and not tags & rules.genre_tags.get("field", frozenset()):
+    if (childrens and not tags & rules.genre_tags.get("field", frozenset()) and not ident.startswith("loc:")
+            and not TRADITIONAL_HINT.search(f"{title} | {desc}")
+            and ident not in set(ov.get("approved_childrens") or [])):
         return exclude(f"children's record: {', '.join(sorted(childrens))}")
     bands = sorted(tags & rules.band_tags) + find_words(f"{title} | {artist or ''}".lower(), rules.band_words)
     if bands:
@@ -665,6 +685,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if genre_from_region:
         genre = rules.region_genre.get(region, "world")
     genre = european_by_region(genre, region, rules)
+    # Classical and court traditions from every region share one genre.
+    if genre not in ("jewish", "field") and is_classical_tradition(tags, title, artist, desc, rules):
+        genre = "classical"
     resorted = None
     if genre == "world":
         playable = [c for c in choices if not (c.seconds is not None and c.seconds < rules.min_seconds)]
@@ -717,6 +740,8 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
             if genre_from_region and not resorted and t_region != region:
                 t_genre = rules.region_genre.get(t_region, "world")
             t_genre = european_by_region(t_genre, t_region, rules)
+            if t_genre not in ("jewish", "field", "classical") and c.title and find_words(t_title.lower(), rules.traditional_art_words):
+                t_genre = "classical"
             # Mixed compilations: one track can be Jewish ("Hora - Israel").
             if t_genre in JEWISH_MOVABLE and is_jewish(t_title, c.artist or ""):
                 t_genre = "jewish"

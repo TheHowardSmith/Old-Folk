@@ -249,6 +249,16 @@ class RadioEngine(
 
     fun pause() = player.pause()
 
+    /** Where the current track is, and how long it is (0 if not known yet). Main thread. */
+    fun position(): Pair<Long, Long> {
+        val dur = player.duration.takeIf { it != androidx.media3.common.C.TIME_UNSET && it > 0 }
+            ?: ((_state.value.current?.seconds ?: 0) * 1000L)
+        return player.currentPosition.coerceAtLeast(0) to dur
+    }
+
+    /** Jump to [ms] in the current track (the play head). */
+    fun seekTo(ms: Long) = player.seekTo(ms.coerceAtLeast(0))
+
     fun togglePlay() = if (player.playWhenReady) pause() else play()
 
     fun skip() {
