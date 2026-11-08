@@ -20,6 +20,9 @@ class Settings(context: Context) {
             Triple("asia_split", "asia", setOf("mideast")),
             Triple("country_split", "oldtime", setOf("country")),
             Triple("country_split2", "american", setOf("country")),
+            Triple("classical_split", "southasia", setOf("classical")),
+            Triple("classical_split2", "asia", setOf("classical")),
+            Triple("classical_split3", "mideast", setOf("classical")),
         )) {
             if (!prefs.getBoolean(flag, false) && from in out) out = out + to
             edit.putBoolean(flag, true)
