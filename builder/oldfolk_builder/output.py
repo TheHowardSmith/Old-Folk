@@ -31,6 +31,8 @@ def track_json(t: Track) -> dict:
         d["w"] = t.page      # ... and web page
     if t.source:
         d["s"] = t.source    # holding institution, credited in the app
+    if t.seconds:
+        d["d"] = round(t.seconds)   # length in seconds, when the archive gives it
     return d
 
 

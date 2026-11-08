@@ -355,6 +355,8 @@ def test_central_asian_tracks_are_not_african_despite_bad_language_tag():
 
 def test_indian_music_has_its_own_genre():
     r = classify_item("x", "78rpm", item({"subject": ["Folk", "Hindustani"], "title": "Raga Bhairavi"}), RULES)
+    assert r.genre == "classical"            # a raga is classical, from every region together
+    r = classify_item("x", "78rpm", item({"subject": ["Folk"], "title": "Punjabi Folk Song"}), RULES)
     assert r.genre == "southasia"
     r = classify_item("x", "78rpm", item({"subject": ["Folk"], "language": "hin"}), RULES)
     assert r.genre == "southasia" and r.region == "South Asia"
@@ -566,8 +568,10 @@ def test_hillbilly_gospel_childrens_records_and_church_choirs():
     res = r({"subject": ["Children's", "Folk, World, & Country", "Nursery Rhymes", "Folk"],
              "creator": "Happy Time Chorus", "title": "Mother Goose Favorites"})
     assert res.status == EXCLUDE and "children" in res.reasons[0]
-    # ...but children's songs in field recordings stay
-    assert r({"subject": ["field recordings", "children's"], "title": "Children's Game Songs"}).status != EXCLUDE
+    # ...but children's songs in field recordings, traditional ones, and hand-checked albums stay
+    assert r({"subject": ["field recordings", "children's"], "title": "Children's Songs"}).status != EXCLUDE
+    assert r({"subject": ["Children's", "Folk"], "title": "Latin American Children Game Songs"}).status != EXCLUDE
+    assert r({"subject": ["Children's", "Folk"], "title": "Lullabies of the World"}).status != EXCLUDE
     # a church choir's carols are Choral even when tagged gospel; a choir's spirituals stay Gospel
     assert r({"subject": ["Gospel"], "creator": "Jesus & Mary Choral Group", "title": "Christmas Carols"}).genre == "choral"
     assert r({"subject": ["Spirituals"], "creator": "Tuskegee Institute Choir", "title": "Christmas Spirituals"}).genre == "gospel"
@@ -612,3 +616,15 @@ def test_untagged_lps_follow_their_country_performer():
     assert results[3].genre == "american"
     country_by_performer(results)
     assert results[3].genre == "country"
+
+
+def test_classical_and_court_music_from_every_region():
+    def g(meta):
+        return classify_item("k", "lp", item(dict({"date": "1960"}, **meta)), RULES).genre
+    assert g({"subject": ["Hindustani", "Folk, World, & Country"], "title": "Ragas"}) == "classical"
+    assert g({"subject": ["Classical", "Folk, World, & Country"], "title": "Persian Classical Music", "genre": "Persian Classical"}) == "classical"
+    assert g({"subject": ["Folk"], "title": "Gagaku: Japanese Court Music"}) == "classical"
+    assert g({"subject": ["Folk"], "title": "Japanese Folk Songs"}) == "asia"
+    # Western classical is still left out
+    r = classify_item("w", "lp", item({"subject": ["Classical"], "title": "Symphony No. 5", "date": "1960"}), RULES)
+    assert r.status == EXCLUDE
