@@ -546,7 +546,8 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if spoken:
         return exclude(f"spoken word / non-music: {', '.join(sorted(spoken))}")
     childrens = tags & CHILDRENS_TAGS
-    if (childrens and not tags & rules.genre_tags.get("field", frozenset()) and not ident.startswith("loc:")
+    if (childrens and not tags & rules.genre_tags.get("field", frozenset())
+            and not ident.startswith("loc:") and meta.get("archive") != "loc"
             and not TRADITIONAL_HINT.search(f"{title} | {desc}")
             and ident not in set(ov.get("approved_childrens") or [])):
         return exclude(f"children's record: {', '.join(sorted(childrens))}")

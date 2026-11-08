@@ -277,6 +277,7 @@ def to_ia_shape(record: dict, detail: dict | None, coll: dict | None, cfg: LocCo
             "coverage": "; ".join(as_list(item.get("location")) or as_list(record.get("location"))),
             "rights": " ".join(as_list(rights)),
             "collection": [s for s in as_list(record.get("partof"))],
+            "archive": "loc",     # tells classify_item this is a Library of Congress field collection
     }
     return {"metadata": {k: _fix(v) for k, v in meta.items()},
             "files": [{**f, "title": _fix(f["title"])} for f in files]}
