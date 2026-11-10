@@ -19,6 +19,7 @@ from datetime import date
 import re
 from dataclasses import dataclass, field
 
+from .llm_checks import title_parts
 from .config import Rules
 from .tracks import FileChoice, pick_files, pick_image
 
@@ -724,7 +725,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
             if claimed == "yes":
                 claimed_tracks.append(f"{t_title} ({owner})")
                 continue
-        cover = covers.get((ident, t_title.strip().lower())) if covers else None
+        # Covers are matched on the whole title or any song in a medley.
+        cover = next((covers[(ident, part)] for part in title_parts(t_title) if (ident, part) in covers),
+                     None) if covers else None
         if cover:
             covered_tracks.append(f"{t_title} ({cover})")
             continue

@@ -48,3 +48,23 @@ def test_confirmed_covers_drop_only_that_track():
     data["files"] = data["files"][:1]
     r = classify_item("lp", "lp", data, rules)
     assert r.status == EXCLUDE and "cover of a protected song" in r.reasons[0]
+
+
+def test_covers_match_songs_inside_medleys(tmp_path):
+    import json
+    from oldfolk_builder import llm_checks
+    for d in ("sonnet", "opus", "inputs"):
+        (tmp_path / d).mkdir()
+    (tmp_path / "inputs" / "c00.jsonl").write_text(
+        json.dumps({"id": "cover:white christmas", "items": ["a"]}) + "\n" +
+        json.dumps({"id": "cover:white christmas#medleys", "items": ["b"]}) + "\n")
+    (tmp_path / "sonnet" / "c00.jsonl").write_text(
+        json.dumps({"id": "cover:white christmas", "verdict": "pop"}) + "\n" +
+        json.dumps({"id": "cover:white christmas#medleys", "verdict": "pop"}) + "\n")
+    (tmp_path / "opus" / "v0.jsonl").write_text(
+        json.dumps({"id": "cover:white christmas", "check": "confirmed", "writer": "Irving Berlin", "died": 1989}) + "\n" +
+        json.dumps({"id": "cover:white christmas#medleys", "check": "confirmed", "writer": "Irving Berlin", "died": 1989}) + "\n")
+    c = llm_checks.load(tmp_path)
+    assert ("a", "white christmas") in c.covers and ("b", "white christmas") in c.covers
+    assert "white christmas" in llm_checks.title_parts("1. RUDOLPH THE RED NOSED REINDEER; 2. WHITE CHRISTMAS")
+    assert "jalousie" in llm_checks.title_parts("Tango Jalousie - Argentina - Xavier Cugat Orch")
