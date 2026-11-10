@@ -60,8 +60,18 @@ def write_shards(tracks: list[Track], out: Path, prefix: str, genres: dict[str, 
     return entries
 
 
+def region_index(tracks: list[Track], map_regions: dict) -> list[dict]:
+    counts = collections.Counter(t.region for t in tracks)
+    out = []
+    for key, spec in map_regions.items():
+        members = list(spec.get("from") or [])
+        out.append({"k": key, "name": spec.get("name", key), "r": members,
+                    "n": sum(counts.get(m, 0) for m in members)})
+    return out
+
+
 def write_all(results: list[ItemResult], out: Path, genres: dict[str, str],
-              version: int | None = None, shard_size: int = SHARD_SIZE) -> dict:
+              version: int | None = None, shard_size: int = SHARD_SIZE, map_regions: dict | None = None) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     for old in list(out.glob("s-*.json")) + list(out.glob("r-*.json")) + list(out.glob("x-*.json")):
         old.unlink()
@@ -69,6 +79,12 @@ def write_all(results: list[ItemResult], out: Path, genres: dict[str, str],
 
     included = [t for r in results if r.status == INCLUDE for t in r.tracks]
     review = [t for r in results if r.status == FLAG for t in r.tracks]
+    # A track whose genre isn't one of the listed styles would be left out of every
+    # shard; file it under the first style (Traditional Songs & Ballads) instead.
+    fallback = next(iter(genres))
+    for t in included + review:
+        if t.genre not in genres:
+            t.genre = fallback
     # Recordings from other archives go in their own "x-" shards, listed under
     # "ext": app versions that only know archive.org URLs never load them.
     main_entries = write_shards([t for t in included if not t.url], out, "s", genres, shard_size)
@@ -83,6 +99,8 @@ def write_all(results: list[ItemResult], out: Path, genres: dict[str, str],
         "n": len(included),
         "genres": [{"k": g, "name": name, "n": counts.get(g, 0)} for g, name in genres.items()
                    if counts.get(g, 0)],
+        # Map regions: key, name, the track regions ("r") they group, and how many tracks.
+        "regions": region_index(included, map_regions or {}),
         "shards": main_entries,
         "ext": ext_entries,
         "review": review_entries,

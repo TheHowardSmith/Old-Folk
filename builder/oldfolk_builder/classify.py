@@ -19,6 +19,7 @@ from datetime import date
 import re
 from dataclasses import dataclass, field
 
+from .llm_checks import title_parts
 from .config import Rules
 from .tracks import FileChoice, pick_files, pick_image
 
@@ -546,7 +547,8 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     if spoken:
         return exclude(f"spoken word / non-music: {', '.join(sorted(spoken))}")
     childrens = tags & CHILDRENS_TAGS
-    if (childrens and not tags & rules.genre_tags.get("field", frozenset()) and not ident.startswith("loc:")
+    if (childrens and not tags & rules.genre_tags.get("field", frozenset())
+            and not ident.startswith("loc:") and meta.get("archive") != "loc"
             and not TRADITIONAL_HINT.search(f"{title} | {desc}")
             and ident not in set(ov.get("approved_childrens") or [])):
         return exclude(f"children's record: {', '.join(sorted(childrens))}")
@@ -723,7 +725,9 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
             if claimed == "yes":
                 claimed_tracks.append(f"{t_title} ({owner})")
                 continue
-        cover = covers.get((ident, t_title.strip().lower())) if covers else None
+        # Covers are matched on the whole title or any song in a medley.
+        cover = next((covers[(ident, part)] for part in title_parts(t_title) if (ident, part) in covers),
+                     None) if covers else None
         if cover:
             covered_tracks.append(f"{t_title} ({cover})")
             continue
@@ -770,3 +774,60 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     elif flags:
         res.status, res.reasons = FLAG, flags
     return res
+
+
+# --- Styles -------------------------------------------------------------------
+# The genres people choose from are styles; where a recording comes from is a
+# separate filter (the region map). The regional groupings used while
+# classifying become one of three styles here, once every source is classified.
+REGIONAL_GENRES = frozenset({"american", "british", "european", "nordic", "eastern_europe", "mediterranean",
+                             "latin", "african", "mideast", "asia", "southasia", "pacific", "world"})
+DANCE_TITLE = re.compile(
+    r"\b(polkas?|waltz(es)?|walzer|valses?|vals|mazurkas?|mazur|oberek|krakowiak|kujawiak|reels?|jigs?|"
+    r"hornpipes?|strathspeys?|schottische|schottis|l[aä]ndler|cs[aá]rd[aá]s|hora|horo|kolo|kolomyjka|kolomyika|"
+    r"sirtaki|hasapiko|syrtos|kalamatianos|tarantella|fandango|jota|sardana|polska|hambo|gammaldans|springar|halling|gangar|"
+    r"square dance|breakdown|hoedown|quadrilles?|two-?step|one-?step|fox ?trot|tango|rumba|samba|choro|"
+    r"maxixe|cueca|cumbia|joropo|marinera|huayno|merengue|danz[oó]n|mambo|galop|polca|xote|bai[aã]o|frevo|"
+    r"forr[oó]|dances?|danza|danse|tanz|t[aä]nze|t[aá]ncok|ta[nń]ce|dans|marches|marsch|marcha|marche)\b", re.I)
+
+
+# Christmas songs and carols, by title, in any language the archives use.
+CHRISTMAS_TITLE = re.compile(
+    r"\b(christmas|xmas|yule(tide)?|carols?|nowell|santa claus|kris kringle|bethlehem|nativity|"
+    r"silent night|stille nacht|adeste fideles|come,? all ye faithful|away in a manger|good king wenceslas|"
+    r"deck the halls?|holy night|minuit,? chr[eé]tiens|jingle bells?|we three kings|god rest (ye|you)|"
+    r"hark!? the herald|joy to the world|midnight clear|il est n[eé]|tu scendi dalle stelle|"
+    r"weihnacht\w*|tannenbaum|navidad|nochebuena|villancicos?|aguinaldos?|(de|do|no|feliz) natal|"
+    r"kol[eę]d[ayi]?|koleda|kolyadk?[ay]|shchedryk|jul(en|e|visa|s[aå]ng|sang|psalm)?|joulu\w*|kerst\w*|"
+    r"bo[zż]e narodzenie|vianoce|v[aá]noce|kar[aá]csony\w*)\b", re.I)
+# "Noël" / "The First Noel", but not the first name ("Noel Coward Medley").
+NOEL_TITLE = re.compile(r"\b[Nn][Oo][EeËë][Ll]\b(?=\s*$|\s*[^\w\s]|\s+[a-zà-ÿ]|\s+[Nn][Oo][EeËë][Ll])")
+# Latin American and Spanish dances of the 78 era, by title.
+LATIN_DANCE_TITLE = re.compile(
+    r"\b(tangos?|milonga|rumbas?|rhumba|sambas?|choro|maxixe|boleros?|mambo|danz[oó]n|habanera|guaracha|"
+    r"merengue|cumbia|beguine|paso ?doble|pasodoble|marchinha)\b", re.I)
+
+
+def style_genre(genre: str | None, title: str, composed: bool) -> str | None:
+    """The style for a track: Christmas & Carols by title, whatever else it is; then
+    Traditional Songs & Ballads, Composed & Popular Songs, Dance Tunes or Samba, Tango
+    & Latin Dance for a regional grouping; other styles (polka, blues, gospel...) are kept."""
+    if CHRISTMAS_TITLE.search(title or "") or NOEL_TITLE.search(title or ""):
+        return "christmas"
+    if genre not in REGIONAL_GENRES:
+        return genre
+    if LATIN_DANCE_TITLE.search(title or ""):
+        return "latindance"
+    if DANCE_TITLE.search(title or ""):
+        return "dance"
+    return "composed" if composed else "songs"
+
+
+def to_styles(results: list) -> None:
+    """Turn every regional grouping into a style (after all sources are classified)."""
+    for r in results:
+        composed = bool(getattr(r, "writers", None))
+        for t in r.tracks:
+            t.genre = style_genre(t.genre, t.title, composed)
+        if r.genre:
+            r.genre = style_genre(r.genre, r.title, composed)

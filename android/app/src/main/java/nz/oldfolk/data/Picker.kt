@@ -4,7 +4,7 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 /**
- * Chooses the next radio track: random, matching the genre filter, not yet played.
+ * Chooses the next radio track: random, matching the style and region filter, not yet played.
  *
  * It picks an album (archive item) first and then a song on it, so a 300-track
  * compilation doesn't crowd out single 78s: an album's chance grows only with
@@ -25,7 +25,7 @@ object Picker {
 
     fun pick(
         tracks: List<Track>,
-        genres: Set<String>,               // empty = all genres
+        selection: Selection,              // styles and map regions; empty = all
         isPlayed: (Long) -> Boolean,
         exclude: Set<Long>,                // already queued
         random: Random = Random.Default,
@@ -35,7 +35,7 @@ object Picker {
         val avoid = HashSet<String>(recentItems)
         val byItem = LinkedHashMap<String, MutableList<Track>>()
         for (t in tracks) {
-            if (genres.isNotEmpty() && t.genre !in genres) continue
+            if (!selection.matches(t)) continue
             matching++
             if (t.key in exclude) { avoid += t.id; continue }
             if (isPlayed(t.key)) continue
@@ -50,6 +50,6 @@ object Picker {
         return Result.Picked(album[random.nextInt(album.size)])
     }
 
-    fun matchingKeys(tracks: List<Track>, genres: Set<String>): List<Long> =
-        tracks.filter { genres.isEmpty() || it.genre in genres }.map { it.key }
+    fun matchingKeys(tracks: List<Track>, selection: Selection): List<Long> =
+        tracks.filter { selection.matches(it) }.map { it.key }
 }

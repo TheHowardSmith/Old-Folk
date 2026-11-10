@@ -109,14 +109,39 @@ data class Track(
 
 data class Genre(val key: String, val name: String, val count: Int)
 
+/** A region on the Genres map: its key, name, the track regions ("r") it groups, and how many tracks. */
+data class MapRegion(val key: String, val name: String, val members: List<String>, val count: Int)
+
+/**
+ * What the radio plays: styles (genre keys) and map regions, each empty for "all".
+ * [regionOf] maps a track's region to its map region (from the index).
+ */
+data class Selection(
+    val genres: Set<String> = emptySet(),
+    val regions: Set<String> = emptySet(),
+    val regionOf: Map<String, String> = emptyMap(),
+) {
+    val isAll: Boolean get() = genres.isEmpty() && (regions.isEmpty() || regionOf.isEmpty())
+
+    fun matches(t: Track): Boolean = (genres.isEmpty() || t.genre in genres) &&
+        (regions.isEmpty() || regionOf.isEmpty() || regionOf[t.region] in regions)
+}
+
 data class ShardInfo(val file: String, val genre: String, val count: Int, val sha256: String)
 
 data class TrackIndex(
     val version: Long,
     val genres: List<Genre>,
     val shards: List<ShardInfo>,
+    val regions: List<MapRegion> = emptyList(),
 ) {
     fun genreName(key: String): String = genres.firstOrNull { it.key == key }?.name ?: key
+    fun regionName(key: String): String = regions.firstOrNull { it.key == key }?.name ?: key
+
+    /** Track region -> map region key. */
+    val regionOf: Map<String, String> = regions.flatMap { r -> r.members.map { it to r.key } }.toMap()
+
+    fun selection(genres: Set<String>, regions: Set<String>) = Selection(genres, regions, regionOf)
 
     companion object {
         fun parse(json: String): TrackIndex {
@@ -126,6 +151,7 @@ data class TrackIndex(
             // (kept separate so older app versions, which can't play them, skip them).
             val s = o.getJSONArray("shards")
             val ext = o.optJSONArray("ext") ?: JSONArray()
+            val rg = o.optJSONArray("regions") ?: JSONArray()
             return TrackIndex(
                 version = o.getLong("v"),
                 genres = List(g.length()) {
@@ -134,6 +160,12 @@ data class TrackIndex(
                 },
                 shards = (List(s.length()) { s.getJSONObject(it) } + List(ext.length()) { ext.getJSONObject(it) })
                     .map { x -> ShardInfo(x.getString("f"), x.getString("g"), x.optInt("n"), x.getString("sha256")) },
+                regions = List(rg.length()) {
+                    val x = rg.getJSONObject(it)
+                    val m = x.optJSONArray("r") ?: JSONArray()
+                    MapRegion(x.getString("k"), x.optString("name", x.getString("k")), List(m.length()) { i -> m.getString(i) },
+                        x.optInt("n"))
+                },
             )
         }
     }

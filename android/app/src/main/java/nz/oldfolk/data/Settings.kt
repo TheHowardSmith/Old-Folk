@@ -30,12 +30,41 @@ class Settings(context: Context) {
         edit.putStringSet("genres", out).apply()
         return out
     }
-    /** Selected genre keys; empty means all genres. */
+
+    private val _regions = MutableStateFlow(prefs.getStringSet("regions", emptySet())!!.toSet())
+
+    init {
+        // Genres became styles and places became the map (Nov 2026): a saved choice of regional
+        // genres becomes those regions on the map. A mix of styles and regions can't be kept
+        // exactly, so it starts again from everything.
+        if (!prefs.getBoolean("styles_split", false)) {
+            val old = _genres.value
+            val regional = old.filter { it in OLD_REGIONAL }
+            val styles = old - OLD_REGIONAL.keys
+            var genres = old
+            var regions = _regions.value
+            if (regional.isNotEmpty() && styles.isNotEmpty()) { genres = emptySet(); regions = emptySet() }
+            else if (regional.isNotEmpty()) { genres = emptySet(); regions = regional.flatMap { OLD_REGIONAL.getValue(it) }.toSet() }
+            prefs.edit().putStringSet("genres", genres).putStringSet("regions", regions).putBoolean("styles_split", true).apply()
+            _genres.value = genres
+            _regions.value = regions
+        }
+    }
+
+    /** Selected style (genre) keys; empty means all styles. */
     val genres: StateFlow<Set<String>> = _genres.asStateFlow()
 
     fun setGenres(keys: Set<String>) {
         prefs.edit().putStringSet("genres", keys).apply()
         _genres.value = keys
+    }
+
+    /** Selected map regions (keys of the index's "regions"); empty means everywhere. */
+    val regions: StateFlow<Set<String>> = _regions.asStateFlow()
+
+    fun setRegions(keys: Set<String>) {
+        prefs.edit().putStringSet("regions", keys).apply()
+        _regions.value = keys
     }
 
     private val _skipNoisy = MutableStateFlow(prefs.getBoolean("skip_noisy", true))
@@ -59,4 +88,16 @@ class Settings(context: Context) {
     var askedNotificationPermission: Boolean
         get() = prefs.getBoolean("asked_notifications", false)
         set(v) = prefs.edit().putBoolean("asked_notifications", v).apply()
+
+    private companion object {
+        /** The old regional genres and the map regions they became. */
+        val OLD_REGIONAL = mapOf(
+            "american" to listOf("north_america"), "british" to listOf("british_isles"),
+            "european" to listOf("western_europe"), "nordic" to listOf("nordic"),
+            "eastern_europe" to listOf("eastern_europe"), "mediterranean" to listOf("southern_europe"),
+            "latin" to listOf("latin_america"), "african" to listOf("africa"), "mideast" to listOf("middle_east"),
+            "asia" to listOf("east_asia", "southeast_asia", "central_asia"), "southasia" to listOf("south_asia"),
+            "pacific" to listOf("pacific"), "world" to emptyList(),
+        )
+    }
 }

@@ -7,31 +7,46 @@
 # Edit freely; re-run `oldfolk-build build` to reclassify from the cache
 # without re-downloading anything.
 
-# Genres shown in the app's genre picker. Order = display order.
+# Genres shown in the app's genre picker: musical styles. Order = display order.
+# Where a recording comes from is a separate filter (map_regions below); the
+# regional groupings used while classifying (american, nordic, mediterranean...)
+# become Traditional Songs & Ballads, Composed & Popular Songs or Dance Tunes at
+# the end (classify.to_styles).
 genres:
+  songs:        "Traditional Songs & Ballads"
+  composed:     "Composed & Popular Songs"
+  dance:        "Dance Tunes"
   oldtime:      "Old-time & Hillbilly"
   country:      "Country & Western"
   blues:        "Country Blues"
   gospel:       "Gospel & Spirituals"
-  american:     "American Folk & Ballads"
-  british:      "British Isles & Celtic"
-  european:     "Western European"
-  nordic:       "Nordic"
-  eastern_europe: "Eastern European"
-  mediterranean: "Mediterranean"
   polka:        "Polka"
+  latindance:   "Samba, Tango & Latin Dance"
   jewish:       "Klezmer & Jewish"
   caribbean:    "Calypso & Caribbean"
-  latin:        "Latin American Folk"
-  african:      "African"
-  mideast:      "Middle Eastern"
-  asia:         "Asian"
-  southasia:    "Indian & South Asian"
-  classical:    "Classical & Court Music"
-  pacific:      "Hawaiian & Pacific"
   choral:       "Choral"
+  christmas:    "Christmas & Carols"
+  classical:    "Classical & Court Music"
   field:        "Field Recordings & Work Songs"
-  world:        "Other Traditional"
+
+# Regions on the map in the app and website: each groups one or more of the
+# regions recordings are filed under. Order = display order.
+map_regions:
+  north_america:  {name: "North America", from: ["USA", "Canada", "Indigenous North America"]}
+  latin_america:  {name: "Latin America", from: ["Latin America"]}
+  caribbean:      {name: "Caribbean", from: ["Caribbean"]}
+  british_isles:  {name: "British Isles", from: ["British Isles"]}
+  western_europe: {name: "Western Europe", from: ["Western Europe"]}
+  nordic:         {name: "Nordic", from: ["Nordic"]}
+  eastern_europe: {name: "Eastern Europe", from: ["Central & Eastern Europe"]}
+  southern_europe: {name: "Southern Europe", from: ["Southern Europe"]}
+  middle_east:    {name: "Middle East", from: ["Middle East & Caucasus"]}
+  africa:         {name: "Africa", from: ["Africa"]}
+  central_asia:   {name: "Central Asia & Siberia", from: ["Central Asia", "Siberia"]}
+  south_asia:     {name: "South Asia", from: ["South Asia"]}
+  east_asia:      {name: "East Asia", from: ["East Asia"]}
+  southeast_asia: {name: "Southeast Asia", from: ["Southeast Asia"]}
+  pacific:        {name: "Hawaii & Pacific", from: ["Hawaii & Pacific"]}
 
 # Tag -> genre. First matching genre in this mapping order wins, so put the
 # most specific styles first.
@@ -50,6 +65,19 @@ genre_tags:
     - lullabies
     - indigenous music of north america
     - home recording
+  # Carols and Christmas songs, whatever their style (tracks are also matched by
+  # title, classify.to_styles). On 78s only: Christmas LPs are commercial albums.
+  christmas:
+    - christmas
+    - christmas music
+    - christmas carols
+    - christmas songs
+    - carols
+    - carol
+    - villancicos
+    - villancico
+    - noël
+    - weihnachtslieder
   blues:
     - blues
     - country blues
@@ -139,6 +167,32 @@ genre_tags:
     - shanty
     - sea shanties
     - concertina
+  # Latin American and Spanish dance music of the 78 era: as traditional by now as
+  # country music. 78s only; the writer rule and rights checks still apply.
+  latindance:
+    - tango
+    - tango-fox
+    - tango argentino
+    - milonga
+    - rumba
+    - rhumba
+    - samba
+    - bolero
+    - mambo
+    - conga
+    - cha-cha-cha
+    - cha cha
+    - danzon
+    - danzón
+    - habanera
+    - beguine
+    - guaracha
+    - maxixe
+    - choro
+    - merengue
+    - cumbia
+    - paso doble
+    - pasodoble
   latin:
     - corrido
     - ranchera
@@ -322,15 +376,6 @@ exclude_tags:
   - doo-wop
   - novelty
   - electronic
-  - tango
-  - tango-fox
-  - rumba
-  - rhumba
-  - mambo
-  - cha-cha-cha
-  - bolero
-  - samba
-  - conga
   - psychedelic
   - psychedelic folk
   - acid folk
@@ -745,6 +790,43 @@ ethnic_waivable_tags:
 # (mood-music orchestras, pop singers, novelty records).
 weak_generic_tags:
   - folk, world, & country
+# Tags that only count on 78rpm discs (on later LPs they usually mean commercial
+# records). country, yodeling and old time are always included.
+tags_78_only:
+  - tango
+  - tango-fox
+  - tango argentino
+  - milonga
+  - rumba
+  - rhumba
+  - samba
+  - bolero
+  - mambo
+  - conga
+  - cha-cha-cha
+  - cha cha
+  - danzon
+  - danzón
+  - habanera
+  - beguine
+  - guaracha
+  - maxixe
+  - choro
+  - merengue
+  - cumbia
+  - paso doble
+  - pasodoble
+  - christmas
+  - christmas music
+  - christmas carols
+  - christmas songs
+  - carols
+  - carol
+  - villancicos
+  - villancico
+  - noël
+  - weihnachtslieder
+
 pop_tags:
   - pop
   - popular music

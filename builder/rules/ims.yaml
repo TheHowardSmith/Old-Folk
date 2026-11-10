@@ -15,8 +15,9 @@ sitemap: https://discografiabrasileira.com.br/sitemap.xml
 credit: Instituto Moreira Salles
 
 # Brazilian traditional / regional genres (the `genre` on each recording page,
-# compared lower-case, accents kept). Popular-song genres (samba, marcha,
-# fox-trot, tango, bolero...) are left out under the "no pop" rule.
+# compared lower-case, accents kept). Generic popular songs (canção, fox-trot,
+# comic songs...) are left out; the dance genres of the time are listed under
+# latin_dance_genres.
 folk_genres:
   - toada
   - embolada
@@ -44,8 +45,6 @@ folk_genres:
   - xote
   - baião
   - modinha
-  - choro
-  - maxixe
   - polca
   - schottisch
   - quadrilha
@@ -57,4 +56,43 @@ folk_genres:
   - rancheira
   - arrasta-pé
   - xaxado
+  - fado
   - viola
+
+# Brazilian dance music of the 78 era (samba, choro, maxixe, marchinhas, tango
+# brasileiro, valsas): filed under "Samba, Tango & Latin Dance". IMS's public-domain
+# year already covers the composers.
+latin_dance_genres:
+  - samba
+  - samba canção
+  - samba-canção
+  - samba choro
+  - samba de breque
+  - samba batucada
+  - batucada
+  - partido alto
+  - marcha
+  - marchinha
+  - marcha-rancho
+  - marcha rancho
+  - marcha carnavalesca
+  - rancho
+  - choro
+  - polca choro
+  - polca-choro
+  - maxixe
+  - tango
+  - tango brasileiro
+  - tango argentino
+  - tango canção
+  - tango-canção
+  - valsa
+  - valsa lenta
+  - valsa brasileira
+  - valsa canção
+  - mazurca
+  - rumba
+  - bolero
+  - habanera
+  - guaracha
+  - conga

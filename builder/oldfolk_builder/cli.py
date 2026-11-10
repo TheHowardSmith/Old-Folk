@@ -169,10 +169,12 @@ def cmd_build(args, rules, store):
     from .classify import country_by_performer
     moved = country_by_performer(results)
     log.info("moved %d gospel / folk-revival-bucket tracks by old-time and country performers", moved)
+    from .classify import to_styles
+    to_styles(results)
     dropped = apply_availability(results, BUILDER_DIR / "cache-rights" / "availability.jsonl")
     if dropped:
         log.info("dropped %d tracks that are on sale or streaming today", dropped)
-    summary = write_all(results, out, rules.genres, version=args.version,
+    summary = write_all(results, out, rules.genres, version=args.version, map_regions=rules.map_regions,
                         shard_size=args.shard_size)
     print(json.dumps(summary, indent=1, ensure_ascii=False))
     log.info("wrote %s", out)

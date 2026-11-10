@@ -42,6 +42,7 @@ class Rules:
     max_seconds: float
     regions: dict[str, dict[str, tuple[str, ...]]]
     genre_region: dict[str, str]
+    map_regions: dict = field(default_factory=dict)
     exclude_conditions: frozenset[str] = frozenset()
     flag_named_writers: bool = True
     instruction_ensembles: tuple[str, ...] = ()
@@ -138,6 +139,7 @@ def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) 
         sources=list(src.get("sources") or []),
         genres=dict(cls["genres"]),
         genre_tags={g: _lower_set(t) for g, t in cls["genre_tags"].items()},
+        tags_78_only=Rules.tags_78_only | _lower_set(cls.get("tags_78_only")),
         generic_folk_tags=_lower_set(cls.get("generic_folk_tags")),
         region_genre=dict(cls.get("region_genre") or {}),
         exclude_tags=_lower_set(cls.get("exclude_tags")),
@@ -154,6 +156,7 @@ def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) 
         max_seconds=float(cls.get("max_seconds", 2400)),
         regions=regions,
         genre_region=dict(reg.get("genre_region") or {}),
+        map_regions=dict(cls.get("map_regions") or {}),
         exclude_conditions=_lower_set(cls.get("exclude_conditions")),
         flag_named_writers=bool(cls.get("flag_named_writers", True)),
         exclude_us_claimed=bool(cls.get("exclude_us_claimed_recordings", False)),

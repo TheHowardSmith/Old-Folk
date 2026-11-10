@@ -37,6 +37,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -69,6 +70,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -125,6 +128,8 @@ import androidx.compose.ui.unit.dp
 import nz.oldfolk.AppGraph
 import nz.oldfolk.BuildConfig
 import nz.oldfolk.data.Genre
+import nz.oldfolk.data.MapRegion
+import nz.oldfolk.data.Selection
 import nz.oldfolk.data.Playlist
 import nz.oldfolk.data.Track
 import nz.oldfolk.data.Updates
@@ -301,6 +306,7 @@ private fun RadioScreen(graph: AppGraph, onBeforePlay: () -> Unit, onSave: (Trac
     val state by graph.engine.state.collectAsState()
     val list by graph.trackList.state.collectAsState()
     val genres by graph.settings.genres.collectAsState()
+    val regionSel by graph.settings.regions.collectAsState()
     val context = LocalContext.current
     val track = state.current
     var position by remember { mutableStateOf(0L to 0L) }
@@ -309,9 +315,21 @@ private fun RadioScreen(graph: AppGraph, onBeforePlay: () -> Unit, onSave: (Trac
     }
     val station = when {
         state.mode == RadioEngine.Mode.PLAYLIST -> "Playlist · ${state.playlistName}"
-        genres.isEmpty() -> "Radio · all genres"
-        genres.size == 1 -> "Radio · " + (list.index?.genreName(genres.first()) ?: genres.first())
-        else -> "Radio · ${genres.size} genres"
+        else -> {
+            val index = list.index
+            val regions = if (index?.regions.isNullOrEmpty()) emptySet() else regionSel
+            val where = when (regions.size) {
+                0 -> null
+                1 -> index?.regionName(regions.first())
+                else -> "${regions.size} regions"
+            }
+            val what = when (genres.size) {
+                0 -> if (where == null) "all styles" else null
+                1 -> index?.genreName(genres.first()) ?: genres.first()
+                else -> "${genres.size} styles"
+            }
+            "Radio · " + listOfNotNull(where, what).joinToString(" · ")
+        }
     }
     RadioContent(
         RadioUi(
@@ -427,7 +445,7 @@ private fun NowPlaying(ui: RadioUi, actions: RadioActions, size: RadioSize) {
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(onClick = actions.onChooseGenres, modifier = Modifier.height(44.dp)) {
                     Icon(Icons.Filled.Tune, null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp)); Text("Choose genres")
+                    Spacer(Modifier.width(8.dp)); Text("Choose styles & regions")
                 }
             }
         } else {
@@ -577,32 +595,125 @@ private fun SectionLabel(text: String, modifier: Modifier = Modifier) {
 private fun GenresScreen(graph: AppGraph) {
     val list by graph.trackList.state.collectAsState()
     val selected by graph.settings.genres.collectAsState()
+    val regionSel by graph.settings.regions.collectAsState()
+    val index = list.index
+    val counts = remember(list.tracks, selected, regionSel, index) {
+        index?.let { GenreCounts.of(list.tracks, it.selection(selected, regionSel)) }
+    }
     GenresContent(
-        genres = list.index?.genres.orEmpty(),
+        genres = index?.genres.orEmpty(),
         selected = selected,
+        regions = index?.regions.orEmpty(),
+        selectedRegions = regionSel,
+        counts = counts,
+        atlas = rememberAtlas(),
         onAll = { graph.settings.setGenres(emptySet()) },
         onToggle = { key -> graph.settings.setGenres(if (key in selected) selected - key else selected + key) },
+        onAllRegions = { graph.settings.setRegions(emptySet()) },
+        onToggleRegion = { key -> graph.settings.setRegions(if (key in regionSel) regionSel - key else regionSel + key) },
     )
 }
 
+/**
+ * Track counts for the Genres screen, each following the other filter: styles within the
+ * chosen regions, regions within the chosen styles, and the tracks matching both.
+ */
+data class GenreCounts(val byStyle: Map<String, Int>, val byRegion: Map<String, Int>, val total: Int) {
+    companion object {
+        fun of(tracks: List<Track>, sel: Selection): GenreCounts? {
+            if (tracks.isEmpty()) return null
+            val byStyle = HashMap<String, Int>()
+            val byRegion = HashMap<String, Int>()
+            var total = 0
+            val styleSel = sel.copy(regions = emptySet())
+            val regionSel = sel.copy(genres = emptySet())
+            for (t in tracks) {
+                val ro = regionSel.matches(t)
+                val so = styleSel.matches(t)
+                if (ro) byStyle.merge(t.genre, 1, Int::plus)
+                if (so) sel.regionOf[t.region]?.let { byRegion.merge(it, 1, Int::plus) }
+                if (ro && so) total++
+            }
+            return GenreCounts(byStyle, byRegion, total)
+        }
+    }
+}
+
 @Composable
-fun GenresContent(genres: List<Genre>, selected: Set<String>, onAll: () -> Unit, onToggle: (String) -> Unit) {
+fun GenresContent(
+    genres: List<Genre>, selected: Set<String>, onAll: () -> Unit, onToggle: (String) -> Unit,
+    regions: List<MapRegion> = emptyList(), selectedRegions: Set<String> = emptySet(), counts: GenreCounts? = null,
+    atlas: Atlas? = null, onAllRegions: () -> Unit = {}, onToggleRegion: (String) -> Unit = {},
+) {
     val rc = LocalRadioColors.current
-    val sorted = genres.sortedBy { it.name.lowercase() }
+    val styleN = { g: Genre -> counts?.let { it.byStyle[g.key] ?: 0 } ?: g.count }
+    val regionN = { r: MapRegion -> counts?.let { it.byRegion[r.key] ?: 0 } ?: r.count }
+    val shownRegions = regions.filter { it.count > 0 }
     LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
         item {
-            val tuned = if (selected.isEmpty()) genres.sumOf { it.count } else genres.filter { it.key in selected }.sumOf { it.count }
-            DialStrip("Tuned to · " + (if (selected.isEmpty()) "all genres" else plural(selected.size, "genre")) +
-                " · " + "%,d".format(tuned))
+            // Before the tracks have loaded, the index's totals give an estimate.
+            val tuned = counts?.total ?: when {
+                selected.isEmpty() && selectedRegions.isNotEmpty() && regions.isNotEmpty() ->
+                    regions.filter { it.key in selectedRegions }.sumOf { it.count }
+                selected.isEmpty() -> genres.sumOf { it.count }
+                else -> genres.filter { it.key in selected }.sumOf { it.count }
+            }
+            val where = when {
+                selectedRegions.isEmpty() || regions.isEmpty() -> null
+                selectedRegions.size == 1 -> regions.firstOrNull { it.key == selectedRegions.first() }?.name
+                else -> plural(selectedRegions.size, "region")
+            }
+            val what = when {
+                selected.isEmpty() -> if (where == null) "all styles" else null
+                selected.size == 1 -> genres.firstOrNull { it.key == selected.first() }?.name
+                else -> plural(selected.size, "style")
+            }
+            DialStrip("Tuned to · " + listOfNotNull(where, what).joinToString(" · ") + " · " + "%,d".format(tuned))
             Spacer(Modifier.height(12.dp))
-            Text("Choose what the radio plays. Pick one or several.", style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 8.dp))
-            GenreRow("All genres", genres.sumOf { it.count }, selected.isEmpty(), onAll, bold = true)
+            Text(
+                if (regions.isEmpty()) "Choose what the radio plays. Pick one or several."
+                else "Pick the styles you want and, if you like, where they're from on the map. The radio plays tracks that match both.",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp))
+        }
+        if (shownRegions.isNotEmpty()) item {
+            SectionLabel("Where from")
+            if (atlas != null) {
+                RegionMap(atlas, selectedRegions, shownRegions.map { it.key }.toSet(), onToggleRegion,
+                    Modifier.padding(bottom = 8.dp))
+            }
+            // One row that scrolls sideways, so the styles stay in reach below.
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                RegionChip("Everywhere", null, selectedRegions.isEmpty(), onAllRegions)
+                for (r in shownRegions) RegionChip(r.name, regionN(r), r.key in selectedRegions) { onToggleRegion(r.key) }
+            }
+            Spacer(Modifier.height(8.dp))
+            SectionLabel("Styles")
+        }
+        item {
+            GenreRow("All styles", counts?.byStyle?.values?.sum() ?: genres.sumOf { it.count }, selected.isEmpty(), onAll, bold = true)
             HorizontalDivider(color = rc.brass.copy(alpha = 0.3f))
         }
-        if (genres.isEmpty()) item { Text("Genres appear once the track list has downloaded.", Modifier.padding(16.dp)) }
-        items(sorted, key = { it.key }) { g -> GenreRow(g.name, g.count, g.key in selected, { onToggle(g.key) }) }
+        if (genres.isEmpty()) item { Text("Styles appear once the track list has downloaded.", Modifier.padding(16.dp)) }
+        // The builder's order: traditional songs first, then the American styles, then the rest.
+        items(genres, key = { it.key }) { g -> GenreRow(g.name, styleN(g), g.key in selected, { onToggle(g.key) }) }
     }
+}
+
+@Composable
+private fun RegionChip(name: String, count: Int?, on: Boolean, onClick: () -> Unit) {
+    val rc = LocalRadioColors.current
+    FilterChip(
+        selected = on, onClick = onClick,
+        label = {
+            Text(name, fontWeight = if (on) FontWeight.SemiBold else null)
+            if (count != null) Text("  " + "%,d".format(count), style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        },
+        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = rc.glow.copy(alpha = 0.35f)),
+        border = FilterChipDefaults.filterChipBorder(enabled = true, selected = on,
+            borderColor = rc.brass.copy(alpha = 0.45f), selectedBorderColor = rc.brass),
+    )
 }
 
 @Composable

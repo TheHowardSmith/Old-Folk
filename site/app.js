@@ -61,7 +61,7 @@
   const genreNames = new Map();
   const tracks = [];
   let shardsLeft = 0;
-  let selected = new Set(store.get("genres", []));        // empty = all genres
+  let selected = new Set(store.get("genres", []));        // empty = all styles
   // Genres that were split (Nov 2026): a saved choice of the old one keeps the new ones.
   for (const [flag, from, to] of [["euroSplit", "european", ["nordic", "eastern_europe", "mediterranean"]],
                                   ["asiaSplit", "asia", ["mideast"]],
@@ -74,6 +74,23 @@
     }
     store.set(flag, true);
   }
+  // Regions chosen on the map (keys of index.regions); empty = everywhere.
+  let regionSel = new Set(store.get("regions", []));
+  // Genres became styles and places became the map (Nov 2026): a saved choice of a regional genre
+  // becomes that region on the map. A mix of styles and regions can't be kept exactly, so it starts
+  // again from everything.
+  if (!store.get("stylesSplit", false)) {
+    const OLD = { american: ["north_america"], british: ["british_isles"], european: ["western_europe"],
+      nordic: ["nordic"], eastern_europe: ["eastern_europe"], mediterranean: ["southern_europe"],
+      latin: ["latin_america"], african: ["africa"], mideast: ["middle_east"],
+      asia: ["east_asia", "southeast_asia", "central_asia"], southasia: ["south_asia"], pacific: ["pacific"], world: [] };
+    const regional = [...selected].filter((k) => k in OLD), styles = [...selected].filter((k) => !(k in OLD));
+    if (regional.length && styles.length) { selected = new Set(); regionSel = new Set(); }
+    else if (regional.length) { selected = new Set(); regionSel = new Set(regional.flatMap((k) => OLD[k])); }
+    store.set("genres", [...selected]); store.set("regions", [...regionSel]); store.set("stylesSplit", true);
+  }
+  const regionKeyOf = new Map();                           // track region ("r") -> map region key
+  const regionNames = new Map();
   const played = new Set(store.get("played", []));
   let history = store.get("history", []);                  // [{t, at}], oldest first
   let queue = [];
@@ -95,7 +112,9 @@
   const pending = new Map();                               // key -> Promise
   const MAX_HOLD = 40e6, HEAD_BYTES = 1600000;             // hold files up to 40 MB; measure the first 1.6 MB
 
-  const inSelection = (t) => selected.size === 0 || selected.has(t.g);
+  const styleOk = (t) => selected.size === 0 || selected.has(t.g);
+  const regionOk = (t) => regionSel.size === 0 || !regionKeyOf.size || regionSel.has(regionKeyOf.get(t.r));
+  const inSelection = (t) => styleOk(t) && regionOk(t);
   const status = (msg) => { $("status").textContent = msg || ""; };
 
   // ------------------------------------------------------------------ loading
@@ -113,6 +132,7 @@
       return;
     }
     for (const g of index.genres || []) genreNames.set(g.k, g.name);
+    for (const r of index.regions || []) { regionNames.set(r.k, r.name); for (const n of r.r || []) regionKeyOf.set(n, r.k); }
     renderGenres();
     renderDial(null);
     const shards = [...(index.shards || []), ...(index.ext || [])];
@@ -123,6 +143,7 @@
     const rest = shards.filter((s) => s !== first);
     await loadShard(first);
     fillQueue();
+    renderGenres();
     status(current ? "" : `${tracks.length.toLocaleString()} tracks ready. Press play to tune in.`);
     renderHistory();
     for (const s of rest) {
@@ -131,6 +152,7 @@
     }
     if (!current) status(`${tracks.length.toLocaleString()} recordings. Press play to tune in.`);
     renderHistory();
+    renderGenres();                                        // counts now cover the whole list
   }
 
   function pickWeighted(list) {
@@ -377,9 +399,21 @@
     const needle = $("needle");
     needle.style.left = pos(t && t.y ? t.y : 1935) + "%";
     needle.innerHTML = t ? `<span class="yr">${t.y || "78"}</span>` : "";
-    const g = selected.size === 0 ? "ALL GENRES"
-      : selected.size === 1 ? (genreNames.get([...selected][0]) || "").toUpperCase() : `${selected.size} GENRES`;
-    $("dial-text").textContent = `RADIO · ${g}`;
+    const style = selected.size === 0 ? "" : selected.size === 1 ? genreNames.get([...selected][0]) || "" : `${selected.size} styles`;
+    const where = regionSel.size === 0 || !regionKeyOf.size ? ""
+      : regionSel.size === 1 ? regionNames.get([...regionSel][0]) || "" : `${regionSel.size} regions`;
+    const parts = [where, style].filter(Boolean);
+    $("dial-text").textContent = `RADIO · ${(parts.length ? parts.join(" · ") : "all styles").toUpperCase()}`;
+    // The year rides above the needle; near the left end it would run into the station name,
+    // so there it sits beside the needle instead. (Measured at the needle's destination, not
+    // mid-slide.)
+    const yr = needle.querySelector(".yr");
+    if (yr) {
+      const sc = $("scale").getBoundingClientRect(), tx = $("dial-text").getBoundingClientRect(), r = yr.getBoundingClientRect();
+      const x = sc.left + (parseFloat(needle.style.left) / 100) * sc.width;
+      const clash = r.top < tx.bottom + 2 && r.bottom > tx.top - 2 && x - r.width / 2 - 4 < tx.right && x + r.width / 2 + 4 > tx.left;
+      yr.classList.toggle("side", clash);
+    }
   }
   const pos = (y) => 4 + ((Math.min(1975, Math.max(1895, y)) - 1895) / 80) * 92;
 
@@ -483,20 +517,46 @@
   // unticks it, and unticking the last genre ticks it again.
   function renderGenres() {
     const list = $("genre-list");
-    const genres = [...(index?.genres || [])].sort((a, b) => a.name.localeCompare(b.name));
-    const everything = genres.reduce((s, g) => s + (g.n || 0), 0);
-    const all = genreRow("All genres", everything, selected.size === 0, (on) => {
-      if (on) setSelection(new Set()); else renderGenres();      // something must stay ticked
-    }, "all");
-    list.replaceChildren(all, ...genres.map((g) => genreRow(g.name, g.n, selected.has(g.k), (on) => toggleGenre(g.k, on))));
-    const total = selected.size === 0 ? everything : genres.reduce((s, g) => s + (selected.has(g.k) ? g.n || 0 : 0), 0);
-    $("genres-count").textContent = `${total.toLocaleString()} tracks selected`;
+    const genres = index?.genres || [];                    // styles, in the builder's order
+    const regions = (index?.regions || []).filter((r) => r.n);
+    // Counts follow the other filter: styles within the chosen regions, regions within the chosen styles.
+    const byStyle = new Map(), byRegion = new Map();
+    let total = 0;
+    for (const t of tracks) {
+      const ro = regionOk(t), so = styleOk(t);
+      if (ro) byStyle.set(t.g, (byStyle.get(t.g) || 0) + 1);
+      if (so) { const k = regionKeyOf.get(t.r); if (k) byRegion.set(k, (byRegion.get(k) || 0) + 1); }
+      if (ro && so) total++;
+    }
+    const loaded = tracks.length > 0;
+    const styleN = (g) => (loaded ? byStyle.get(g.k) || 0 : g.n);
+    const all = genreRow("All styles", loaded ? [...byStyle.values()].reduce((a, b) => a + b, 0) : index?.n || 0,
+      selected.size === 0, (on) => { if (on) setSelection(new Set()); else renderGenres(); }, "all");
+    list.replaceChildren(all, ...genres.map((g) => genreRow(g.name, styleN(g), selected.has(g.k), (on) => toggleGenre(g.k, on))));
+
+    const chips = $("region-chips");
+    const chip = (label, n, on, onClick, cls) => {
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      b.type = "button"; b.setAttribute("aria-pressed", String(on)); if (cls) b.className = cls;
+      b.append(label);
+      if (n != null) { const s = document.createElement("span"); s.className = "n"; s.textContent = n.toLocaleString(); b.append(s); }
+      b.addEventListener("click", onClick);
+      li.append(b);
+      return li;
+    };
+    chips.replaceChildren(
+      chip("Everywhere", null, regionSel.size === 0, () => setRegions(new Set()), "all"),
+      ...regions.map((r) => chip(r.name, loaded ? byRegion.get(r.k) || 0 : r.n, regionSel.has(r.k), () => toggleRegion(r.k))));
+    $("atlas").hidden = !regions.length;
+    if (regions.length) loadAtlas().then(updateAtlas);
+    $("genres-count").textContent = `${(loaded ? total : index?.n || 0).toLocaleString()} tracks selected`;
   }
 
   function toggleGenre(k, on) {
     const sel = new Set(selected);
     if (on) sel.add(k); else sel.delete(k);
-    setSelection(sel);                                      // none left = all genres
+    setSelection(sel);                                      // none left = all styles
   }
 
   function setSelection(sel) {
@@ -505,6 +565,66 @@
     renderGenres();
     renderDial(current);
     fillQueue();
+  }
+
+  function toggleRegion(k) {
+    const sel = new Set(regionSel);
+    if (sel.has(k)) sel.delete(k); else sel.add(k);
+    setRegions(sel);                                        // none left = everywhere
+  }
+
+  function setRegions(sel) {
+    regionSel = sel;
+    store.set("regions", [...regionSel]);
+    renderGenres();
+    renderDial(current);
+    fillQueue();
+  }
+
+  // The map: drawn once from map.json (made by builder/scripts/make_map.py), then only its classes change.
+  var atlasReady = null;
+  function loadAtlas() {
+    if (atlasReady) return atlasReady;
+    atlasReady = fetch("map.json").then((r) => r.json()).then((m) => {
+      const NS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("viewBox", `0 0 ${m.w} ${m.h}`);
+      const add = (parent, tag, attrs) => {
+        const el = document.createElementNS(NS, tag);
+        for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+        parent.appendChild(el); return el;
+      };
+      add(svg, "rect", { class: "sea", width: m.w, height: m.h });
+      const grat = add(svg, "g", { class: "grat" });
+      const y = (lat) => ((80 - lat) / 136) * m.h, x = (lon) => ((lon + 180) / 360) * m.w;
+      for (let lat = 60; lat > -60; lat -= 30) add(grat, "line", { x1: 0, x2: m.w, y1: y(lat), y2: y(lat) });
+      for (let lon = -150; lon < 180; lon += 30) add(grat, "line", { y1: 0, y2: m.h, x1: x(lon), x2: x(lon) });
+      if (m.land) add(svg, "path", { class: "land", d: m.land });
+      for (const r of m.regions) {
+        const path = add(svg, "path", { class: "rg", d: r.d, "data-k": r.k });
+        const title = document.createElementNS(NS, "title"); title.textContent = regionNames.get(r.k) || r.k; path.appendChild(title);
+      }
+      for (const r of m.regions) {
+        if (r.ax != null) add(svg, "line", { class: "lead", x1: r.x, y1: r.y + 6, x2: r.ax, y2: r.ay });
+        const t = add(svg, "text", { x: r.x, y: r.y, "data-k": r.k });
+        t.textContent = (regionNames.get(r.k) || r.k).toUpperCase();
+      }
+      svg.addEventListener("click", (e) => {
+        const k = e.target.closest("[data-k]")?.dataset.k;
+        if (k && regionNames.has(k)) toggleRegion(k);
+      });
+      $("atlas").replaceChildren(svg);
+    }).catch((e) => { console.warn("map", e); $("atlas").hidden = true; });
+    return atlasReady;
+  }
+
+  function updateAtlas() {
+    const any = regionSel.size > 0;
+    document.querySelectorAll("#atlas [data-k]").forEach((el) => {
+      const on = regionSel.has(el.dataset.k);
+      el.classList.toggle("on", on);
+      el.classList.toggle("off", any && !on && el.tagName === "path");
+    });
   }
 
   function renderSound() {

@@ -40,6 +40,7 @@ FONO_RE = re.compile(r"/(?:fonograma|music-recording)/(\d+)(?:/|$)")
 class ImsConfig:
     sitemap: str
     folk_genres: frozenset[str]
+    latin_dance_genres: frozenset[str] = frozenset()
     credit: str = "Instituto Moreira Salles"
     user_agent: str = "OldFolkAirListBuilder/1.0"
     pause: float = 5.0
@@ -51,6 +52,7 @@ def load_config(path: Path = RULES_DIR / "ims.yaml") -> ImsConfig:
     return ImsConfig(
         sitemap=d.get("sitemap", "https://discografiabrasileira.com.br/sitemap.xml"),
         folk_genres=frozenset(str(g).lower() for g in d.get("folk_genres") or []),
+        latin_dance_genres=frozenset(str(g).lower() for g in d.get("latin_dance_genres") or []),
         credit=str(d.get("credit") or "Instituto Moreira Salles"),
         user_agent=str(d.get("user_agent") or "OldFolkAirListBuilder/1.0"),
         pause=float(d.get("pause", 5.0)),
@@ -152,7 +154,14 @@ def harvest(store, cfg: ImsConfig, minutes: float | None = None, limit: int | No
 
 def _name(x) -> str:
     if isinstance(x, dict):
-        return str(x.get("name") or "").strip()
+        n = x.get("name")
+        if isinstance(n, list):
+            # A performer listed by stage name then real name(s): "Bahiano (Manuel Pedro dos Santos)".
+            names = [str(i).strip() for i in n if str(i).strip()]
+            if not names:
+                return ""
+            return names[0] if len(names) == 1 else f"{names[0]} ({names[-1]})"
+        return str(n or "").strip()
     if isinstance(x, list):
         return ", ".join(n for n in (_name(i) for i in x) if n)
     return str(x or "").strip()
@@ -176,7 +185,8 @@ def classify_record(ident: str, rec: dict, rules: Rules, cfg: ImsConfig,
         return ItemResult(id=rid, status=EXCLUDE, title=title,
                           reasons=[f"ims: not yet public domain in Brazil ({pd_year or 'no year'})"])
     genre = (_name(rec.get("genre")) or str(rec.get("xGenre") or "")).strip()
-    if genre.lower() not in cfg.folk_genres:
+    dance = genre.lower() in cfg.latin_dance_genres
+    if genre.lower() not in cfg.folk_genres and not dance:
         return ItemResult(id=rid, status=EXCLUDE, title=title,
                           reasons=[f"not folk: Brazilian {genre.lower() or 'untagged'} (popular song genre)"])
     album = rec.get("inAlbum") if isinstance(rec.get("inAlbum"), dict) else {}
@@ -198,7 +208,8 @@ def classify_record(ident: str, rec: dict, rules: Rules, cfg: ImsConfig,
     res = classify_item(ident, "other", data, rules)
     res.id = rid
     # Polkas keep their own genre (so listeners can leave them out), as everywhere else.
-    app_genre = "polka" if genre.lower() in ("polca", "polka") else "latin"
+    # Samba, choro, tango and the other dance genres of the time have their own style.
+    app_genre = "polka" if genre.lower() in ("polca", "polka") else "latindance" if dance else "latin"
     for t in res.tracks:
         t.id, t.url, t.page, t.source, t.picture = rid, audio, rec.get("pageUrl"), cfg.credit, None
         t.region, t.genre = "Latin America", app_genre

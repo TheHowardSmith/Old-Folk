@@ -14,6 +14,7 @@ Everything else stays in the list and on the check list.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -23,6 +24,25 @@ class LlmChecks:
     protected: dict[str, str] = field(default_factory=dict)        # item -> "Name (d. 1964)"
     cleared: set[str] = field(default_factory=set)                 # items whose writer check is settled
     covers: dict[tuple[str, str], str] = field(default_factory=dict)   # (item, title) -> "Name (d. 1990)"
+
+
+_DANCE_PREFIX = re.compile(r"(?i)^(tango|rumba|rhumba|bolero|samba|paso ?doble|beguine|mambo|conga)\s*[:-]?\s+")
+_NOTE = re.compile(r"\((restored|instrumental|vocal|fox[- ]?trot|tango|rumba|bolero|waltz|from [^)]*)\)", re.I)
+
+
+def title_parts(title: str) -> list[str]:
+    """The whole title and each song in a medley ("1. Rudolph...; 2. White Christmas"),
+    lower-cased and without notes like "(restored)", for matching cover verdicts."""
+    out = [re.sub(r"\s+", " ", (title or "").strip().lower())]
+    for p in re.split(r"\s*(?:;|/|\b\d\.\s)\s*", title or ""):
+        p = _NOTE.sub("", p)
+        p = re.sub(r"^\s*\d+[.)]\s*", "", p).strip(" \"'“”-–;,.")
+        p = _DANCE_PREFIX.sub("", p)
+        p = re.split(r"\s+-\s+", p)[0]
+        p = re.sub(r"\s+", " ", p).strip().lower()
+        if len(p) >= 3 and p not in out:
+            out.append(p)
+    return out
 
 
 def _lines(path: Path):
@@ -57,13 +77,13 @@ def load(root: Path | None, cutoff: int = 1955) -> LlmChecks:
     cover_items: dict[str, list[str]] = {}
     for f in sorted((root / "inputs").glob("c*.jsonl")) if (root / "inputs").exists() else []:
         for r in _lines(f):
-            cover_items[r["id"]] = r.get("items") or []
+            cover_items.setdefault(r["id"], []).extend(r.get("items") or [])
     for key, r in first.items():
         second = inputs.get(key)
         is_cover = key.startswith("cover:")
         if second and second.get("check") == "confirmed":
             if is_cover:
-                title = key.split(":", 1)[1]
+                title = key.split(":", 1)[1].split("#", 1)[0]   # "cover:white christmas#medleys"
                 for item in cover_items.get(key, []):
                     out.covers[(item, title)] = _who(second)
             else:

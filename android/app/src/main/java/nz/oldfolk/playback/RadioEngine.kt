@@ -29,6 +29,7 @@ import nz.oldfolk.data.Picker
 import nz.oldfolk.data.PlayHistory
 import nz.oldfolk.data.Playlist
 import nz.oldfolk.data.Playlists
+import nz.oldfolk.data.Selection
 import nz.oldfolk.data.Settings
 import nz.oldfolk.data.StreamHistory
 import nz.oldfolk.data.Track
@@ -151,6 +152,9 @@ class RadioEngine(
         }
         scope.launch(Dispatchers.Main) {
             settings.genres.drop(1).collect { onGenresChanged() }
+        }
+        scope.launch(Dispatchers.Main) {
+            settings.regions.drop(1).collect { onGenresChanged() }
         }
         scope.launch(Dispatchers.Main) {
             // A measurement arrived: apply it if the current track has only just started.
@@ -365,14 +369,14 @@ class RadioEngine(
     private fun topUp() {
         if (mode != Mode.RADIO) return
         val list = repo.state.value
-        val genres = settings.genres.value
+        val selection = selection()
         var resets = 0
         var added = false
         val needed = { if (player.mediaItemCount == 0) targetAhead() + 1 else targetAhead() - aheadCount() }
         while (needed() > 0) {
             val exclude = queuedKeys()
             val recent = streamHistory.entries.value.takeLast(Picker.RECENT_ALBUMS).map { it.track.id }
-            when (val r = Picker.pick(list.tracks, genres, history::contains, exclude, recentItems = recent)) {
+            when (val r = Picker.pick(list.tracks, selection, history::contains, exclude, recentItems = recent)) {
                 is Picker.Result.Picked -> {
                     player.addMediaItem(mediaItem(r.track))
                     added = true
@@ -380,7 +384,7 @@ class RadioEngine(
                 Picker.Result.Exhausted -> {
                     if (!list.complete || resets > 0) break
                     // Everything in this selection has been heard: start the cycle again.
-                    history.forget(Picker.matchingKeys(list.tracks, genres))
+                    history.forget(Picker.matchingKeys(list.tracks, selection))
                     message = "You've heard every track in this selection. Starting over."
                     resets++
                 }
@@ -440,6 +444,12 @@ class RadioEngine(
         publish()
     }
 
+    /** The styles and map regions chosen on the Genres screen. */
+    private fun selection(): Selection {
+        val regionOf = repo.state.value.index?.regionOf.orEmpty()
+        return Selection(settings.genres.value, settings.regions.value, regionOf)
+    }
+
     private fun onGenresChanged() {
         if (mode != Mode.RADIO) return
         val count = player.mediaItemCount
@@ -450,9 +460,8 @@ class RadioEngine(
         val idx = player.currentMediaItemIndex
         if (idx + 1 < count) player.removeMediaItems(idx + 1, count)
         topUp()
-        val genres = settings.genres.value
         val cur = currentTrack()
-        if (cur != null && genres.isNotEmpty() && cur.genre !in genres && player.hasNextMediaItem()) {
+        if (cur != null && !selection().matches(cur) && player.hasNextMediaItem()) {
             val wasPlaying = player.playWhenReady
             player.seekToNextMediaItem()
             if (!wasPlaying) player.pause()
@@ -544,7 +553,7 @@ class RadioEngine(
             list.error != null && list.tracks.isEmpty() -> list.error
             list.tracks.isEmpty() && list.loading -> "Downloading the track list…"
             list.tracks.isNotEmpty() && player.mediaItemCount == 0 && mode == Mode.RADIO ->
-                if (list.loading) "Loading more tracks…" else "No tracks match the selected genres."
+                if (list.loading) "Loading more tracks…" else "No tracks match your choice of styles and regions."
             else -> null
         }
         _state.value = UiState(

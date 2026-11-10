@@ -28,7 +28,11 @@ sources:
       OR Krakowiak OR Kujawiak OR Kolomyika OR Schottische OR Schottis OR Landler
       OR Rheinlander OR Csárdás OR Gypsy OR Lullaby OR Yodeling OR Corrido OR Son
       OR Flamenco OR Baiao OR African OR Arabian OR Turkish OR Japanese OR Java
-      OR Gamelan OR "Indigenous Music Of North America" OR vise OR Concertina)
+      OR Gamelan OR "Indigenous Music Of North America" OR vise OR Concertina
+      OR Tango OR Milonga OR Rumba OR Rhumba OR Samba OR Bolero OR Mambo OR Conga OR "Cha Cha"
+      OR Danzon OR Danzón OR Habanera OR Beguine OR Guaracha OR Maxixe OR Choro OR Merengue
+      OR Cumbia OR "Paso Doble" OR Pasodoble
+      OR Christmas OR Carol OR Carols OR Villancico)
 
   - name: 78rpm-untagged-by-subject
     kind: 78rpm
