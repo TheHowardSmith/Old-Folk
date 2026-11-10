@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import nz.oldfolk.data.Genre
+import nz.oldfolk.data.MapRegion
 import nz.oldfolk.data.Playlist
 import nz.oldfolk.data.Track
 import org.junit.Rule
@@ -23,11 +24,21 @@ class ScreenshotTest {
         Track("c", "c.mp3", "Mamele", "Abe Schwartz Orchestra", null, "Central & Eastern Europe", "jewish"),
     )
     private val genres = listOf(
-        Genre("oldtime", "Old-time & Hillbilly", 6211), Genre("blues", "Country Blues", 2480),
-        Genre("british", "British Isles & Celtic", 812), Genre("european", "European Folk & Dance", 9470),
-        Genre("jewish", "Klezmer & Jewish", 560), Genre("pacific", "Hawaiian & Pacific", 1490),
-        Genre("caribbean", "Calypso & Caribbean", 190), Genre("asia", "Asian & Middle Eastern", 870),
-        Genre("field", "Field Recordings & Work Songs", 120),
+        Genre("songs", "Traditional Songs & Ballads", 11240), Genre("composed", "Composed & Popular Songs", 3980),
+        Genre("dance", "Dance Tunes", 4120), Genre("oldtime", "Old-time & Hillbilly", 4767),
+        Genre("country", "Country & Western", 2079), Genre("blues", "Country Blues", 1213),
+        Genre("gospel", "Gospel & Spirituals", 1624), Genre("polka", "Polka", 5560),
+        Genre("jewish", "Klezmer & Jewish", 1009), Genre("field", "Field Recordings & Work Songs", 1933),
+    )
+    private val regions = listOf(
+        MapRegion("north_america", "North America", listOf("USA"), 14800), MapRegion("latin_america", "Latin America", listOf(), 2400),
+        MapRegion("caribbean", "Caribbean", listOf(), 560), MapRegion("british_isles", "British Isles", listOf(), 1540),
+        MapRegion("western_europe", "Western Europe", listOf(), 1500), MapRegion("nordic", "Nordic", listOf(), 1900),
+        MapRegion("eastern_europe", "Eastern Europe", listOf(), 4400), MapRegion("southern_europe", "Southern Europe", listOf(), 1960),
+        MapRegion("middle_east", "Middle East", listOf(), 540), MapRegion("africa", "Africa", listOf(), 370),
+        MapRegion("central_asia", "Central Asia & Siberia", listOf(), 60), MapRegion("south_asia", "South Asia", listOf(), 160),
+        MapRegion("east_asia", "East Asia", listOf(), 300), MapRegion("southeast_asia", "Southeast Asia", listOf(), 150),
+        MapRegion("pacific", "Hawaii & Pacific", listOf(), 1640),
     )
 
     private fun radio(t: Track?, playing: Boolean, msg: String? = null) = RadioUi(positionMs = 74_000, durationMs = 185_000,
@@ -47,8 +58,12 @@ class ScreenshotTest {
     @Test fun radioPlayingDark() = shot(true, Tab.RADIO) { RadioContent(radio(track, true), RadioActions()) }
     @Test fun radioUndatedPausedDark() = shot(true, Tab.RADIO) { RadioContent(radio(undated, false), RadioActions()) }
     @Test fun radioEmptyLight() = shot(false, Tab.RADIO) { RadioContent(radio(null, false), RadioActions()) }
-    @Test fun genresLight() = shot(false, Tab.GENRES, "Genres") { GenresContent(genres, setOf("oldtime", "blues"), {}, {}) }
-    @Test fun genresDark() = shot(true, Tab.GENRES, "Genres") { GenresContent(genres, emptySet(), {}, {}) }
+    @Test fun genresLight() = shot(false, Tab.GENRES, "Genres") {
+        GenresContent(genres, setOf("oldtime", "blues"), {}, {}, regions, emptySet(), atlas = rememberAtlas())
+    }
+    @Test fun genresDark() = shot(true, Tab.GENRES, "Genres") {
+        GenresContent(genres, emptySet(), {}, {}, regions, setOf("nordic", "british_isles"), atlas = rememberAtlas())
+    }
     @Test fun historyDark() = shot(true, Tab.HISTORY, "History") {
         HistoryContent(
             listOf(HistoryRow.Past(upNext[1], "9:12 pm"), HistoryRow.Past(upNext[0], "9:15 pm"),
