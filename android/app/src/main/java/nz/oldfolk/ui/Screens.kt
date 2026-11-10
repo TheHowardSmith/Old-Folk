@@ -132,6 +132,7 @@ import nz.oldfolk.data.MapRegion
 import nz.oldfolk.data.Selection
 import nz.oldfolk.data.Playlist
 import nz.oldfolk.data.Track
+import nz.oldfolk.data.UpdateInstaller
 import nz.oldfolk.data.Updates
 import nz.oldfolk.playback.MediaCache
 import nz.oldfolk.playback.RadioEngine
@@ -1032,7 +1033,13 @@ sealed interface UpdateUi {
     data object Checking : UpdateUi
     data object UpToDate : UpdateUi
     data class Available(val version: String) : UpdateUi
+    /** Downloading the new version; [progress] is 0..1, or null before the size is known. */
+    data class Downloading(val version: String, val progress: Float?) : UpdateUi
+    /** Handed to Android's installer, which shows its own confirmation. */
+    data class Installing(val version: String) : UpdateUi
     data class Failed(val reason: String) : UpdateUi
+    /** Downloading or installing went wrong: offer the browser instead. */
+    data class InstallFailed(val version: String, val reason: String) : UpdateUi
 }
 
 @Composable
@@ -1046,6 +1053,11 @@ private fun AboutScreen(graph: AppGraph) {
     val theme by graph.settings.theme.collectAsState()
     var update by remember { mutableStateOf<UpdateUi>(UpdateUi.Idle) }
     val scope = rememberCoroutineScope()
+    val installProblem by UpdateInstaller.problem.collectAsState()
+    LaunchedEffect(installProblem) {
+        val u = update
+        if (installProblem != null && u is UpdateUi.Installing) update = UpdateUi.InstallFailed(u.version, installProblem!!)
+    }
     AboutContent(
         AboutInfo(
             update = update,
@@ -1077,7 +1089,23 @@ private fun AboutScreen(graph: AppGraph) {
                 }
             }
         },
-        onDownloadUpdate = { Links.open(context, Updates.apkUrl) },
+        onDownloadUpdate = {
+            val version = (update as? UpdateUi.Available)?.version ?: (update as? UpdateUi.InstallFailed)?.version ?: "latest"
+            update = UpdateUi.Downloading(version, null)
+            scope.launch {
+                update = try {
+                    withContext(Dispatchers.IO) {
+                        UpdateInstaller.downloadAndInstall(context.applicationContext) { p ->
+                            scope.launch { if (update is UpdateUi.Downloading) update = UpdateUi.Downloading(version, p) }
+                        }
+                    }
+                    UpdateUi.Installing(version)
+                } catch (e: Exception) {
+                    UpdateUi.InstallFailed(version, if (e is java.net.UnknownHostException) "no connection" else (e.message ?: "download failed"))
+                }
+            }
+        },
+        onBrowserUpdate = { Links.open(context, Updates.apkUrl) },
         onTheme = { graph.settings.setTheme(it) },
     )
     if (confirmReset) {
@@ -1099,6 +1127,7 @@ fun AboutContent(
     onCheckUpdate: () -> Unit = {},
     onDownloadUpdate: () -> Unit = {},
     onTheme: (String) -> Unit = {},
+    onBrowserUpdate: () -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1121,17 +1150,34 @@ fun AboutContent(
                         fontWeight = FontWeight.SemiBold)
                     Button(onClick = onDownloadUpdate) {
                         Icon(Icons.Filled.Download, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp))
-                        Text("Download update")
+                        Text("Download and install")
                     }
-                    Text("Your browser downloads it; open the file to install it over this version. " +
-                        "Your history and playlists are kept.",
+                    Text("Android asks you to confirm the update (the first time, it also asks you to allow " +
+                        "installs from Old Folk Air). Your history and playlists are kept.",
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                is UpdateUi.Downloading -> {
+                    Text("Downloading version ${u.version}…", style = MaterialTheme.typography.bodyMedium)
+                    if (u.progress == null) LinearProgressIndicator(Modifier.fillMaxWidth())
+                    else LinearProgressIndicator(progress = { u.progress }, modifier = Modifier.fillMaxWidth())
+                }
+                is UpdateUi.Installing -> {
+                    Text("Version ${u.version} downloaded. Confirm the update in Android's installer; " +
+                        "Old Folk Air restarts when it's done.", style = MaterialTheme.typography.bodyMedium)
+                    TextButton(onClick = onDownloadUpdate) { Text("Installer didn't open? Try again") }
+                }
+                is UpdateUi.InstallFailed -> {
+                    Text("Couldn't install the update (${u.reason}).", style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = onDownloadUpdate) { Text("Try again") }
+                        TextButton(onClick = onBrowserUpdate) { Text("Download in browser") }
+                    }
                 }
                 is UpdateUi.Failed -> {
                     Text("Couldn't check for updates (${u.reason}).", style = MaterialTheme.typography.bodyMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = onCheckUpdate) { Text("Try again") }
-                        TextButton(onClick = onDownloadUpdate) { Text("Download latest") }
+                        TextButton(onClick = onBrowserUpdate) { Text("Download in browser") }
                     }
                 }
             }
