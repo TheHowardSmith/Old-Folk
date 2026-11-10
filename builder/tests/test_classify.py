@@ -210,8 +210,9 @@ def test_regimental_and_military_bands_excluded():
     assert r.status == EXCLUDE
 
 
-def test_pop_and_latin_dance_not_included():
-    assert classify_item("t", "78rpm", item({"genre": "Tango", "language": "Spanish"}), RULES).status == EXCLUDE
+def test_pop_not_included():
+    # (Tango and the other Latin dances have their own style now: test_latin_dance_78s_get_their_own_style.)
+    assert classify_item("j", "78rpm", item({"genre": ["Tango", "Jazz"]}), RULES).status != INCLUDE
     assert classify_item("g", "78rpm", item({"genre": "Popular Music", "language": "Greek"}), RULES).status == EXCLUDE
 
 
@@ -660,3 +661,22 @@ def test_index_lists_map_regions_with_counts(tmp_path):
     assert regions["north_america"]["n"] == 2 and "Canada" in regions["north_america"]["r"]
     assert regions["nordic"]["n"] == 1 and regions["nordic"]["name"] == "Nordic"
     assert idx["n"] == 4
+
+
+def test_latin_dance_78s_get_their_own_style():
+    r = classify_item("x", "78rpm", item({"genre": "Tango", "date": "1928", "creator": "Orquesta Tipica Victor"}), RULES)
+    assert r.status == INCLUDE and r.genre == "latindance", r.reasons
+    # On LPs a tango tag alone isn't enough (commercial dance-band albums).
+    assert classify_item("x", "other", item({"genre": "Tango", "date": "1958"}), RULES).status == EXCLUDE
+
+
+def test_christmas_songs_and_carols_get_their_own_style():
+    from oldfolk_builder.classify import style_genre
+    r = classify_item("x", "78rpm", item({"genre": "Christmas", "date": "1924", "title": "Christmas Bells"}), RULES)
+    assert r.status == INCLUDE and r.genre == "christmas", r.reasons
+    assert style_genre("choral", "Stille Nacht, heilige Nacht", composed=False) == "christmas"
+    assert style_genre("polka", "Christmas Polka", composed=True) == "christmas"
+    assert style_genre("nordic", "Nu är det jul igen", composed=False) == "christmas"
+    assert style_genre("american", "Noel Coward Medley", composed=True) == "composed"
+    assert style_genre("african", "Zulu songs from Natal", composed=False) == "songs"
+    assert style_genre("latin", "El Choclo (tango)", composed=True) == "latindance"

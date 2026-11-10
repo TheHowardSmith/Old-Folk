@@ -788,11 +788,33 @@ DANCE_TITLE = re.compile(
     r"forr[oó]|dances?|danza|danse|tanz|t[aä]nze|t[aá]ncok|ta[nń]ce|dans|marches|marsch|marcha|marche)\b", re.I)
 
 
+# Christmas songs and carols, by title, in any language the archives use.
+CHRISTMAS_TITLE = re.compile(
+    r"\b(christmas|xmas|yule(tide)?|carols?|nowell|santa claus|kris kringle|bethlehem|nativity|"
+    r"silent night|stille nacht|adeste fideles|come,? all ye faithful|away in a manger|good king wenceslas|"
+    r"deck the halls?|holy night|minuit,? chr[eé]tiens|jingle bells?|we three kings|god rest (ye|you)|"
+    r"hark!? the herald|joy to the world|midnight clear|il est n[eé]|tu scendi dalle stelle|"
+    r"weihnacht\w*|tannenbaum|navidad|nochebuena|villancicos?|aguinaldos?|(de|do|no|feliz) natal|"
+    r"kol[eę]d[ayi]?|koleda|kolyadk?[ay]|shchedryk|jul(en|e|visa|s[aå]ng|sang|psalm)?|joulu\w*|kerst\w*|"
+    r"bo[zż]e narodzenie|vianoce|v[aá]noce|kar[aá]csony\w*)\b", re.I)
+# "Noël" / "The First Noel", but not the first name ("Noel Coward Medley").
+NOEL_TITLE = re.compile(r"\b[Nn][Oo][EeËë][Ll]\b(?=\s*$|\s*[^\w\s]|\s+[a-zà-ÿ]|\s+[Nn][Oo][EeËë][Ll])")
+# Latin American and Spanish dances of the 78 era, by title.
+LATIN_DANCE_TITLE = re.compile(
+    r"\b(tangos?|milonga|rumbas?|rhumba|sambas?|choro|maxixe|boleros?|mambo|danz[oó]n|habanera|guaracha|"
+    r"merengue|cumbia|beguine|paso ?doble|pasodoble|marchinha)\b", re.I)
+
+
 def style_genre(genre: str | None, title: str, composed: bool) -> str | None:
-    """Traditional Songs & Ballads, Composed & Popular Songs or Dance Tunes for a
-    regional grouping; style genres (polka, blues, gospel...) are kept."""
+    """The style for a track: Christmas & Carols by title, whatever else it is; then
+    Traditional Songs & Ballads, Composed & Popular Songs, Dance Tunes or Samba, Tango
+    & Latin Dance for a regional grouping; other styles (polka, blues, gospel...) are kept."""
+    if CHRISTMAS_TITLE.search(title or "") or NOEL_TITLE.search(title or ""):
+        return "christmas"
     if genre not in REGIONAL_GENRES:
         return genre
+    if LATIN_DANCE_TITLE.search(title or ""):
+        return "latindance"
     if DANCE_TITLE.search(title or ""):
         return "dance"
     return "composed" if composed else "songs"

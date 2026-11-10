@@ -139,6 +139,7 @@ def load_rules(rules_dir: Path = RULES_DIR, overrides_path: Path | None = None) 
         sources=list(src.get("sources") or []),
         genres=dict(cls["genres"]),
         genre_tags={g: _lower_set(t) for g, t in cls["genre_tags"].items()},
+        tags_78_only=Rules.tags_78_only | _lower_set(cls.get("tags_78_only")),
         generic_folk_tags=_lower_set(cls.get("generic_folk_tags")),
         region_genre=dict(cls.get("region_genre") or {}),
         exclude_tags=_lower_set(cls.get("exclude_tags")),

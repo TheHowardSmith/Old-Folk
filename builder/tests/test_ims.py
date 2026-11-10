@@ -39,8 +39,17 @@ def test_public_domain_folk_recording_included():
 def test_not_yet_public_domain_or_pop_excluded():
     assert ims.classify_record("1", rec(publicDomainYear="2027"), RULES, CFG, this_year=2026).status == EXCLUDE
     assert ims.classify_record("1", rec(publicDomainYear=None), RULES, CFG, this_year=2026).status == EXCLUDE
-    r = ims.classify_record("1", rec(genre={"name": "Samba"}), RULES, CFG, this_year=2026)
+    r = ims.classify_record("1", rec(genre={"name": "Canção"}), RULES, CFG, this_year=2026)
     assert r.status == EXCLUDE and "popular" in r.reasons[0]
+
+
+def test_samba_and_other_dances_get_their_own_style():
+    for g in ("Samba", "Choro", "Marcha", "Tango brasileiro", "Valsa"):
+        r = ims.classify_record("1", rec(genre={"name": g}), RULES, CFG, this_year=2026)
+        assert r.status == INCLUDE and r.tracks[0].genre == "latindance", (g, r.reasons)
+    # ... but only once they are in the public domain in Brazil.
+    assert ims.classify_record("1", rec(genre={"name": "Samba"}, publicDomainYear="2034"), RULES, CFG,
+                               this_year=2026).status == EXCLUDE
 
 
 def test_brazilian_polcas_go_to_polka():

@@ -21,9 +21,11 @@ genres:
   blues:        "Country Blues"
   gospel:       "Gospel & Spirituals"
   polka:        "Polka"
+  latindance:   "Samba, Tango & Latin Dance"
   jewish:       "Klezmer & Jewish"
   caribbean:    "Calypso & Caribbean"
   choral:       "Choral"
+  christmas:    "Christmas & Carols"
   classical:    "Classical & Court Music"
   field:        "Field Recordings & Work Songs"
 
@@ -58,6 +60,19 @@ genre_tags:
     - work song
     - prison songs
     - chants
+  # Carols and Christmas songs, whatever their style (tracks are also matched by
+  # title, classify.to_styles). On 78s only: Christmas LPs are commercial albums.
+  christmas:
+    - christmas
+    - christmas music
+    - christmas carols
+    - christmas songs
+    - carols
+    - carol
+    - villancicos
+    - villancico
+    - noël
+    - weihnachtslieder
     - chant
     - lullaby
     - lullabies
@@ -152,6 +167,32 @@ genre_tags:
     - shanty
     - sea shanties
     - concertina
+  # Latin American and Spanish dance music of the 78 era: as traditional by now as
+  # country music. 78s only; the writer rule and rights checks still apply.
+  latindance:
+    - tango
+    - tango-fox
+    - tango argentino
+    - milonga
+    - rumba
+    - rhumba
+    - samba
+    - bolero
+    - mambo
+    - conga
+    - cha-cha-cha
+    - cha cha
+    - danzon
+    - danzón
+    - habanera
+    - beguine
+    - guaracha
+    - maxixe
+    - choro
+    - merengue
+    - cumbia
+    - paso doble
+    - pasodoble
   latin:
     - corrido
     - ranchera
@@ -335,15 +376,6 @@ exclude_tags:
   - doo-wop
   - novelty
   - electronic
-  - tango
-  - tango-fox
-  - rumba
-  - rhumba
-  - mambo
-  - cha-cha-cha
-  - bolero
-  - samba
-  - conga
   - psychedelic
   - psychedelic folk
   - acid folk
@@ -758,6 +790,43 @@ ethnic_waivable_tags:
 # (mood-music orchestras, pop singers, novelty records).
 weak_generic_tags:
   - folk, world, & country
+# Tags that only count on 78rpm discs (on later LPs they usually mean commercial
+# records). country, yodeling and old time are always included.
+tags_78_only:
+  - tango
+  - tango-fox
+  - tango argentino
+  - milonga
+  - rumba
+  - rhumba
+  - samba
+  - bolero
+  - mambo
+  - conga
+  - cha-cha-cha
+  - cha cha
+  - danzon
+  - danzón
+  - habanera
+  - beguine
+  - guaracha
+  - maxixe
+  - choro
+  - merengue
+  - cumbia
+  - paso doble
+  - pasodoble
+  - christmas
+  - christmas music
+  - christmas carols
+  - christmas songs
+  - carols
+  - carol
+  - villancicos
+  - villancico
+  - noël
+  - weihnachtslieder
+
 pop_tags:
   - pop
   - popular music
