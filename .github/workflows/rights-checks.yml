@@ -15,6 +15,12 @@ name: Rights checks
 
 on:
   workflow_dispatch:
+    inputs:
+      list:
+        description: "which track list to check: tracklist (live) or tracklist-candidate (a review build)"
+        type: choice
+        default: tracklist
+        options: [tracklist, tracklist-candidate]
   schedule:
     - cron: "41 4 * * 1"          # weekly, after the list may have changed
   push:
@@ -47,7 +53,7 @@ jobs:
       - run: pip install -e builder
       - name: Download the published track list and earlier results
         run: |
-          gh release download tracklist -p 'index.json' -p 's-*.json' -D tl
+          gh release download ${{ inputs.list || 'tracklist' }} -p 'index.json' -p 's-*.json' -D tl
           mkdir -p prev
           gh release download rights-data -p 'availability.jsonl' -D prev || touch prev/availability.jsonl
       - name: Check shard ${{ matrix.shard }} of 10
@@ -111,7 +117,7 @@ jobs:
       - name: The check list and earlier results
         run: |
           mkdir -p tl prev
-          gh release download tracklist -p 'checks.csv' -D tl || : > tl/checks.csv
+          gh release download ${{ inputs.list || 'tracklist' }} -p 'checks.csv' -D tl || : > tl/checks.csv
           gh release download rights-data -p 'writer_search.jsonl' -D prev || touch prev/writer_search.jsonl
       - name: Search shard ${{ matrix.shard }} of 4
         run: |

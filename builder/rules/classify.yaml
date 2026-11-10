@@ -60,6 +60,11 @@ genre_tags:
     - work song
     - prison songs
     - chants
+    - chant
+    - lullaby
+    - lullabies
+    - indigenous music of north america
+    - home recording
   # Carols and Christmas songs, whatever their style (tracks are also matched by
   # title, classify.to_styles). On 78s only: Christmas LPs are commercial albums.
   christmas:
@@ -73,11 +78,6 @@ genre_tags:
     - villancico
     - noël
     - weihnachtslieder
-    - chant
-    - lullaby
-    - lullabies
-    - indigenous music of north america
-    - home recording
   blues:
     - blues
     - country blues
