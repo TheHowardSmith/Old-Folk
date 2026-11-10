@@ -771,3 +771,38 @@ def classify_item(ident: str, kind: str, data: dict, rules: Rules) -> ItemResult
     elif flags:
         res.status, res.reasons = FLAG, flags
     return res
+
+
+# --- Styles -------------------------------------------------------------------
+# The genres people choose from are styles; where a recording comes from is a
+# separate filter (the region map). The regional groupings used while
+# classifying become one of three styles here, once every source is classified.
+REGIONAL_GENRES = frozenset({"american", "british", "european", "nordic", "eastern_europe", "mediterranean",
+                             "latin", "african", "mideast", "asia", "southasia", "pacific", "world"})
+DANCE_TITLE = re.compile(
+    r"\b(polkas?|waltz(es)?|walzer|valses?|vals|mazurkas?|mazur|oberek|krakowiak|kujawiak|reels?|jigs?|"
+    r"hornpipes?|strathspeys?|schottische|schottis|l[aä]ndler|cs[aá]rd[aá]s|hora|horo|kolo|kolomyjka|kolomyika|"
+    r"sirtaki|hasapiko|syrtos|kalamatianos|tarantella|fandango|jota|sardana|polska|hambo|gammaldans|springar|halling|gangar|"
+    r"square dance|breakdown|hoedown|quadrilles?|two-?step|one-?step|fox ?trot|tango|rumba|samba|choro|"
+    r"maxixe|cueca|cumbia|joropo|marinera|huayno|merengue|danz[oó]n|mambo|galop|polca|xote|bai[aã]o|frevo|"
+    r"forr[oó]|dances?|danza|danse|tanz|t[aä]nze|t[aá]ncok|ta[nń]ce|dans|marches|marsch|marcha|marche)\b", re.I)
+
+
+def style_genre(genre: str | None, title: str, composed: bool) -> str | None:
+    """Traditional Songs & Ballads, Composed & Popular Songs or Dance Tunes for a
+    regional grouping; style genres (polka, blues, gospel...) are kept."""
+    if genre not in REGIONAL_GENRES:
+        return genre
+    if DANCE_TITLE.search(title or ""):
+        return "dance"
+    return "composed" if composed else "songs"
+
+
+def to_styles(results: list) -> None:
+    """Turn every regional grouping into a style (after all sources are classified)."""
+    for r in results:
+        composed = bool(getattr(r, "writers", None))
+        for t in r.tracks:
+            t.genre = style_genre(t.genre, t.title, composed)
+        if r.genre:
+            r.genre = style_genre(r.genre, r.title, composed)

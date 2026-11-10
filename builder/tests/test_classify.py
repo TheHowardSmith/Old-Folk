@@ -628,3 +628,35 @@ def test_classical_and_court_music_from_every_region():
     # Western classical is still left out
     r = classify_item("w", "lp", item({"subject": ["Classical"], "title": "Symphony No. 5", "date": "1960"}), RULES)
     assert r.status == EXCLUDE
+
+
+def test_regional_groupings_become_styles():
+    from oldfolk_builder.classify import ItemResult, Track, style_genre, to_styles
+    assert style_genre("nordic", "Hambo från Dalarna", composed=False) == "dance"
+    assert style_genre("british", "The Kerry Reel", composed=False) == "dance"
+    assert style_genre("eastern_europe", "Hora Staccato", composed=True) == "dance"
+    assert style_genre("american", "Barbara Allen", composed=False) == "songs"
+    assert style_genre("american", "This Land Is Your Land", composed=True) == "composed"
+    assert style_genre("blues", "Rag Dance Blues", composed=False) == "blues"      # styles are kept
+    assert style_genre("polka", "Beer Barrel Polka", composed=True) == "polka"
+    r = ItemResult(id="x", status="include", title="Songs of Norway", genre="nordic", writers=[])
+    r.tracks = [Track(id="x", file="1.mp3", title="Ola Glomstulen", artist=None, year=1930, region="Nordic",
+                      genre="nordic"),
+                Track(id="x", file="2.mp3", title="Springar", artist=None, year=1930, region="Nordic", genre="nordic")]
+    to_styles([r])
+    assert [t.genre for t in r.tracks] == ["songs", "dance"] and r.genre == "songs"
+
+
+def test_index_lists_map_regions_with_counts(tmp_path):
+    import json
+    from oldfolk_builder.classify import ItemResult, Track
+    from oldfolk_builder.output import write_all
+    r = ItemResult(id="x", status="include", title="t", genre="songs")
+    r.tracks = [Track(id="x", file=f"{i}.mp3", title="t", artist=None, year=1930, region=reg, genre="songs")
+                for i, reg in enumerate(["USA", "Canada", "Nordic", "Unknown"])]
+    write_all([r], tmp_path, RULES.genres, version=1, map_regions=RULES.map_regions)
+    idx = json.loads((tmp_path / "index.json").read_text())
+    regions = {x["k"]: x for x in idx["regions"]}
+    assert regions["north_america"]["n"] == 2 and "Canada" in regions["north_america"]["r"]
+    assert regions["nordic"]["n"] == 1 and regions["nordic"]["name"] == "Nordic"
+    assert idx["n"] == 4
