@@ -61,7 +61,7 @@
   const genreNames = new Map();
   const tracks = [];
   let shardsLeft = 0;
-  let selected = new Set(store.get("genres", []));        // empty = all genres
+  let selected = new Set(store.get("genres", []));        // empty = all styles
   // Genres that were split (Nov 2026): a saved choice of the old one keeps the new ones.
   for (const [flag, from, to] of [["euroSplit", "european", ["nordic", "eastern_europe", "mediterranean"]],
                                   ["asiaSplit", "asia", ["mideast"]],
@@ -403,7 +403,17 @@
     const where = regionSel.size === 0 || !regionKeyOf.size ? ""
       : regionSel.size === 1 ? regionNames.get([...regionSel][0]) || "" : `${regionSel.size} regions`;
     const parts = [where, style].filter(Boolean);
-    $("dial-text").textContent = `RADIO · ${(parts.length ? parts.join(" · ") : "all genres").toUpperCase()}`;
+    $("dial-text").textContent = `RADIO · ${(parts.length ? parts.join(" · ") : "all styles").toUpperCase()}`;
+    // The year rides above the needle; near the left end it would run into the station name,
+    // so there it sits beside the needle instead. (Measured at the needle's destination, not
+    // mid-slide.)
+    const yr = needle.querySelector(".yr");
+    if (yr) {
+      const sc = $("scale").getBoundingClientRect(), tx = $("dial-text").getBoundingClientRect(), r = yr.getBoundingClientRect();
+      const x = sc.left + (parseFloat(needle.style.left) / 100) * sc.width;
+      const clash = r.top < tx.bottom + 2 && r.bottom > tx.top - 2 && x - r.width / 2 - 4 < tx.right && x + r.width / 2 + 4 > tx.left;
+      yr.classList.toggle("side", clash);
+    }
   }
   const pos = (y) => 4 + ((Math.min(1975, Math.max(1895, y)) - 1895) / 80) * 92;
 

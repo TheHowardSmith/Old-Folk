@@ -162,6 +162,7 @@ a { color: var(--primary); }
   background: linear-gradient(#5a4a3a, #241a12); box-shadow: 0 0 0 1px rgba(0,0,0,.5);
 }
 .needle .yr { position: absolute; top: -17px; left: 50%; transform: translateX(-50%); font: 700 12px/1 Georgia, serif; color: #FF7A4A; white-space: nowrap; }
+.needle .yr.side { top: 1px; left: 6px; transform: none; }   /* beside the needle, clear of the station name */
 
 /* Player */
 .player { display: grid; justify-items: center; gap: 14px; padding-bottom: 28px; }
@@ -423,7 +424,8 @@ body.fit-tight .actions a { font-size: 14px; }
   #tab-radio .player { display: contents; }
   #tab-radio .dial-cab { grid-column: 1; grid-row: 1; }
   #tab-radio .art { grid-column: 1; grid-row: 2 / span 4; justify-self: center; align-self: start; }
-  #tab-radio .now { grid-column: 2; grid-row: 1 / span 2; justify-self: center; align-self: center; }
+  #tab-radio .now { grid-column: 2; grid-row: 1 / span 2; justify-self: stretch; align-self: center; min-width: 0; max-width: none; }
+  #tab-radio .now .artist { max-width: 100%; }   /* long names end in "…" inside the column */
   #tab-radio .playhead { grid-column: 2; grid-row: 3; justify-self: center; }
   #tab-radio .grille-cab { grid-column: 2; grid-row: 4; justify-self: center; }
   #tab-radio .actions { grid-column: 2; grid-row: 5; justify-self: center; padding-bottom: 8px; }
@@ -485,3 +487,8 @@ h3.sub { font-size: 18px; margin: 18px 0 8px; }
 .region-chips button[aria-pressed="true"] { background: color-mix(in srgb, var(--map-on) 45%, var(--card)); border-color: var(--brass); font-weight: 600; }
 .region-chips button.all[aria-pressed="true"] { background: var(--cloth); }
 .region-chips button:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+
+/* Very large screens shown at 100% (a 4K monitor without display scaling): scale the whole page up
+   so it isn't a small island in the middle. Monitors with scaling on already look like 1080p-1440p. */
+@media (min-width: 2200px) and (min-height: 1250px) { html { zoom: 1.35; } }
+@media (min-width: 3000px) and (min-height: 1700px) { html { zoom: 1.8; } }

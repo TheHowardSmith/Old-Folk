@@ -46,3 +46,9 @@ def test_not_yet_public_domain_or_pop_excluded():
 def test_brazilian_polcas_go_to_polka():
     r = ims.classify_record("1", rec(genre={"name": "Polca"}), RULES, CFG, this_year=2026)
     assert r.status == INCLUDE and r.tracks[0].genre == "polka"
+
+
+def test_performer_with_stage_and_real_name_reads_as_text():
+    assert ims._name({"@type": "Person", "name": ["Bahiano", "Manuel Pedro dos Santos"]}) == "Bahiano (Manuel Pedro dos Santos)"
+    assert ims._name({"name": ["Cadete", "KDT", "Manoel Evêncio da Costa Moreira"]}) == "Cadete (Manoel Evêncio da Costa Moreira)"
+    assert ims._name([{"name": "Pixinguinha"}, {"name": ["Donga"]}]) == "Pixinguinha, Donga"

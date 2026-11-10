@@ -152,7 +152,14 @@ def harvest(store, cfg: ImsConfig, minutes: float | None = None, limit: int | No
 
 def _name(x) -> str:
     if isinstance(x, dict):
-        return str(x.get("name") or "").strip()
+        n = x.get("name")
+        if isinstance(n, list):
+            # A performer listed by stage name then real name(s): "Bahiano (Manuel Pedro dos Santos)".
+            names = [str(i).strip() for i in n if str(i).strip()]
+            if not names:
+                return ""
+            return names[0] if len(names) == 1 else f"{names[0]} ({names[-1]})"
+        return str(n or "").strip()
     if isinstance(x, list):
         return ", ".join(n for n in (_name(i) for i in x) if n)
     return str(x or "").strip()
