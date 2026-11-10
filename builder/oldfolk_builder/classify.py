@@ -810,7 +810,7 @@ LATIN_DANCE_TITLE = re.compile(
 
 def style_genre(genre: str | None, title: str, composed: bool) -> str | None:
     """The style for a track: Christmas & Carols by title, whatever else it is; then
-    Traditional Songs & Ballads, Composed & Popular Songs, Dance Tunes or Samba, Tango
+    Traditional Songs & Ballads, Composed & Popular Songs, Dance Tunes or Tango, Samba
     & Latin Dance for a regional grouping; other styles (polka, blues, gospel...) are kept."""
     if CHRISTMAS_TITLE.search(title or "") or NOEL_TITLE.search(title or ""):
         return "christmas"

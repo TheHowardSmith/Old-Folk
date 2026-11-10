@@ -60,7 +60,7 @@ folk_genres:
   - viola
 
 # Brazilian dance music of the 78 era (samba, choro, maxixe, marchinhas, tango
-# brasileiro, valsas): filed under "Samba, Tango & Latin Dance". IMS's public-domain
+# brasileiro, valsas): filed under "Tango, Samba & Latin Dance". IMS's public-domain
 # year already covers the composers.
 latin_dance_genres:
   - samba
